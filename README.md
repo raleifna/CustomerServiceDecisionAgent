@@ -48,7 +48,7 @@ Mock Enterprise Backend（订单/物流/客户数据）+ Knowledge Base（政策
 ## 文档导航
 
 | 文档 | 内容 |
-|---|---|---|
+|---|---|
 | [docs/01_PRD.md](./docs/01_PRD.md) | 产品需求文档：业务背景、用户需求、功能需求、Success Metrics（What），不涉及技术实现 | 
 | docs/02_DataDesign.md | Enterprise Mock Database Schema、数据标注方案 |
 | docs/03_BenchmarkResearch.md | 标杆产品调研（Zendesk、Intercom、Agentforce 等） | 
