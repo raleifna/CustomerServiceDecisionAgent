@@ -47,8 +47,6 @@ Mock Enterprise Backend（订单/物流/客户数据）+ Knowledge Base（政策
 
 ## 文档导航
 
-本项目遵循 PRD / Architecture / 详细设计三层文档结构，设计文档统一放在 `docs/`，并按阅读顺序加编号前缀：
-
 | 文档 | 内容 |
 |---|---|---|
 | [docs/01_PRD.md](./docs/01_PRD.md) | 产品需求文档：业务背景、用户需求、功能需求、Success Metrics（What），不涉及技术实现 | 

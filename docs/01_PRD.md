@@ -165,8 +165,6 @@ Customer Response / Human Escalation（客户回复 / 人工升级）
 
 各能力模块的业务定义见第 6 章功能需求。技术上如何拆分实现这些能力（例如是否采用多智能体架构、每个组件的内部设计），见 [04_Architecture.md](./04_Architecture.md)。
 
-> **业务能力与技术实现解耦**：每项业务能力均保持与具体技术实现解耦。系统未来可采用 Rule Engine、单一 LLM、Multi-Agent、Hybrid Workflow 等不同实现方式承载同一套业务能力，PRD 定义的是"系统应具备什么能力"，不绑定"用什么技术实现"。当前版本选择多智能体架构的理由记录在 Architecture.md，属于技术决策，未来更换实现方式不需要修改本文档。
-
 ---
 
 # 6. 功能需求（Functional Requirements）
