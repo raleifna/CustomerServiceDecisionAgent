@@ -1,0 +1,99 @@
+[
+  {
+    "evidence_id": "EVD2026080005",
+    "request_id": "SR2026080005",
+    "evidence_type": "Video",
+    "submitted_by": "Customer",
+    "submitted_date": "2026-08-08",
+    "description": "客户提交商品接通电源后无法正常启动的完整操作视频",
+    "verification_status": "MachineReviewed",
+    "verified_facts": [
+      "视频中的商品类别与订单商品一致",
+      "视频展示了完整的接通电源和启动操作",
+      "商品在操作后没有正常启动"
+    ],
+    "verification_confidence": 0.88
+  },
+  {
+    "evidence_id": "EVD2026080008",
+    "request_id": "SR2026080008",
+    "evidence_type": "Image",
+    "submitted_by": "Customer",
+    "submitted_date": "2026-08-10",
+    "description": "客户提交三件商品合照及其中一件存在明显裂纹的近照",
+    "verification_status": "MachineReviewed",
+    "verified_facts": [
+      "图片中的商品类别与订单商品一致",
+      "图片中可见三件商品",
+      "其中一件商品存在明显裂纹"
+    ],
+    "verification_confidence": 0.90
+  },
+  {
+    "evidence_id": "EVD2026080009",
+    "request_id": "SR2026080009",
+    "evidence_type": "DiagnosticReport",
+    "submitted_by": "AfterSalesCenter",
+    "submitted_date": "2026-08-07",
+    "description": "平台授权售后中心出具的功能故障检测报告",
+    "verification_status": "Verified",
+    "verified_facts": [
+      "检测商品型号与订单商品一致",
+      "商品存在非人为造成的功能故障"
+    ],
+    "verification_confidence": 0.98
+  },
+  {
+    "evidence_id": "EVD2026080010",
+    "request_id": "SR2026080010",
+    "evidence_type": "Image",
+    "submitted_by": "Customer",
+    "submitted_date": "2026-08-09",
+    "description": "客户提交一张商品局部存在疑似划痕的近距离照片",
+    "verification_status": "NeedsHumanReview",
+    "verified_facts": [
+      "图片中存在疑似外观损坏区域",
+      "仅凭局部照片无法确认商品型号及损坏原因"
+    ],
+    "verification_confidence": 0.52
+  },
+  {
+    "evidence_id": "EVD2026080015",
+    "request_id": "SR2026080015",
+    "evidence_type": "Video",
+    "submitted_by": "Customer",
+    "submitted_date": "2026-08-11",
+    "description": "客户已上传商品无法启动的视频，材料仍在等待审核",
+    "verification_status": "Pending",
+    "verified_facts": [],
+    "verification_confidence": null
+  },
+  {
+    "evidence_id": "EVD2026080016",
+    "request_id": "SR2026080016",
+    "evidence_type": "Image",
+    "submitted_by": "Customer",
+    "submitted_date": "2026-08-12",
+    "description": "客户提交的图片经审核显示为其他类别商品，无法匹配本次订单",
+    "verification_status": "Rejected",
+    "verified_facts": [
+      "图片中的商品类别与订单商品不一致"
+    ],
+    "verification_confidence": 0.95
+  },
+  {
+    "evidence_id": "EVD2026080018",
+    "request_id": "SR2026080018",
+    "evidence_type": "Image",
+    "submitted_by": "Customer",
+    "submitted_date": "2026-08-12",
+    "description": "客户提交易损商品出现裂纹的照片，物流系统没有运输破损记录",
+    "verification_status": "MachineReviewed",
+    "verified_facts": [
+      "图片中的商品类别与订单商品一致",
+      "商品表面存在可见裂纹",
+      "图片无法确认裂纹形成原因"
+    ],
+    "verification_confidence": 0.68
+  }
+]

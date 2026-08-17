@@ -73,7 +73,7 @@ Customer Request
 
 | 指标 | 目标 | 说明 |
 |---|---|---|
-| Decision Accuracy（决策准确率） | > 90% | 系统决策结果与预期正确结果的一致比例，基于第 9 章业务场景用例及抽样标注数据评估 |
+| Decision Accuracy（决策准确率） | > 90% | 系统决策结果与评估用例预期结果的一致比例，基于第 9 章业务场景及扩展 Case Database 评估 |
 | Human Escalation Rate（人工升级率） | < 15% | 触发人工升级的请求占比，过高说明系统自动化程度不足 |
 | Average Response Time（平均响应时长） | < 5s | 对应第 7 章非功能需求中的响应速度要求 |
 | Workflow Success Rate（流程完整执行率） | > 95% | 请求从任务规划到最终回复（或人工升级）能够无异常走完全流程的比例 |
@@ -247,9 +247,9 @@ Customer Response / Human Escalation（客户回复 / 人工升级）
 
 # 8. 数据来源（Data Sources）
 
-## 客户对话数据
+## 客户请求与评估输入
 
-用于模拟真实客户售后咨询场景的多轮对话语料。
+核心测试输入由场景化 Case Database 派生，并通过 `request_id` 关联 Service Request。保留的真实电商对话样本仅用于补充表达方式和测试语言鲁棒性，不作为业务事实、决策标签或项目主线数据源。
 
 ## 企业业务数据（Mock）
 
@@ -259,7 +259,7 @@ Customer Response / Human Escalation（客户回复 / 人工升级）
 
 包含退款政策、物流政策、会员政策等规则文档，供决策分析环节检索使用。
 
-> 具体数据集选型、Schema 设计见 [docs/04_Architecture.md](./04_Architecture.md) 与 `docs/02_DataDesign.md`。
+> 具体 Mock Database、评估输入与可选语言材料设计见 [docs/04_Architecture.md](./04_Architecture.md) 与 [docs/02_DataDesign.md](./02_DataDesign.md)。
 
 ---
 
@@ -322,10 +322,10 @@ VIP 客户反馈包裹未收到，物流信息显示丢件 → 决策：批准�
 
 ## Data Assets
 
-- Customer Dialogue Dataset（DeepUtteranceAggregation 抽样 + CrossWOZ 标注框架参考）
 - Enterprise Mock Database（订单 / 物流 / 客户 / 商品）
 - RAG Knowledge Base（退款 / 物流 / VIP 政策文档）
-- Evaluation Test Cases（对应第 9 章业务场景用例及扩展压测案例）
+- Evaluation Test Cases（以 `request_id` 关联 Mock Database，并记录预期决策与规则依据）
+- Optional Language Robustness Samples（保留的真实对话筛选结果，仅用于请求表达变体测试）
 
 ## System
 
@@ -340,4 +340,3 @@ VIP 客户反馈包裹未收到，物流信息显示丢件 → 决策：批准�
 - Presentation Slides
 
 ---
-

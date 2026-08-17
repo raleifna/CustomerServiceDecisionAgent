@@ -1,0 +1,11 @@
+[
+  {
+    "fulfillment_request_id": "FR2026080001",
+    "order_id": "ORD2026080021",
+    "customer_id": "CUS0021",
+    "request_type": "ExpediteShipment",
+    "created_date": "2026-08-17",
+    "workflow_status": "Submitted",
+    "result": null
+  }
+]

@@ -1,0 +1,156 @@
+[
+  {
+    "product_id": "PRO0001",
+    "category": "数码",
+    "price": 699.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0002",
+    "category": "家电",
+    "price": 1299.00,
+    "is_fragile": true,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0003",
+    "category": "服饰",
+    "price": 299.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0004",
+    "category": "数码",
+    "price": 899.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0005",
+    "category": "家电",
+    "price": 459.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0006",
+    "category": "鞋靴",
+    "price": 399.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0007",
+    "category": "食品",
+    "price": 99.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0008",
+    "category": "家居",
+    "price": 199.00,
+    "is_fragile": true,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0009",
+    "category": "数码",
+    "price": 799.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0010",
+    "category": "奢侈品",
+    "price": 12999.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0011",
+    "category": "服饰",
+    "price": 399.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0012",
+    "category": "数码",
+    "price": 599.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0013",
+    "category": "服饰",
+    "price": 329.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0014",
+    "category": "食品",
+    "price": 89.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0015",
+    "category": "家电",
+    "price": 799.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0016",
+    "category": "数码",
+    "price": 1099.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0017",
+    "category": "家居",
+    "price": 259.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0018",
+    "category": "饰品",
+    "price": 499.00,
+    "is_fragile": false,
+    "is_customized": true
+  },
+  {
+    "product_id": "PRO0019",
+    "category": "家居",
+    "price": 299.00,
+    "is_fragile": true,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0020",
+    "category": "食品",
+    "price": 79.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0021",
+    "category": "数码",
+    "price": 649.00,
+    "is_fragile": false,
+    "is_customized": false
+  },
+  {
+    "product_id": "PRO0022",
+    "category": "家居",
+    "price": 359.00,
+    "is_fragile": false,
+    "is_customized": false
+  }
+]

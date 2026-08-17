@@ -1,0 +1,62 @@
+[
+  {
+    "case_id": "EVAL_MULTI_001",
+    "category": "context_memory",
+    "turns": [
+      {
+        "user_message": "订单ORD2026080021什么时候发货？",
+        "expected_paths": {
+          "conversation_result.conversation_intent": "ShippingTimeQuery",
+          "conversation_context.active_order_id": "ORD2026080021"
+        }
+      },
+      {
+        "user_message": "那这个订单的物流呢？",
+        "expected_paths": {
+          "conversation_result.conversation_intent": "LogisticsQuery",
+          "conversation_result.order_id": "ORD2026080021",
+          "query_result.order_id": "ORD2026080021",
+          "final_result": null
+        }
+      }
+    ]
+  },
+  {
+    "case_id": "EVAL_MULTI_002",
+    "category": "context_memory",
+    "turns": [
+      {
+        "user_message": "订单ORD2026080005的换货进度怎么样？",
+        "expected_paths": {
+          "query_result.request_id": "SR2026080005",
+          "conversation_context.active_order_id": "ORD2026080005",
+          "conversation_context.active_request_id": "SR2026080005"
+        }
+      },
+      {
+        "user_message": "那这个订单发货了吗？",
+        "expected_paths": {
+          "conversation_result.conversation_intent": "OrderStatusQuery",
+          "conversation_result.order_id": "ORD2026080005",
+          "query_result.is_shipped": true,
+          "final_result": null
+        }
+      }
+    ]
+  },
+  {
+    "case_id": "EVAL_MULTI_003",
+    "category": "thread_isolation",
+    "turns": [
+      {
+        "user_message": "那这个订单的物流呢？",
+        "expected_paths": {
+          "conversation_result.conversation_intent": "LogisticsQuery",
+          "conversation_result.order_id": null,
+          "query_result": null
+        },
+        "response_contains": ["请提供订单号"]
+      }
+    ]
+  }
+]

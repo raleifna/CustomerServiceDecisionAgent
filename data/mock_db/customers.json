@@ -1,0 +1,128 @@
+[
+  {
+    "customer_id": "CUS0001",
+    "vip_level": "Normal",
+    "register_date": "2024-03-12",
+    "refund_history_count": 1
+  },
+  {
+    "customer_id": "CUS0002",
+    "vip_level": "Platinum",
+    "register_date": "2021-06-18",
+    "refund_history_count": 2
+  },
+  {
+    "customer_id": "CUS0003",
+    "vip_level": "Normal",
+    "register_date": "2023-11-06",
+    "refund_history_count": 0
+  },
+  {
+    "customer_id": "CUS0004",
+    "vip_level": "Silver",
+    "register_date": "2022-08-21",
+    "refund_history_count": 1
+  },
+  {
+    "customer_id": "CUS0005",
+    "vip_level": "Normal",
+    "register_date": "2025-01-17",
+    "refund_history_count": 0
+  },
+  {
+    "customer_id": "CUS0006",
+    "vip_level": "Gold",
+    "register_date": "2022-04-09",
+    "refund_history_count": 1
+  },
+  {
+    "customer_id": "CUS0007",
+    "vip_level": "Normal",
+    "register_date": "2024-09-25",
+    "refund_history_count": 0
+  },
+  {
+    "customer_id": "CUS0008",
+    "vip_level": "Silver",
+    "register_date": "2023-05-30",
+    "refund_history_count": 2
+  },
+  {
+    "customer_id": "CUS0009",
+    "vip_level": "Normal",
+    "register_date": "2024-01-08",
+    "refund_history_count": 12
+  },
+  {
+    "customer_id": "CUS0010",
+    "vip_level": "Normal",
+    "register_date": "2026-08-01",
+    "refund_history_count": 0
+  },
+  {
+    "customer_id": "CUS0011",
+    "vip_level": "Normal",
+    "register_date": "2023-02-16",
+    "refund_history_count": 0
+  },
+  {
+    "customer_id": "CUS0012",
+    "vip_level": "Silver",
+    "register_date": "2022-09-08",
+    "refund_history_count": 1
+  },
+  {
+    "customer_id": "CUS0013",
+    "vip_level": "Normal",
+    "register_date": "2024-04-21",
+    "refund_history_count": 0
+  },
+  {
+    "customer_id": "CUS0014",
+    "vip_level": "Normal",
+    "register_date": "2025-03-14",
+    "refund_history_count": 0
+  },
+  {
+    "customer_id": "CUS0015",
+    "vip_level": "Gold",
+    "register_date": "2022-01-19",
+    "refund_history_count": 2
+  },
+  {
+    "customer_id": "CUS0016",
+    "vip_level": "Normal",
+    "register_date": "2024-07-03",
+    "refund_history_count": 1
+  },
+  {
+    "customer_id": "CUS0017",
+    "vip_level": "Normal",
+    "register_date": "2023-05-28",
+    "refund_history_count": 0
+  },
+  {
+    "customer_id": "CUS0018",
+    "vip_level": "Silver",
+    "register_date": "2021-12-11",
+    "refund_history_count": 1
+  },
+  {
+    "customer_id": "CUS0019",
+    "vip_level": "Normal",
+    "register_date": "2024-10-09",
+    "refund_history_count": 0
+  },
+  {
+    "customer_id": "CUS0020",
+    "vip_level": "Normal",
+    "register_date": "2025-06-17",
+    "refund_history_count": 0
+  },
+  {
+    "customer_id": "CUS0021",
+    "vip_level": "Normal",
+    "register_date": "2024-12-06",
+    "refund_history_count": 0
+  }
+]

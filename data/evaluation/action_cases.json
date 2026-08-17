@@ -1,0 +1,51 @@
+[
+  {
+    "case_id": "EVAL_ACTION_001",
+    "category": "action_success",
+    "mode": "conversation_submit",
+    "turns": [
+      {"user_message": "订单ORD2026080021什么时候发货？"},
+      {"user_message": "需要"}
+    ],
+    "expected_paths": {
+      "action_result.status": "Submitted",
+      "action_result.action": "ExpediteShipment",
+      "action_result.order_id": "ORD2026080021",
+      "action_result.created": true
+    },
+    "response_contains": ["已为订单", "催单编号"]
+  },
+  {
+    "case_id": "EVAL_ACTION_002",
+    "category": "idempotency",
+    "mode": "repository_idempotency",
+    "order_id": "ORD2026080021",
+    "customer_id": "CUS0021",
+    "expected_record_count": 1
+  },
+  {
+    "case_id": "EVAL_ACTION_003",
+    "category": "action_safety",
+    "mode": "conversation_failure",
+    "turns": [
+      {"user_message": "订单ORD2026080021什么时候发货？"},
+      {"user_message": "需要"}
+    ],
+    "expected_paths": {
+      "action_result.status": "Failed"
+    },
+    "response_contains": ["未能提交"],
+    "response_not_contains": ["已为订单"]
+  },
+  {
+    "case_id": "EVAL_ACTION_004",
+    "category": "action_guard",
+    "mode": "already_shipped",
+    "order_id": "ORD2026080005",
+    "expected_paths": {
+      "action_result.status": "NotRequired",
+      "action_result.reason": "AlreadyShipped"
+    },
+    "response_contains": ["已经发货", "无需"]
+  }
+]

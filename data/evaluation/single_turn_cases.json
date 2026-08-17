@@ -1,0 +1,186 @@
+[
+  {
+    "case_id": "EVAL_ROUTE_001",
+    "category": "routing",
+    "input": {"user_message": "订单ORD2026080021什么时候发货？"},
+    "expected_paths": {
+      "conversation_result.conversation_intent": "ShippingTimeQuery",
+      "query_result.query_type": "ShippingTimeQuery",
+      "query_result.promised_ship_date": "2026-08-18",
+      "final_result": null
+    },
+    "response_contains": ["ORD2026080021", "2026-08-18", "承诺"]
+  },
+  {
+    "case_id": "EVAL_ROUTE_002",
+    "category": "routing",
+    "input": {"user_message": "订单ORD2026080005发货了吗？"},
+    "expected_paths": {
+      "conversation_result.conversation_intent": "OrderStatusQuery",
+      "query_result.is_shipped": true,
+      "query_result.is_delivered": true,
+      "final_result": null
+    },
+    "response_contains": ["ORD2026080005", "签收"]
+  },
+  {
+    "case_id": "EVAL_ROUTE_003",
+    "category": "routing",
+    "input": {"user_message": "订单ORD2026080002的物流有没有异常？"},
+    "expected_paths": {
+      "conversation_result.conversation_intent": "LogisticsQuery",
+      "query_result.exception_count": 1,
+      "final_result": null
+    },
+    "response_contains": ["京东物流", "疑似丢件", "尚未处理"]
+  },
+  {
+    "case_id": "EVAL_ROUTE_004",
+    "category": "routing",
+    "input": {"user_message": "订单ORD2026080005的换货进度怎么样？"},
+    "expected_paths": {
+      "conversation_result.conversation_intent": "AfterSalesStatusQuery",
+      "query_result.request_id": "SR2026080005",
+      "query_result.workflow_status": "Pending",
+      "final_result": null
+    },
+    "response_contains": ["SR2026080005", "待处理"]
+  },
+  {
+    "case_id": "EVAL_ROUTE_005",
+    "category": "routing",
+    "input": {"user_message": "物流怎么样？"},
+    "expected_paths": {
+      "conversation_result.conversation_intent": "LogisticsQuery",
+      "query_result": null,
+      "final_result": null
+    },
+    "response_contains": ["请提供订单号"]
+  },
+  {
+    "case_id": "EVAL_DECISION_001",
+    "category": "decision",
+    "input": {"request_id": "SR2026080001"},
+    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "Approve", "final_result.approved_quantity": 1, "final_result.approved_amount": 699.0}
+  },
+  {
+    "case_id": "EVAL_DECISION_002",
+    "category": "decision",
+    "input": {"request_id": "SR2026080002"},
+    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "Approve", "final_result.approved_quantity": 1, "final_result.approved_amount": 1299.0}
+  },
+  {
+    "case_id": "EVAL_DECISION_003",
+    "category": "decision",
+    "input": {"request_id": "SR2026080003"},
+    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "Reject"}
+  },
+  {
+    "case_id": "EVAL_DECISION_004",
+    "category": "decision",
+    "input": {"request_id": "SR2026080004"},
+    "expected_paths": {"final_result.handling_status": "HumanEscalation", "final_result.decision": null}
+  },
+  {
+    "case_id": "EVAL_DECISION_005",
+    "category": "decision",
+    "input": {"request_id": "SR2026080005"},
+    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "Approve", "final_result.approved_quantity": 1}
+  },
+  {
+    "case_id": "EVAL_DECISION_006",
+    "category": "decision",
+    "input": {"request_id": "SR2026080006"},
+    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "Approve", "final_result.approved_quantity": 1}
+  },
+  {
+    "case_id": "EVAL_DECISION_007",
+    "category": "decision",
+    "input": {"request_id": "SR2026080007"},
+    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "Approve", "final_result.approved_quantity": 1, "final_result.approved_amount": 99.0}
+  },
+  {
+    "case_id": "EVAL_DECISION_008",
+    "category": "decision",
+    "input": {"request_id": "SR2026080008"},
+    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "Approve", "final_result.approved_quantity": 1, "final_result.approved_amount": 199.0}
+  },
+  {
+    "case_id": "EVAL_DECISION_009",
+    "category": "decision",
+    "input": {"request_id": "SR2026080009"},
+    "expected_paths": {"final_result.handling_status": "HumanEscalation", "final_result.decision": null}
+  },
+  {
+    "case_id": "EVAL_DECISION_010",
+    "category": "decision",
+    "input": {"request_id": "SR2026080010"},
+    "expected_paths": {"final_result.handling_status": "HumanEscalation", "final_result.decision": null}
+  },
+  {
+    "case_id": "EVAL_DECISION_011",
+    "category": "decision",
+    "input": {"request_id": "SR2026080011"},
+    "expected_paths": {"final_result.handling_status": "HumanEscalation", "final_result.decision": null}
+  },
+  {
+    "case_id": "EVAL_DECISION_012",
+    "category": "decision",
+    "input": {"request_id": "SR2026080012"},
+    "expected_paths": {"final_result.handling_status": "NeedsMoreEvidence", "final_result.decision": null}
+  },
+  {
+    "case_id": "EVAL_DECISION_013",
+    "category": "decision",
+    "input": {"request_id": "SR2026080013"},
+    "expected_paths": {"final_result.handling_status": "NeedsMoreEvidence", "final_result.decision": null}
+  },
+  {
+    "case_id": "EVAL_DECISION_014",
+    "category": "decision",
+    "input": {"request_id": "SR2026080014"},
+    "expected_paths": {"final_result.handling_status": "NeedsMoreEvidence", "final_result.decision": null}
+  },
+  {
+    "case_id": "EVAL_DECISION_015",
+    "category": "decision",
+    "input": {"request_id": "SR2026080015"},
+    "expected_paths": {"final_result.handling_status": "AwaitingEvidenceReview", "final_result.decision": null}
+  },
+  {
+    "case_id": "EVAL_DECISION_016",
+    "category": "decision",
+    "input": {"request_id": "SR2026080016"},
+    "expected_paths": {"final_result.handling_status": "NeedsMoreEvidence", "final_result.decision": null}
+  },
+  {
+    "case_id": "EVAL_DECISION_017",
+    "category": "decision",
+    "input": {"request_id": "SR2026080017"},
+    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "Reject"}
+  },
+  {
+    "case_id": "EVAL_DECISION_018",
+    "category": "decision",
+    "input": {"request_id": "SR2026080018"},
+    "expected_paths": {"final_result.handling_status": "NeedsMoreEvidence", "final_result.decision": null}
+  },
+  {
+    "case_id": "EVAL_DECISION_019",
+    "category": "decision",
+    "input": {"request_id": "SR2026080019"},
+    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "PartialApprove", "final_result.approved_quantity": 1, "final_result.approved_amount": 79.0}
+  },
+  {
+    "case_id": "EVAL_DECISION_020",
+    "category": "decision",
+    "input": {"request_id": "SR2026080020"},
+    "expected_paths": {"final_result.handling_status": "AwaitingExternalVerification", "final_result.decision": null}
+  },
+  {
+    "case_id": "EVAL_DECISION_021",
+    "category": "decision",
+    "input": {"request_id": "SR2026080021"},
+    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "Approve", "final_result.approved_quantity": 1, "final_result.approved_amount": 359.0}
+  }
+]
