@@ -49,11 +49,17 @@ STAFF_API_KEYS={"reviewer-token-a":{"staff_id":"agent_a","roles":["reviewer"]}}
 docker compose --profile execution up --build -d
 ```
 
-这条命令会启动 PostgreSQL、后端 API、前端和履约 Worker 四个服务。
+这条命令会启动 PostgreSQL、后端 API、前端和履约 Worker 四个服务——**这是启动
+本系统的标准方式，请始终带上 `--profile execution`，不要省略。**
 
-> **必须带 `--profile execution`**：履约 Worker（负责真正执行退款/取消订单/换货）
-> 默认不随 `docker compose up` 启动，不带这个参数的话，所有"已批准"的申请会一直
-> 停在 `ExecutionPending`，看起来批准成功、实际上从未真正执行。
+背后的原因：系统把"裁决"和"执行"拆成了两步——Decision Engine 批准退款后，
+只是把这笔任务记录为"待执行"（`ExecutionPending`），真正调用退款/取消订单/
+换货接口的是一个独立进程，也就是履约 Worker。这个 Worker 在 `docker-compose.yml`
+里被标记为 `profiles: ["execution"]`，如果启动时不加 `--profile execution`
+（比如只运行不带参数的 `docker compose up`），Worker 就不会被启动，所有
+"已批准"的申请会一直卡在"待执行"状态——客户端上看起来裁决已经完成，但退款、
+取消订单、换货这些动作实际上从未被真正执行。带上 `--profile execution` 才能
+体验到系统完整的闭环行为。
 
 首次启动需要构建镜像，等待约 1-2 分钟；`docker compose ps` 确认四个容器都是
 `Up`/`healthy` 状态后即可访问：
