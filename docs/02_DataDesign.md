@@ -120,7 +120,7 @@ Last Updated: 2026-08
 | request_reason | string | 申请理由分类，如 `"商品损坏"` `"未收到货"` `"质量问题"` `"错发商品"` `"不想要了"` |
 | requested_quantity | integer \| null | 本次申请涉及的商品数量；咨询类请求可为 null，其他请求需 ≤ Orders 表中的 `quantity` |
 | request_date | date | 申请提交时间 |
-| workflow_status | enum | 流程状态：`Pending` / `NeedsReflection` / `EscalatedToHuman` / `ExecutionPending` / `ExecutionFailed` / `Closed` |
+| workflow_status | enum | 流程状态：`Pending` / `NeedsReflection` / `EscalatedToHuman` / `ExecutionPending` / `ExecutionFailed` / `ReturnAwaitingShipment` / `ReturnInTransit` / `ReturnAwaitingInspection` / `Closed` |
 | decision | enum \| null | 业务结论：`Approve` / `Reject` / `PartialApprove` / `NoActionRequired`；未完成决策时为 null |
 | approved_quantity | integer \| null | 实际批准的商品数量；仅在产生批准结果后填写 |
 | approved_amount | number \| null | 实际批准金额（元）；仅在产生退款金额后填写 |
@@ -130,6 +130,7 @@ Last Updated: 2026-08
 
 - `workflow_status` 只表示客服决策工作流进度，不表示退款是否到账
 - `decision` 与流程状态相互独立；例如已作出批准决定但外部履约尚未完成时，表示为 `workflow_status = ExecutionPending`、`decision = Approve`
+- `ReturnAwaitingShipment` / `ReturnInTransit` / `ReturnAwaitingInspection` 只出现在"批准 + 无理由退货"场景：客户需要先寄回商品、客服验货后才真正退款，验货通过后转入 `ExecutionPending`，验货不通过直接转入 `Closed`（详见 `docs/06_LowLevelDesign.md` 5.5 节）
 - `PartialRefund` 是客户申请类型，`PartialApprove` 是系统只批准部分申请，二者不可混用
 - 使用 `PartialApprove` 时必须填写 `approved_quantity` 或 `approved_amount`
 - 物流咨询等不产生批准/拒绝结论的请求使用 `NoActionRequired`
@@ -233,7 +234,7 @@ Mock 数据需要覆盖以下组合，确保 Decision Engine 的各类分支都�
 |---|---|---|---|---|
 | 正常已签收 + 无异常 + 在时效内 | 已签收，未超时效 | 无异常 | 可退款 | Case 1 |
 | VIP + 物流丢件 | 已支付，未签收 | Lost | 可退款（VIP优先） | Case 2 |
-| 已签收超30天 + 无异常 | 已签收，超时效 | 无异常 | 不可退款 | Case 3 |
+| 已签收超7天 + 无异常 | 已签收，超时效 | 无异常 | 不可退款 | Case 3 |
 | 已签收超时效 + 物流曾异常 | 已签收，超时效 | 曾有 Exception 记录 | 政策与物流证据冲突 | Case 4 |
 
 ### 类别 B：商品与订单本身的问题
@@ -362,8 +363,8 @@ data/knowledge_base/
 当超时效拒绝条款与物流异常、商品安全或风险规则冲突时，
 Decision Engine 不得简单覆盖规则，应记录全部证据并进入 Reflection。
 
-## REFUND-002：超过三十天的非质量退款
-签收超过 30 天且无物流异常记录的，不支持无理由退货。
+## REFUND-002：超过七天的非质量退款
+签收超过 7 天且无物流异常记录的，不支持无理由退货。
 
 ## REFUND-008：客户申报商品破损
 物流系统不预先记录商品或包装破损；客户发起申请并提交材料，材料通过审核且申请及时的，才支持退款或换货；

@@ -59,7 +59,7 @@ State 中不保存 Evaluation Ground Truth（`case_id`、`expected_decision` 等
 | `order_agent` | `order_agent_node` | `agents/order_agent.py` | 计算签收状态、延迟天数、错发/少发、已批准数量扣减 |
 | `logistics_agent` | `logistics_agent_node` | `agents/logistics_agent.py` | 汇总物流异常事实（停滞/滞留/是否已解决） |
 | `evidence_agent` | `evidence_agent_node` | `agents/evidence_agent.py` | 汇总客户提交材料的审核状态 |
-| `policy_agent` | `policy_agent_node` | `agents/policy_agent.py` | 按事实匹配候选政策编号与风险信号（RISK-001~004） |
+| `policy_agent` | `policy_agent_node` | `agents/policy_agent.py` | 按事实匹配候选政策编号与风险信号（RISK-001~006） |
 | `evidence_completeness_gate` | `evidence_completeness_gate_node` | `graph/evidence_gate.py` | 裁决前置检查：证据是否齐全、是否强制人工、是否直接可裁决 |
 | `decision_engine` | `decision_engine_node` | `decision/engine.py` | 调用声明式规则引擎产出候选裁决 |
 | `reflection_agent` | `reflection_agent_node` | `agents/reflection_agent.py` | 复核冲突/风险信号，给出下一步路由 |
@@ -171,7 +171,11 @@ Evidence Gate 结合 `request_reason` 和 `has_machine_reviewed_evidence` 再判
 RISK-001  历史退款次数 >= high_refund_count
 RISK-002  订单金额 >= high_value_amount
 RISK-003  新账号（注册 <= new_account_days 天）+ 首次退款 + 金额 >= high_value_amount
-RISK-004  客户"错发"主张与仓库出库记录冲突
+RISK-004  客户"错发"主张与仓库出库记录冲突，或申请数量超过订单/剩余可赔付数量
+RISK-005  风险规则边界声明（NeedsReflection/EscalatedToHuman 不等于最终结论）；
+          在命中 RISK-004/RISK-006 或证据要求人工审核时一并追加
+RISK-006  少发商品：申请数量超过仓库记录确认的少发数量，需 PartialApprove 到
+          已确认数量而非全额批准
 ```
 
 RISK-003 的强制人工检查在 Evidence Gate 中独立实现（不依赖 RISK-002 恰好同时命中），
@@ -224,8 +228,10 @@ RISK-003 的强制人工检查在 Evidence Gate 中独立实现（不依赖 RISK
 
 ## 4.9 Finalization（`graph/finalization.py`）
 
-系统里**唯一**允许写回 `service_requests.workflow_status`/`decision` 的节点
-（见文件内注释）。三条输入路径：
+Graph 内部**唯一**允许写回 `service_requests.workflow_status`/`decision` 的节点
+（见文件内注释）。Graph 运行结束之后，物理退货流程（5.5 节）会在客户寄回、
+客服签收、验货三个环节继续推进 `workflow_status`，但那是独立的后续 API 调用，
+不是同一次 Graph 执行的一部分。三条输入路径：
 
 ```text
 proposed_decision 非空        → 调用 persist_decision_lifecycle：
@@ -320,6 +326,39 @@ STAFF_API_KEYS='{"replace-with-long-random-token":{"staff_id":"agent_001","roles
 这条上限校验与自动裁决路径（始终按 `unit_price × quantity` 计算）保持一致。
 领取、证据审核、人工裁决和手动重试均记录在 `audit_logs`；达到最大重试次数的
 履约任务进入工作台的"履约失败任务"队列，可由有权限的客服重新入队。
+
+## 5.5 物理退货子流程（`repositories/return_order_repository.py`）
+
+当 Decision Engine 的裁决是 `Approve` 且 `request_reason = 不想要了`（无理由退货）
+时，Finalization 除了正常的 `ExecutionPending` 流程外，还会在同一事务里额外插入
+一条 `return_orders` 记录（`workflow_status='AwaitingShipment'`），并把
+`service_requests.workflow_status` 设为 `ReturnAwaitingShipment`——这类退货要求
+客户先把商品寄回、客服验货确认后才真正退款，不能像"取消未发货订单"那样直接
+进入履约执行。
+
+后续三步由客户和客服分别通过 API 调用推进，发生在 Graph 运行结束之后，不经过
+Finalization：
+
+```text
+POST /service-requests/{request_id}/return-shipment   （客户，main.py）
+  → submit_return_shipment：校验 AwaitingShipment → InTransit，
+    写入 carrier/tracking_number，service_requests.workflow_status → ReturnInTransit
+
+POST /return-orders/{return_order_id}/receive          （客服 reviewer/admin，staff.py）
+  → receive_return：InTransit → AwaitingInspection，
+    service_requests.workflow_status → ReturnAwaitingInspection
+
+POST /return-orders/{return_order_id}/inspect           （客服 reviewer/admin，staff.py）
+  → inspect_return：
+    验货通过 → return_orders.workflow_status = InspectionAccepted，
+               创建 RefundPayment action_task + outbox_event（复用履约 Worker），
+               service_requests.workflow_status → ExecutionPending
+    验货不通过 → return_orders.workflow_status = InspectionRejected，
+               service_requests.workflow_status → Closed，不创建退款任务
+```
+
+每一步都在 `WHERE workflow_status = 当前预期状态` 的条件更新下完成，更新返回
+0 行即视为状态已变化、直接返回 `None`，避免同一退货记录被并发推进两次。
 
 ---
 

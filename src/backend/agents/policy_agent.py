@@ -111,7 +111,7 @@ def policy_agent_node(
         and isinstance(days_since_delivery, int)
         and days_since_delivery > refund_rules["late_non_quality_days"]
     ):
-        add_candidate("REFUND-002", "非质量退款申请距签收已超过30天")
+        add_candidate("REFUND-002", "非质量退款申请距签收已超过7天")
 
     if (
         request_reason == "质量问题"

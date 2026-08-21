@@ -310,7 +310,7 @@ Enterprise Facts
 | Low Confidence | 综合置信度低于配置阈值 |
 | Missing Evidence | 质量问题只有客户陈述，缺少最低材料 |
 | Evidence Conflict | 客户声称少发，但仓库记录显示足量出库 |
-| Rule Conflict | 超过30天拒绝条款与历史物流异常例外同时命中 |
+| Rule Conflict | 超过7天拒绝条款与历史物流异常例外同时命中 |
 | Risk Trigger | 高频退款客户，即使本次证据充分仍需复核 |
 
 Reflection 的职责是重新检查证据完整性、冲突和规则适用性，可请求补充证据或重新执行失败的查询。它不能伪造新事实。
@@ -378,7 +378,7 @@ State 中不放 Evaluation Ground Truth：`case_id`、`expected_decision` 和
 
 # 7. 状态写回与副作用边界
 
-证据收集和候选决策阶段均为只读。只有 Finalization 节点（`graph/finalization.py`）
+证据收集和候选决策阶段均为只读。图内部只有 Finalization 节点（`graph/finalization.py`）
 可以更新 Postgres `service_requests` 表的 `workflow_status`/`decision`：
 
 | 处理结果 | workflow_status | decision |
@@ -387,12 +387,19 @@ State 中不放 Evaluation Ground Truth：`case_id`、`expected_decision` 和
 | 需要复核 / 缺证据 / 等待证据审核 | `NeedsReflection` | `null` |
 | 强制人工 | `EscalatedToHuman` | `null` |
 | 自动或人工决策完成，等待外部履约执行 | `ExecutionPending` | `Approve` / `Reject` / `PartialApprove` / `NoActionRequired` |
+| 决策为"批准"且原因为"不想要了"，需要客户先寄回商品 | `ReturnAwaitingShipment` | `Approve` |
 | 外部履约执行成功 | `Closed` | 同上，不变 |
 | 外部履约重试耗尽仍失败 | `ExecutionFailed` | 同上，不变 |
 
 退款到账、换货出库等履约执行状态不属于决策本身：Decision Engine 只产出裁决，
 真正的外部调用由独立 Worker 异步执行（见 `docs/06_LowLevelDesign.md` 5.2 节），
 这是刻意的职责分离，不是能力缺口——避免"批准"和"退款已经到账"被混为一谈。
+
+图之外，`ReturnAwaitingShipment` 触发的物理退货流程（客户寄回 → 客服签收 →
+验货）由 `repositories/return_order_repository.py` 直接写 `workflow_status`，
+不经过 Finalization——因为这条链路发生在 Graph 运行结束之后，由客户和客服后续
+分别调用 API 触发，不是同一次 Graph 执行的一部分。完整状态流转见
+`docs/06_LowLevelDesign.md` 5.5 节。
 
 ---
 
