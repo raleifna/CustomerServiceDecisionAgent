@@ -249,7 +249,7 @@ Customer Response / Human Escalation（客户回复 / 人工升级）
 
 ## 客户请求与评估输入
 
-核心测试输入由场景化 Case Database 派生，并通过 `request_id` 关联 Service Request。保留的真实电商对话样本仅用于补充表达方式和测试语言鲁棒性，不作为业务事实、决策标签或项目主线数据源。
+核心测试输入由场景化 Case Database 派生，并通过 `request_id` 关联 Service Request。
 
 ## 企业业务数据（Mock）
 
@@ -259,7 +259,7 @@ Customer Response / Human Escalation（客户回复 / 人工升级）
 
 包含退款政策、物流政策、会员政策等规则文档，供决策分析环节检索使用。
 
-> 具体 Mock Database、评估输入与可选语言材料设计见 [docs/04_Architecture.md](./04_Architecture.md) 与 [docs/02_DataDesign.md](./02_DataDesign.md)。
+> 具体 Mock Database 与评估输入设计见 [docs/04_Architecture.md](./04_Architecture.md) 与 [docs/02_DataDesign.md](./02_DataDesign.md)。
 
 ---
 
@@ -325,9 +325,8 @@ VIP 客户反馈包裹未收到，物流信息显示丢件 → 决策：批准�
 ## Data Assets
 
 - Enterprise Mock Database（订单 / 物流 / 客户 / 商品）
-- RAG Knowledge Base（退款 / 物流 / VIP 政策文档）
+- Policy Knowledge Base（退款 / 物流 / VIP 政策文档，确定性匹配，非向量检索）
 - Evaluation Test Cases（以 `request_id` 关联 Mock Database，并记录预期决策与规则依据）
-- Optional Language Robustness Samples（保留的真实对话筛选结果，仅用于请求表达变体测试）
 
 ## System
 

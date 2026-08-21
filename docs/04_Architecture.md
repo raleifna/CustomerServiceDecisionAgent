@@ -448,10 +448,8 @@ State 中不放 Evaluation Ground Truth。`case_id`、`expected_decision` 和 `e
 | Enterprise Mock Database | 提供订单、客户、商品、物流和申请证据事实 | 是，作为事实部分 |
 | Knowledge Base | 提供退款、物流、VIP 和风险条款 | 是，作为规则部分 |
 | 场景驱动 Evaluation Cases | 保存预期决策、规则命中和轨迹 | 是 |
-| ECD 筛选/适配对话 | 提供真实口语表达和鲁棒性测试素材 | 否 |
-| CrossWOZ | 参考角色、intent 和 slot 标注思想 | 否 |
 
-真实电商对话不是 Agent 运行的前置依赖。核心评估由可控的 Mock Facts、Policies 和 Evaluation Ground Truth 驱动；真实对话用于验证口语、缺信息、多轮澄清和表达变化。
+核心评估由可控的 Mock Facts、Policies 和 Evaluation Ground Truth 驱动，覆盖口语化、缺信息、多轮澄清和表达变化均通过场景化改写的 Evaluation Cases 实现（见 `docs/02_DataDesign.md` 4.2 节），不依赖外部真实对话数据集。
 
 ---
 

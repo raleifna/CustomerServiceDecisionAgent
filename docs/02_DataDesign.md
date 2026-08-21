@@ -13,9 +13,8 @@ Last Updated: 2026-08
 | 数据资产 | 用途 | 来源 | 本文档章节 |
 |---|---|---|---|
 | Enterprise Mock Database | Order Agent / Logistics Agent 查询数据源 | 自建 JSON | 第2章 |
-| Knowledge Base | Policy Agent RAG 检索数据源 | 自建 Markdown | 第3章 |
+| Knowledge Base | Policy Agent 确定性匹配数据源（非向量检索） | 自建 Markdown | 第3章 |
 | Evaluation Cases | 保存可复现的输入、预期决策与规则依据 | 基于 Mock Database 与政策自建 | 第4章 |
-| Optional Language Samples | 扩展客户表达方式、测试语言鲁棒性 | 场景化改写 + 保留的 ECD 筛选样本 | 第4章 |
 
 ---
 
@@ -386,7 +385,7 @@ Decision Engine 不得简单覆盖规则，应记录全部证据并进入 Reflec
 
 ---
 
-# 4. Evaluation Cases 与语言输入
+# 4. Evaluation Cases
 
 ## 4.1 核心评估用例
 
@@ -412,18 +411,7 @@ Ground Truth 应单独存放在评估文件中，不写入客户输入，也不�
 
 客户在输入中声称“少发”“错发”或“已损坏”只构成客户主张；是否成立仍由仓库出库记录、物流异常和 Service Request Evidence 判定。
 
-## 4.3 保留的真实对话材料
-
-`data/dialogue_dataset/` 中已下载和筛选的 ECD 文件继续保留，定位为**可选的语言鲁棒性素材**。它们可以帮助观察真实客服口语、噪声和多轮表达，但：
-
-- 不是 Agent 运行或 Demo 的前置依赖；
-- 不直接提供业务事实或决策 Ground Truth；
-- 不要求继续扩充到固定数量；
-- 只有在完成去标识、业务边界复核和 `request_id` 适配后，才可作为补充测试输入。
-
-CrossWOZ 仅保留为 intent / slot 等标注思想的参考，不作为本项目必须处理的数据集。
-
-## 4.4 数据文件组织
+## 4.3 数据文件组织
 
 ```text
 data/
@@ -431,12 +419,7 @@ data/
 ├── knowledge_base/           # 核心政策规则
 ├── business_rules.json       # 阈值、金额、次数等环境参数
 ├── decision_rules.json       # 声明式裁决规则（priority 排序、when/decision/confidence）
-├── evaluation/                # 评估 Ground Truth：single_turn/multi_turn/action_cases + llm_judge_cases
-└── dialogue_dataset/         # 已保留的可选语言鲁棒性材料
-    ├── raw_samples/          # 原始文件
-    ├── processed/            # 筛选结果
-    ├── config/               # 关键词等筛选配置
-    └── reviews/              # 人工复核记录
+└── evaluation/                # 评估 Ground Truth：single_turn/multi_turn/action_cases + llm_judge_cases
 ```
 
 ---
@@ -460,9 +443,6 @@ Step 5：为核心 Case 编写多种用户输入和多轮澄清变体
         │
         ▼
 Step 6：校验请求、企业事实、证据、政策与 Ground Truth 是否逻辑一致
-        │
-        ▼
-Optional：将通过边界复核的真实对话适配为额外语言鲁棒性输入
 ```
 
 ---
