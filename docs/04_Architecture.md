@@ -69,7 +69,7 @@ Order Agent 首版聚合读取 Orders、Customers 和 Products，是为了控制
 ```text
 ┌──────────────────────────────────────────────────────────────┐
 │ Interface Layer                                              │
-│ Streamlit / FastAPI：接收对话、request_id，展示处理轨迹       │
+│ React 客户端 + Staff 工作台 / FastAPI：接收对话、展示处理轨迹  │
 └──────────────────────────────┬───────────────────────────────┘
                                ▼
 ┌──────────────────────────────────────────────────────────────┐
@@ -137,6 +137,10 @@ Worker 调用支付、仓储或订单系统。业务申请在任务完成前保�
 ---
 
 # 4. 组件职责
+
+> 本章使用的是概念角色名（Request Resolver / Planner、Order Agent 等），用于说明
+> 职责边界；这些角色在代码里对应的真实 LangGraph 节点名、函数签名和 State 字段
+> 见 [docs/06_LowLevelDesign.md](./06_LowLevelDesign.md)，两者不是一一对应的文件名。
 
 ## 4.1 Request Resolver / Planner
 
@@ -424,13 +428,16 @@ State 中不放 Evaluation Ground Truth。`case_id`、`expected_decision` 和 `e
 
 | 模块 | 选型 | 理由与边界 |
 |---|---|---|
-| 编排 | LangGraph | 显式节点、条件边、并行证据收集和 checkpoint；首版以实际代码验证具体图结构 |
-| 模型接口 | OpenAI-compatible SDK + 可配置模型 | 隔离模型供应商；结构化查询和规则判断不依赖 LLM |
-| API | FastAPI | 提供请求处理、状态查询和调试接口 |
-| Demo | Streamlit | 展示证据、规则命中、Reflection 和最终结果 |
-| Knowledge Base | Markdown；检索后端可替换 | 首版可先做编号/关键词检索，再接 ChromaDB，避免 RAG 阻塞核心流程 |
-| Mock Database | JSON + Repository 层 | JSON 不由 Agent 直接遍历，通过数据访问层查询和校验 |
-| 配置 | 独立规则/设置文件 | 阈值、权重和评估日期不得散落在 Prompt 中 |
+| 编排 | LangGraph | 显式节点、条件边、并行证据收集；`src/backend/graph/workflow.py` 定义完整图结构 |
+| 模型接口 | OpenAI SDK（调用 DeepSeek API，OpenAI 兼容） | 隔离模型供应商；结构化查询和规则判断不依赖 LLM，只用于意图理解和话术润色 |
+| API | FastAPI | `src/backend/api/main.py`（客户端接口）+ `staff.py`/`staff_auth.py`（人工工作台，Token 鉴权） |
+| Demo / 前端 | React + Vite | 客户聊天工作区（`App.tsx`）+ Staff 审核工作台（`StaffConsole.tsx`），展示证据、规则命中、Reflection 和最终结果 |
+| Knowledge Base | Markdown，确定性匹配 | 未接入向量检索；Policy Agent 按请求类型/原因/事实做确定性候选政策匹配，Markdown 主要承担人可读的政策说明与编号溯源 |
+| 声明式裁决规则 | JSON（`decision_rules.json`） | `priority` 排序、`when` 条件、`decision`/`confidence` 表达式，由 `rule_engine.py` 加载校验并执行；配置无效时明确失败，不静默跳过 |
+| Mock Database | JSON + Repository 层 | JSON 不由 Agent 直接遍历，通过数据访问层查询和校验；Postgres 可用时优先读写 Postgres，否则回退 JSON 种子数据 |
+| 持久化 | PostgreSQL | Service Request 生命周期、`decision_records`/`action_tasks`/`outbox_events`/`audit_logs`、证据元数据、人工工单租约 |
+| 履约执行 | 独立 Worker（`scripts/workers/run_action_worker.py`） | 轮询认领 `action_tasks`，用 `Idempotency-Key` 调用外部服务，指数退避重试；必须以 `docker compose --profile execution up` 启动，默认 `docker compose up` 不会带上它 |
+| 配置 | 独立规则/设置文件（`business_rules.json` + `decision_rules.json`） | 阈值、金额、次数和裁决规则不散落在 Prompt 中，可通过 `BUSINESS_RULES_PATH`/`DECISION_RULES_PATH` 按部署环境切换 |
 
 ---
 
@@ -477,15 +484,20 @@ Demo 应展示：
 
 ---
 
-# 11. 实现后待补内容
+# 11. 实现状态
 
-以下内容应在代码跑通后根据真实实现补入，而不是现在猜测：
+本文档第 1-10 章写于实现之前，用于约束首版组件边界；系统现已实现并通过
+`docs/07_Evaluation.md` 中的确定性回归套件与 LLM-as-judge 质量套件验证。以下
+内容不再是"待补"，已在真实代码中落地，具体契约见 `docs/06_LowLevelDesign.md`：
 
-- LangGraph 的具体 State 类型和 reducer；
-- 并行节点的实际 fan-out/fan-in 实现；
-- Agent Prompt 与 structured output model；
-- Repository、Tool 和 Agent 的具体类/函数路径；
-- 重试、超时和 checkpoint 后端；
-- `docs/05_DecisionRules.md` 中的最终权重与阈值；
-- API 请求/响应 Schema；
-- Evaluation 中的 tool trajectory 与节点级指标。
+- Graph State 类型定义：`src/backend/graph/state.py`；
+- LangGraph 节点、条件边与 fan-out/fan-in 编排：`src/backend/graph/workflow.py`；
+- Agent Prompt 与结构化输出：`src/backend/agents/*.py`（各 Agent 独立文件）；
+- Repository 层（Postgres 优先，JSON 种子数据回退）：`src/backend/repositories/*.py`；
+- 声明式裁决规则与最终权重/阈值：`data/decision_rules.json` + `data/business_rules.json`，运行方式见 `docs/05_DecisionRules.md`；
+- API 请求/响应 Schema：`src/backend/api/schemas.py`；
+- 履约重试、幂等与 Outbox：`src/backend/repositories/decision_lifecycle_repository.py` + `scripts/workers/run_action_worker.py`；
+- Evaluation 覆盖：确定性套件的路由/决策/幂等/线程隔离用例，及 LLM-judge 套件的语气/事实/完整性/policy_compliance/safety 五维度打分与 pass^k 一致性检验。
+
+系统运行中真实发现并修复的业务逻辑问题（而非设计阶段的预判）记录在
+`docs/09_ResultsReport.md`，不在本文档中补充。

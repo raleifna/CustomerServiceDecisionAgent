@@ -319,6 +319,8 @@ VIP 客户反馈包裹未收到，物流信息显示丢件 → 决策：批准�
 - `docs/05_DecisionRules.md` —— 决策规则设计
 - `docs/06_LowLevelDesign.md` —— 详细设计
 - `docs/07_Evaluation.md` —— 评估报告（对应第 2.1 节 Success Metrics 实测结果）
+- `docs/08_ManualTesting.md` —— 手工测试清单
+- `docs/09_ResultsReport.md` —— 结果报告：系统现状、发现并修复的问题、评测结果
 
 ## Data Assets
 
@@ -331,7 +333,7 @@ VIP 客户反馈包裹未收到，物流信息显示丢件 → 决策：批准�
 
 - CustomerServiceDecisionAgent（可运行系统）
 - LangGraph Multi-Agent Workflow
-- Web Demo（Streamlit）
+- Web Demo（React 客户端 + Staff 人工工作台，FastAPI 提供接口）
 
 ## Project Deliverables
 

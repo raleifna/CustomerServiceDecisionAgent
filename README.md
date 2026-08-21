@@ -28,45 +28,49 @@ Customer Request                     Customer Request
 ## Architecture Preview（系统层次预览）
 
 ```
-Frontend（Streamlit）
+Frontend（React + Vite，客户端 + Staff 工作台）
         │
         ▼
-FastAPI（接口层）
+FastAPI（接口层：/chat、/customers、/service-requests、/staff）
         │
         ▼
-LangGraph（多 Agent 编排层）
+LangGraph（多 Agent 编排层：Order/Logistics/Evidence/Policy → Gate → Decision → Reflection → Response）
         │
         ▼
-Tools（Order / Logistics / Policy 查询工具）
+Repository 层（Order / Logistics / Policy / Evidence / Decision Lifecycle 查询与写入）
         │
         ▼
 Mock Enterprise Backend（订单/物流/客户数据）+ Knowledge Base（政策文档）
         │
-        ├── PostgreSQL（会话 Checkpoint / 履约操作记录）
-        └── JSON / Markdown（固定案例事实 / 政策）
+        ├── PostgreSQL（会话状态、Service Request 生命周期、履约操作记录）
+        └── JSON / Markdown（固定案例事实 / 政策 / 声明式裁决规则）
 ```
 
-多 Agent 内部编排（Planner → 数据 Agent → Decision Engine → Reflection → Response）的完整设计见 [docs/04_Architecture.md](./docs/04_Architecture.md)。
+多 Agent 内部编排（Router → 数据 Agent → Evidence Gate → Decision Engine → Reflection → Response）的完整设计见 [docs/04_Architecture.md](./docs/04_Architecture.md)，各 Agent/节点的输入输出契约见 [docs/06_LowLevelDesign.md](./docs/06_LowLevelDesign.md)。
 
 ## 文档导航
 
 | 文档 | 内容 |
 |---|---|
-| [docs/01_PRD.md](./docs/01_PRD.md) | 产品需求文档：业务背景、用户需求、功能需求、Success Metrics（What），不涉及技术实现 | 
+| [docs/01_PRD.md](./docs/01_PRD.md) | 产品需求文档：业务背景、用户需求、功能需求、Success Metrics（What），不涉及技术实现 |
 | [docs/02_DataDesign.md](./docs/02_DataDesign.md) | Mock Database、Knowledge Base、评估用例与可选语言样本设计 |
-| docs/03_BenchmarkResearch.md | 标杆产品调研（Zendesk、Intercom、Agentforce 等） | 
-| [docs/04_Architecture.md](./docs/04_Architecture.md) | 系统架构设计：多 Agent 拆分理由、Decision Engine 设计、技术选型（How） | 
-| docs/05_DecisionRules.md | Evidence Fusion 权重规则、Reflection 触发阈值 | 
-| docs/06_LowLevelDesign.md | 各 Agent 的 Prompt / State / Tool / Conditional Edge 详细设计 | 
-| docs/07_Evaluation.md | 测试用例、评估指标、Benchmark 结果（对应 PRD Success Metrics） |
+| [docs/03_BenchmarkResearch.md](./docs/03_BenchmarkResearch.md) | 标杆产品调研（Zendesk、Intercom、Agentforce、阿里云等）及对本项目架构决策的印证 |
+| [docs/04_Architecture.md](./docs/04_Architecture.md) | 系统架构设计：多 Agent 拆分理由、Decision Engine 设计、技术选型（How） |
+| [docs/05_DecisionRules.md](./docs/05_DecisionRules.md) | 声明式裁决规则（`decision_rules.json`）与业务参数（`business_rules.json`）的运行方式 |
+| [docs/06_LowLevelDesign.md](./docs/06_LowLevelDesign.md) | 各 Agent / Graph 节点的 State 输入输出、Conditional Edge 与关键源文件 |
+| [docs/07_Evaluation.md](./docs/07_Evaluation.md) | 确定性回归套件 + LLM-as-judge 质量套件：用例设计、运行方式与最新基线 |
+| [docs/08_ManualTesting.md](./docs/08_ManualTesting.md) | 手工测试清单：客户端、Staff 工作台、自动化回归 |
+| [docs/09_ResultsReport.md](./docs/09_ResultsReport.md) | 结果报告：系统现状、发现并修复的业务逻辑问题、评测结果 |
 
 ## 技术栈速览
 
-LangGraph · OpenAI SDK（调用 DeepSeek API）· FastAPI · PostgreSQL · React
+LangGraph · OpenAI SDK（调用 DeepSeek API）· FastAPI · PostgreSQL · React + Vite
 
-详细选型理由见 [Architecture.md 第4章](./docs/04_Architecture.md#4-技术选型)。
+详细选型理由见 [Architecture.md 第8章](./docs/04_Architecture.md#8-技术选型)。
 
 ## Success Metrics（对应 docs/01_PRD.md 第 2.1 节）
+
+实测结果见 [docs/09_ResultsReport.md](./docs/09_ResultsReport.md)。
 
 | 指标 | 目标 |
 |---|---|
@@ -82,22 +86,31 @@ LangGraph · OpenAI SDK（调用 DeepSeek API）· FastAPI · PostgreSQL · Reac
 ```
 CustomerServiceDecisionAgent/
 ├── README.md
-├── docs/
-│   ├── 01_PRD.md
-│   ├── 02_DataDesign.md          
-│   ├── 03_BenchmarkResearch.md   
-│   ├── 04_Architecture.md       
-│   ├── 05_DecisionRules.md       
-│   ├── 06_LowLevelDesign.md      
-│   └── 07_Evaluation.md          
+├── docs/                          # 见上方"文档导航"，01-09
 ├── src/
 │   ├── backend/
+│   │   ├── agents/                # Order/Logistics/Evidence/Policy/Reflection/Response/Router 等节点
+│   │   ├── actions/                # 履约动作：Fulfillment/HumanHandoff/LogisticsChase/ServiceRequest/Withdraw
+│   │   ├── api/                    # FastAPI 应用、Schema、Staff 鉴权
+│   │   ├── config/                 # business_rules.py 等运行时配置加载
+│   │   ├── decision/                # engine.py + rule_engine.py（声明式裁决）
+│   │   ├── graph/                  # LangGraph 编排、State、Evidence Gate、Finalization
+│   │   ├── llm/                     # LLM 客户端与调用遥测
+│   │   ├── repositories/            # 数据访问层（Postgres / Mock JSON 回退）
+│   │   └── services/                 # 履约执行、证据上传等服务
 │   └── frontend/
+│       └── src/                    # App.tsx（客户端）、StaffConsole.tsx（人工工作台）
+├── scripts/
+│   ├── evaluation/                 # run_evaluation.py（确定性）、run_llm_judge.py（LLM-as-judge）
+│   └── workers/                    # run_action_worker.py（履约任务异步执行）
+├── tests/                          # 单元测试 + tests/integration（真实 Postgres）
 ├── data/
-│   ├── mock_db/
-│   ├── knowledge_base/
-│   └── dialogue_dataset/       # 保留的可选语言鲁棒性材料，不作为核心决策数据源
-└── demo/
+│   ├── mock_db/                    # Enterprise Mock Database（JSON）
+│   ├── knowledge_base/             # 政策 Markdown
+│   ├── business_rules.json         # 阈值、金额、次数等环境参数
+│   ├── decision_rules.json         # 声明式裁决规则
+│   └── evaluation/                 # 确定性用例 + LLM-judge 用例
+└── docker-compose.yml               # postgres / backend / frontend / action-worker（execution profile）/ integration-tests（test profile）
 ```
 
 ---
@@ -240,11 +253,16 @@ npm run dev
 
 Vite 开发服务器会将 `/api` 请求代理到 `http://127.0.0.1:8000`。
 
----
+## 运行 LLM-as-Judge 质量评测
 
-## 待补充文档占位
+除确定性 Evaluation Harness 外，还有一套走真实 LLM 调用的对话质量评测（语气、
+事实准确性、完整性、policy_compliance、safety 五个维度打分；关键场景额外跑
+pass^k 一致性检验）：
 
-<!-- docs/03_BenchmarkResearch.md：标杆产品调研（Zendesk、Intercom、Agentforce 等） -->
-<!-- docs/05_DecisionRules.md：Evidence Fusion 权重规则、Reflection 触发阈值 -->
-<!-- docs/06_LowLevelDesign.md：各 Agent 的 Prompt / State / Tool / Conditional Edge 详细设计 -->
-<!-- docs/07_Evaluation.md：测试用例、评估指标、Benchmark 结果 -->
+```bash
+DATABASE_URL=postgresql://customer_service:customer_service_dev@localhost:15433/customer_service \
+python scripts/evaluation/run_llm_judge.py --report reports/llm_judge.json
+```
+
+会产生真实 API 调用费用，且不完全确定性；用于抓工具执行失败、语气机械等
+确定性套件覆盖不到的问题类别。详见 [docs/07_Evaluation.md](./docs/07_Evaluation.md)。

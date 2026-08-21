@@ -21,6 +21,17 @@ docker compose up --build
 重复测试创建类场景前需要使用新订单，或者明确清理测试数据库。`docker compose down -v`
 会删除本项目 PostgreSQL 数据卷，只能在确认不需要已有本地数据时使用。
 
+**注意**：`action-worker` 服务挂了 `profiles: ["execution"]`，不带 profile 的
+`docker compose up` 不会启动它，也不会重启一个已存在但已退出的旧容器。凡是要
+验证"批准后是否真的执行了退款/取消/换货"，必须用：
+
+```bash
+docker compose --profile execution up -d
+```
+
+否则申请会一直停在 `ExecutionPending`，看起来批准成功、实际上从未真正执行——
+这个坑在项目实际开发过程中真的踩过一次，见 `docs/09_ResultsReport.md`。
+
 ## 2. 客户端与订单项
 
 | 编号 | 操作 | 测试数据 | 预期结果 |
@@ -68,6 +79,7 @@ WHERE request_id = '<上一步查到的 request_id>';
 | AT-02 | `python scripts/evaluation/run_evaluation.py` | 34/34 通过。 |
 | AT-03 | `docker compose --profile test up integration-tests --build --abort-on-container-exit --exit-code-from integration-tests` | 5 个 PostgreSQL 集成测试通过，包括双 Worker 和双 Staff 并发领取。 |
 | AT-04 | `npm --prefix src/frontend run build` | TypeScript 检查及 Vite 生产构建成功。 |
+| AT-05 | `DATABASE_URL=... python scripts/evaluation/run_llm_judge.py`（需配置 `API_KEY`） | 7 条用例全部通过；`pass_k=3` 的用例三次均通过；确认没有 `action_status=Failed` 却仍判 PASS 的情况。 |
 
 ## 5. 重点观察的错误结果
 

@@ -343,8 +343,13 @@ data/mock_db/
 
 ## 3.1 设计原则
 
-- 采用 Markdown 文档存储，向量化后供 Policy Agent 检索（ChromaDB）
-- 每条政策条款需要有明确编号（如 `Refund Policy #2`），便于 Decision Engine 的 `rule_hits` 字段引用溯源
+- 采用 Markdown 文档存储；实现版本没有接入向量检索（ChromaDB）——Policy Agent
+  按请求类型、原因和已收集事实做确定性候选政策匹配（见 `src/backend/agents/policy_agent.py`
+  与声明式规则 `data/decision_rules.json`），不是靠语义相似度检索命中条款。
+  这与 `docs/03_BenchmarkResearch.md` 第 2 章的判断一致：订单财务类标准化场景
+  用确定性 Workflow 约束比让模型自由检索/判断更可控，Markdown 政策文档本质上是
+  给人看的业务说明与给 `rule_hits` 溯源用的编号来源，不是运行时检索数据源。
+- 每条政策条款需要有明确编号（如 `REFUND-008`），便于 Decision Engine 的 `rule_hits` 字段引用溯源
 - 政策条款需要包含"例外情形"，否则无法覆盖 Case 4 这类冲突场景
 
 ## 3.2 文档结构
@@ -424,7 +429,9 @@ CrossWOZ 仅保留为 intent / slot 等标注思想的参考，不作为本项�
 data/
 ├── mock_db/                  # 核心企业事实与 Service Requests
 ├── knowledge_base/           # 核心政策规则
-├── evaluation/               # 后续建立的评估 Ground Truth 与输入变体
+├── business_rules.json       # 阈值、金额、次数等环境参数
+├── decision_rules.json       # 声明式裁决规则（priority 排序、when/decision/confidence）
+├── evaluation/                # 评估 Ground Truth：single_turn/multi_turn/action_cases + llm_judge_cases
 └── dialogue_dataset/         # 已保留的可选语言鲁棒性材料
     ├── raw_samples/          # 原始文件
     ├── processed/            # 筛选结果
