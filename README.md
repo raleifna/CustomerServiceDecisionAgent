@@ -43,6 +43,13 @@ ENABLE_LLM_RESPONSE=true
 STAFF_API_KEYS={"reviewer-token-a":{"staff_id":"agent_a","roles":["reviewer"]}}
 ```
 
+`.env.example` 里注释掉的 `DATABASE_URL` 只在**不用 Docker、本地直接运行
+Python 后端**时才需要手动打开：这时数据库监听在宿主机的 `localhost:15433`
+（`POSTGRES_PORT` 映射的端口）。用 `docker compose` 启动时不需要管这一行——
+后端容器和 Postgres 容器在同一个 Docker 网络里，`docker-compose.yml` 会把
+`DATABASE_URL` 覆盖成容器间地址（host 是服务名 `postgres`，而不是
+`localhost`），保持注释状态即可。
+
 ### 2. 一键启动完整系统
 
 ```bash
@@ -52,7 +59,7 @@ docker compose --profile execution up --build -d
 这条命令会启动 PostgreSQL、后端 API、前端和履约 Worker 四个服务——**这是启动
 本系统的标准方式，请始终带上 `--profile execution`，不要省略。**
 
-背后的原因：系统把"裁决"和"执行"拆成了两步——Decision Engine 批准退款后，
+系统把"裁决"和"执行"拆成了两步——Decision Engine 批准退款后，
 只是把这笔任务记录为"待执行"（`ExecutionPending`），真正调用退款/取消订单/
 换货接口的是一个独立进程，也就是履约 Worker。这个 Worker 在 `docker-compose.yml`
 里被标记为 `profiles: ["execution"]`，如果启动时不加 `--profile execution`
