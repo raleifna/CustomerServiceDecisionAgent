@@ -88,6 +88,11 @@ Order Agent 首版聚合读取 Orders、Customers 和 Products，是为了控制
 └──────────────────────────────────────────────────────────────┘
 ```
 
+自动裁决不会直接声称退款、换货或取消已经完成。Finalization 在同一个数据库事务中
+写入不可变 `decision_records`、幂等 `action_tasks` 和 `outbox_events`，随后由独立
+Worker 调用支付、仓储或订单系统。业务申请在任务完成前保持
+`ExecutionPending`，外部执行成功后才能关闭。
+
 数据层的具体 Schema 以 [02_DataDesign.md](./02_DataDesign.md) 为准。
 
 ---

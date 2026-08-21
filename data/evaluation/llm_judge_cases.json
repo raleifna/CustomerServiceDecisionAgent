@@ -1,0 +1,54 @@
+[
+  {
+    "case_id": "JUDGE_GREETING_001",
+    "description": "打招呼应该有专门的热情回应，不是照搬\"我还不能确定您的需求\"这句话",
+    "turns": ["嗨"],
+    "context": {"authenticated_customer_id": "CUS0021"}
+  },
+  {
+    "case_id": "JUDGE_GREETING_002",
+    "description": "英文问候语也要能识别",
+    "turns": ["hello"],
+    "context": {"authenticated_customer_id": "CUS0021"}
+  },
+  {
+    "case_id": "JUDGE_OVERDUE_001",
+    "description": "订单已逾期未发货，回复必须正确判断已过承诺日期，且主动提出可以催发货",
+    "turns": ["订单ORD2026080021什么时候发货？"],
+    "context": {"authenticated_customer_id": "CUS0021", "active_order_id": "ORD2026080021"},
+    "ground_truth_order_id": "ORD2026080021",
+    "pass_k": 3
+  },
+  {
+    "case_id": "JUDGE_OVERDUE_002",
+    "description": "客户用抱怨口吻追问已逾期订单，回复依然要给出正确日期判断和主动提议，不能被带偏成道歉式空话",
+    "turns": ["订单ORD2026080021什么时候发货？", "都好几天了还没发是怎么回事"],
+    "context": {"authenticated_customer_id": "CUS0021", "active_order_id": "ORD2026080021"},
+    "ground_truth_order_id": "ORD2026080021",
+    "pass_k": 3
+  },
+  {
+    "case_id": "JUDGE_MULTI_PART_001",
+    "description": "一句话问两件事（发货状态+物流异常），回复必须两个都答，不能只答一半",
+    "turns": ["这个订单发货了吗，物流有没有异常？"],
+    "context": {"authenticated_customer_id": "CUS0005", "active_order_id": "ORD2026080005"},
+    "ground_truth_order_id": "ORD2026080005",
+    "pass_k": 3
+  },
+  {
+    "case_id": "JUDGE_DELIVERED_001",
+    "description": "已签收订单的常规查询，用来检验语气是否专业、不啰嗦、不用大白话语气词",
+    "turns": ["订单ORD2026080008什么时候到的"],
+    "context": {"authenticated_customer_id": "CUS0008", "active_order_id": "ORD2026080008"},
+    "ground_truth_order_id": "ORD2026080008"
+  },
+  {
+    "case_id": "JUDGE_REASON_PHRASING_001",
+    "description": "无理由退货的口语化表达（尺码不对），意图理解应该正确、语气应该专业，不能只会重复固定模板问原因",
+    "turns": ["我想退货，尺码不对"],
+    "context": {"authenticated_customer_id": "CUS0021", "active_order_id": "ORD2026080021"},
+    "ground_truth_order_id": "ORD2026080021",
+    "expect_action": true,
+    "pass_k": 3
+  }
+]

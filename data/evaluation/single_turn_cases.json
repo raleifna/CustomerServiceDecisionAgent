@@ -32,7 +32,7 @@
       "query_result.exception_count": 1,
       "final_result": null
     },
-    "response_contains": ["京东物流", "疑似丢件", "尚未处理"]
+    "response_contains": ["京东物流", "物流已停滞超过72小时", "需不需要帮您催一下"]
   },
   {
     "case_id": "EVAL_ROUTE_004",
@@ -61,13 +61,13 @@
     "case_id": "EVAL_DECISION_001",
     "category": "decision",
     "input": {"request_id": "SR2026080001"},
-    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "Approve", "final_result.approved_quantity": 1, "final_result.approved_amount": 699.0}
+    "expected_paths": {"final_result.handling_status": "NeedsMoreEvidence", "final_result.decision": null}
   },
   {
     "case_id": "EVAL_DECISION_002",
     "category": "decision",
     "input": {"request_id": "SR2026080002"},
-    "expected_paths": {"final_result.handling_status": "DecisionCompleted", "final_result.decision": "Approve", "final_result.approved_quantity": 1, "final_result.approved_amount": 1299.0}
+    "expected_paths": {"final_result.handling_status": "AwaitingExternalVerification", "final_result.decision": null}
   },
   {
     "case_id": "EVAL_DECISION_003",

@@ -19,7 +19,7 @@ Normal < Silver < Gold < Platinum
 
 - `vip_level = Platinum`；
 - 订单已经发货但尚未签收；
-- Logistics 存在未解决的 `疑似丢件`；
+- Logistics 存在未解决的物流停滞，且客户已上报未收到货；
 - 客户申请原因为“未收到货”。
 
 ### 决策方向

@@ -47,5 +47,24 @@
       "action_result.reason": "AlreadyShipped"
     },
     "response_contains": ["已经发货", "无需"]
+  },
+  {
+    "case_id": "EVAL_ACTION_005",
+    "category": "intake",
+    "mode": "conversation_intake",
+    "customer_id": "CUS0005",
+    "turns": [
+      {"user_message": "订单ORD2026080005申请售后，尺码不对，退1件"}
+    ],
+    "mock_extraction": {
+      "request_type": "Refund",
+      "request_reason": "不想要了",
+      "requested_quantity": 1
+    },
+    "expected_paths": {
+      "action_result": null,
+      "service_request": null
+    },
+    "response_contains": ["超过七天", "暂时无法", "无理由退货"]
   }
 ]

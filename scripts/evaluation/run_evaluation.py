@@ -198,6 +198,84 @@ def _run_failed_action(case: dict[str, Any]) -> dict[str, Any]:
     return output
 
 
+def _create_service_request_in_memory(
+    *,
+    order_id: str,
+    customer_id: str,
+    request_type: str,
+    request_reason: str,
+    requested_quantity: int,
+    order_item: dict[str, Any] | None = None,
+    order_item_count: int = 1,
+    request_date: date | None = None,
+) -> tuple[dict[str, Any], bool]:
+    """Stand-in for create_service_request that needs no real database.
+
+    create_service_request() requires DATABASE_URL, which the evaluation
+    harness deliberately does not configure (eval must stay free and
+    independent of external services). This fabricates the same shape of
+    record so the intake node's downstream behavior is still exercised.
+    """
+    return (
+        {
+            "request_id": "SR-EVAL-INTAKE",
+            "order_id": order_id,
+            "customer_id": customer_id,
+            "request_type": request_type,
+            "request_reason": request_reason,
+            "requested_quantity": requested_quantity,
+            "request_date": (request_date or date(2026, 8, 17)).isoformat(),
+            "workflow_status": "Pending",
+            "decision": None,
+            "approved_quantity": None,
+            "approved_amount": None,
+            "decision_confidence": None,
+        },
+        True,
+    )
+
+
+def _run_intake_case(case: dict[str, Any]) -> dict[str, Any]:
+    """Run a conversational service-request creation flow.
+
+    Overrides request_intent_agent.chat_json (blocked to a hard error for the
+    rest of the suite, see run_all()) with the case's mock_extraction, so this
+    verifies that a correctly-classified request_reason (e.g. "尺码不对" ->
+    "不想要了") is wired through to the created service request. It does not
+    verify that a real LLM produces that classification — see docs/07_Evaluation.md
+    for why the harness cannot depend on live LLM behavior.
+    """
+    config = {
+        "configurable": {
+            "thread_id": f"eval-{case['case_id']}-{uuid4().hex}",
+        }
+    }
+    output: dict[str, Any] = {}
+
+    with (
+        patch(
+            "src.backend.agents.request_intent_agent.chat_json",
+            return_value=case["mock_extraction"],
+        ),
+        patch(
+            "src.backend.actions.service_request_action.create_service_request",
+            side_effect=_create_service_request_in_memory,
+        ),
+    ):
+        for index, turn in enumerate(case["turns"]):
+            invoke_input: dict[str, Any] = {"user_message": turn["user_message"]}
+            if index == 0:
+                invoke_input["conversation_context"] = {
+                    "authenticated_customer_id": case["customer_id"],
+                }
+            output = customer_service_conversation_graph.invoke(
+                invoke_input,
+                config=config,
+            )
+
+    return output
+
+
 def run_action_cases() -> list[EvaluationResult]:
     results = []
 
@@ -262,6 +340,17 @@ def run_action_cases() -> list[EvaluationResult]:
                         )
                     )
 
+                elif mode == "conversation_intake":
+                    output = _run_intake_case(case)
+                    errors.extend(
+                        _validate_output(
+                            output,
+                            case.get("expected_paths"),
+                            case.get("response_contains"),
+                            case.get("response_not_contains"),
+                        )
+                    )
+
                 elif mode == "already_shipped":
                     output = fulfillment_action_node(
                         {
@@ -289,6 +378,51 @@ def run_action_cases() -> list[EvaluationResult]:
     return results
 
 
+def _mock_query_tool_call(
+    messages: list[dict[str, Any]],
+    tools: list[dict[str, Any]],
+    tool_executor: Any,
+    **_kwargs: Any,
+) -> str:
+    """Deterministic stand-in for chat_with_tools in query_agent.py.
+
+    Calls every available tool (instead of letting a real model choose) and
+    renders a plain, deterministic sentence from the results. This verifies
+    the tool-execution plumbing without depending on real model output; it
+    does not verify that a real LLM picks the right tools or phrases well.
+    """
+    parts: list[str] = []
+    for tool in tools:
+        name = tool["function"]["name"]
+        result = tool_executor(name, {})
+        if name == "get_order_status":
+            order_id = result.get("order_id")
+            parts.append(f"订单 {order_id} 支付状态 {result.get('payment_status')}。")
+            if result.get("delivered_date"):
+                parts.append(f"已于 {result['delivered_date']} 签收。")
+            elif result.get("shipped_date"):
+                parts.append(f"已于 {result['shipped_date']} 发货")
+                if result.get("estimated_delivery_date"):
+                    parts.append(f"，预计 {result['estimated_delivery_date']} 送达。")
+                else:
+                    parts.append("。")
+            elif result.get("promised_ship_date"):
+                parts.append(f"尚未发货，承诺发货日期为 {result['promised_ship_date']}。")
+            else:
+                parts.append("尚未发货。")
+        elif name == "get_logistics_status":
+            exceptions = result.get("exceptions") or []
+            if not exceptions:
+                parts.append("物流没有异常记录。")
+            else:
+                for exc in exceptions:
+                    status = "已处理" if exc.get("resolved") else "尚未处理"
+                    parts.append(
+                        f"{exc.get('carrier')} 记录 {exc.get('exception_type')}（{status}）。"
+                    )
+    return "".join(parts) or "暂时没有可查询到的信息。"
+
+
 def run_all() -> list[EvaluationResult]:
     llm_error = RuntimeError("Evaluation Harness 禁止调用真实 LLM")
     with (
@@ -299,6 +433,10 @@ def run_all() -> list[EvaluationResult]:
         patch(
             "src.backend.agents.request_intent_agent.chat_json",
             side_effect=llm_error,
+        ),
+        patch(
+            "src.backend.agents.query_agent.chat_with_tools",
+            side_effect=_mock_query_tool_call,
         ),
     ):
         return (

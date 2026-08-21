@@ -130,6 +130,63 @@ uvicorn src.backend.api.main:app --reload
 直接运行 Python 且未设置 `DATABASE_URL` 时，系统会回退到内存会话和 JSON
 履约记录，仅适合本地调试；需要持久化时，请按 `.env.example` 配置本地数据库连接。
 
+## 可靠履约 Worker
+
+自动批准只创建幂等履约任务，不会把“批准”误报成“退款已经完成”。配置外部服务后，
+可以启动独立 Worker：
+
+```bash
+PAYMENT_REFUND_URL=http://payment-service/refunds \
+WAREHOUSE_EXCHANGE_URL=http://warehouse-service/exchanges \
+ORDER_CANCEL_URL=http://order-service/cancellations \
+docker compose --profile execution up --build
+```
+
+Worker 使用 `Idempotency-Key` 调用外部服务，并按指数退避重试。成功后申请从
+`ExecutionPending` 进入 `Closed`；超过最大尝试次数后进入 `ExecutionFailed`，
+不会修改原有批准或拒绝结论。任务领取使用 PostgreSQL `SKIP LOCKED`，支持多个
+Worker 实例并行消费。每次任务创建、重试、成功或失败都会在同一事务中写入
+Outbox 事件。
+
+## 人工工作台认证与工单并发
+
+`/staff/*` 不再信任前端提交的处理人姓名。请在 `.env` 中配置不透明 Token 到
+服务端员工身份和角色的映射：
+
+```bash
+STAFF_API_KEYS='{"replace-with-long-random-token":{"staff_id":"agent_001","roles":["reviewer"]}}'
+```
+
+支持 `viewer`、`reviewer` 和 `admin`。工作台中输入 Token 后，服务端解析真实
+`staff_id`。人工裁决前必须领取工单；领取产生 15 分钟租约和版本号，其他客服不能
+抢占有效租约。审批提交会校验工单归属、租约和版本，防止两人同时覆盖结果。
+
+人工批准与自动批准使用同一执行闭环：写入不可变裁决记录、创建幂等履约任务和
+Outbox 事件，外部执行成功后才关闭申请。达到最大重试次数的任务会进入工作台的
+“履约失败任务”队列，可由有权限的客服重新入队。领取、证据审核、人工裁决和手动
+重试均记录在 `audit_logs`。
+
+## PostgreSQL 集成测试
+
+单元测试不会实际执行 PostgreSQL 的事务、约束和 `SKIP LOCKED`。集成测试使用
+独立的临时数据库验证申请与申请项原子创建、裁决/履约/Outbox 幂等、事务回滚和
+多 Worker 竞争领取：
+
+```bash
+docker compose --profile test up integration-tests \
+  --build --abort-on-container-exit --exit-code-from integration-tests
+```
+
+测试数据库使用 tmpfs，结束后不保留数据。若本地已经有专用测试库，也可以设置
+`TEST_DATABASE_URL` 后运行：
+
+```bash
+TEST_DATABASE_URL=postgresql://user:pass@localhost/customer_service_test \
+python -m unittest discover -s tests/integration -v
+```
+
+为防止误清空开发或生产库，数据库名称必须包含 `test`，否则集成测试会跳过。
+
 接口地址：
 
 - Health Check：`http://localhost:8000/health`

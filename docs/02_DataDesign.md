@@ -84,7 +84,7 @@ Last Updated: 2026-08
 |---|---|---|
 | order_id | string | 关联 Orders 表 |
 | carrier | string | 物流公司 |
-| exception_type | string | 异常类型，如 `"滞留超72小时"` `"疑似丢件"` `"运输破损"` |
+| exception_type | string | 物流轨迹可观测异常，如 `"物流停滞超72小时"` `"滞留超72小时"` `"派送延迟"` `"路径异常"`；系统不得从长期未更新推导“疑似丢件”，商品破损和未收到货由客户另行申报 |
 | exception_recorded_date | date | 异常事件被物流系统记录的时间 |
 | resolved | boolean | 该异常是否已被物流方处理解决 |
 
@@ -243,7 +243,7 @@ Mock 数据需要覆盖以下组合，确保 Decision Engine 的各类分支都�
 
 | 场景 | 说明 | 预期决策方向 |
 |---|---|---|
-| 商品质量问题（非易损品） | 收货后功能故障，非破损类问题，需要区分"运输损坏"与"产品质量问题"两种归因 | 批准退款/换货，但依据条款不同于运输破损 |
+| 商品质量问题（非易损品） | 收货后功能故障，非破损类问题，需要与客户申报的可见损坏区分 | 批准退款/换货，但证据要求与可见损坏不同 |
 | 错发商品 | Orders 中 `shipped_product_id` 与 `product_id` 不相等，仓库出库记录可独立验证客户陈述 | 批准换货，平台承担运费 |
 | 少发/漏发 | Orders 中 `shipped_quantity` 小于 `quantity`，仓库出库记录可独立验证少发数量 | 批准补发或部分退款 |
 | 部分退款请求 | 订单含多件商品，客户只对其中一件不满意 | 需要按商品单价计算部分退款金额，而非整单退款 |
@@ -314,6 +314,31 @@ data/mock_db/
 
 ---
 
+## 2.5 裁决与执行生命周期表
+
+- `decision_records`：不可变裁决快照，保存规则版本、命中规则和输入摘要哈希。
+- `action_tasks`：退款、取消订单和换货等实际副作用任务；通过
+  `idempotency_key` 防止重复执行，并记录重试次数、错误及外部交易号。
+- `outbox_events`：与业务状态在同一事务内写入，供事件发布器可靠投递。
+- `audit_logs`：保存 Staff 身份、角色、操作对象、结果和必要的结构化详情。
+
+申请状态按照 `ExecutionPending → Closed` 或
+`ExecutionPending → ExecutionFailed` 流转。批准结论不等于外部履约已经成功。
+人工队列在 `service_requests` 中使用 `assigned_to`、`lease_expires_at` 和
+`row_version` 实现领取租约与乐观并发控制。
+
+## 2.6 订单项与售后申请项
+
+`orders` 只保存客户、支付和物流生命周期等订单头信息。商品购买快照进入
+`order_items`：`product_id`、`sku_id`、规格、成交单价、购买数量、优惠金额、
+实付金额以及实际出库商品和数量。金额裁决使用订单项的 `unit_price` 快照，不能
+使用商品当前售价。
+
+`service_request_items` 明确关联本次售后的 `order_item_id`，并分别保存申请数量、
+批准数量和批准金额。当前自动裁决版本要求一条申请关联一个订单项；多商品订单若
+未指定商品会要求客户先选择 SKU，不会默认对整单发起售后。未来支持一次申请多个
+订单项时，可以在每个申请项上独立裁决后再汇总订单级处理状态。
+
 # 3. Knowledge Base（Policy Agent 数据源）
 
 ## 3.1 设计原则
@@ -347,8 +372,8 @@ Decision Engine 不得简单覆盖规则，应记录全部证据并进入 Reflec
 ## REFUND-002：超过三十天的非质量退款
 签收超过 30 天且无物流异常记录的，不支持无理由退货。
 
-## REFUND-006：运输破损
-物流系统存在运输破损记录且申请及时的，支持退款或换货；
+## REFUND-008：客户申报商品破损
+物流系统不预先记录商品或包装破损；客户发起申请并提交材料，材料通过审核且申请及时的，才支持退款或换货；
 若只有客户单方陈述，应降低置信度或进入 Reflection。
 ```
 
@@ -371,8 +396,8 @@ Decision Engine 不得简单覆盖规则，应记录全部证据并进入 Reflec
 | user_input | 本轮客户输入 | `收到时商品已经损坏，我要退款` |
 | expected_route | 预期工作流路径 | `Decision` / `Reflection` / `HumanEscalation` |
 | expected_decision | 预期业务结论；未决策路径可为 null | `Approve` / `Reject` / `PartialApprove` / null |
-| expected_rule_hits | 应命中的政策编号 | `["REFUND-006"]` |
-| rationale | Ground Truth 的事实与规则依据 | `物流存在运输破损记录` |
+| expected_rule_hits | 应命中的政策编号 | `["REFUND-008"]` |
+| rationale | Ground Truth 的事实与规则依据 | `客户商品损坏材料已通过审核` |
 
 Ground Truth 应单独存放在评估文件中，不写入客户输入，也不预先写入尚未执行的 Service Request。
 
