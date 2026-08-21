@@ -1073,8 +1073,17 @@ function App() {
                 const rejectedCount = request.evidence_reviews.filter((review) => review.verification_status === "Rejected").length;
                 const isOpenRequest = !request.decision
                   && ["Pending", "NeedsReflection", "EscalatedToHuman", "InReview"].includes(request.workflow_status);
+                // workflow_status alone can't tell "needs a new upload" apart
+                // from "already uploaded, sitting in Pending review" — both
+                // collapse into the same NeedsReflection value server-side.
+                // Reconstruct the distinction from the evidence list itself
+                // instead of inviting a redundant second upload.
+                const hasEvidenceAwaitingReview = request.evidence.some(
+                  (item) => item.verification_status === "Pending",
+                );
                 const canUploadMoreEvidence = isOpenRequest
                   && rejectedCount < 2
+                  && !hasEvidenceAwaitingReview
                   && (request.request_reason === "质量问题" || request.request_reason === "商品损坏");
                 const requestEvidence = requestPageUploadedEvidence[request.request_id];
                 const requestDescription = requestPageDescriptions[request.request_id] || "";

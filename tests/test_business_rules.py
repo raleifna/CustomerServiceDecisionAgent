@@ -72,6 +72,97 @@ class EvidenceGateTests(unittest.TestCase):
         self.assertNotIn("尺码", _special_issue_guidance("数码"))
         self.assertIn("尺码", _special_issue_guidance("服饰"))
 
+    def test_refund_003_blocks_machine_reviewed_only_quality_evidence(self) -> None:
+        """A quality-issue claim backed only by machine review must go to
+        human reflection, the same as a damage claim (REFUND-008) does —
+        MachineReviewed alone was previously enough to auto-approve."""
+        state = {
+            "service_request": {"request_reason": "质量问题"},
+            "order_evidence": {},
+            "logistics_evidence": {},
+            "evidence_review": {
+                "has_usable_evidence": True,
+                "has_machine_reviewed_evidence": True,
+                "has_verified_evidence": False,
+            },
+            "policy_evidence": {
+                "candidate_policy_ids": ["REFUND-003"],
+                "missing_policy_ids": [],
+            },
+            "errors": [],
+        }
+
+        result = evidence_completeness_gate_node(state)
+
+        self.assertEqual(result["gate_result"]["status"], "NeedsReflection")
+        self.assertFalse(result["gate_result"]["can_decide"])
+
+    def test_refund_008_blocks_machine_reviewed_only_damage_evidence(self) -> None:
+        state = {
+            "service_request": {"request_reason": "商品损坏"},
+            "order_evidence": {},
+            "logistics_evidence": {},
+            "evidence_review": {
+                "has_usable_evidence": True,
+                "has_machine_reviewed_evidence": True,
+                "has_verified_evidence": False,
+            },
+            "policy_evidence": {
+                "candidate_policy_ids": ["REFUND-008"],
+                "missing_policy_ids": [],
+            },
+            "errors": [],
+        }
+
+        result = evidence_completeness_gate_node(state)
+
+        self.assertEqual(result["gate_result"]["status"], "NeedsReflection")
+        self.assertFalse(result["gate_result"]["can_decide"])
+
+    def test_human_verified_quality_evidence_clears_the_machine_review_gate(self) -> None:
+        state = {
+            "service_request": {"request_reason": "质量问题"},
+            "order_evidence": {},
+            "logistics_evidence": {},
+            "evidence_review": {
+                "has_usable_evidence": True,
+                "has_machine_reviewed_evidence": True,
+                "has_verified_evidence": True,
+            },
+            "policy_evidence": {
+                "candidate_policy_ids": ["REFUND-003"],
+                "missing_policy_ids": [],
+            },
+            "errors": [],
+        }
+
+        result = evidence_completeness_gate_node(state)
+
+        self.assertEqual(result["gate_result"]["status"], "ReadyForDecision")
+        self.assertTrue(result["gate_result"]["can_decide"])
+
+    def test_risk_003_forces_human_escalation_independently_of_risk_002(self) -> None:
+        """RISK-003 (new-account large refund) must not rely on RISK-002
+        happening to fire at the same amount threshold — it needs its own
+        explicit gate so a future independent threshold change can't
+        silently let it through unreviewed."""
+        state = {
+            "service_request": {"request_reason": "质量问题"},
+            "order_evidence": {},
+            "logistics_evidence": {},
+            "evidence_review": {"has_usable_evidence": True},
+            "policy_evidence": {
+                "candidate_policy_ids": ["RISK-003"],
+                "missing_policy_ids": [],
+            },
+            "errors": [],
+        }
+
+        result = evidence_completeness_gate_node(state)
+
+        self.assertEqual(result["gate_result"]["status"], "HumanEscalation")
+        self.assertFalse(result["gate_result"]["can_decide"])
+
     def test_uncovered_business_case_routes_to_reflection(self) -> None:
         state = {
             "service_request": {"request_reason": "质量问题"},

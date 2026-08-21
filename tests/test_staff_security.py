@@ -68,6 +68,27 @@ class HumanDecisionValidationTests(unittest.TestCase):
                 approved_quantity=1, approved_amount=10,
             )
 
+    def test_approved_amount_cannot_exceed_what_was_actually_paid(self) -> None:
+        """A reviewer approving more than the order item's paid_amount must be
+        rejected — the automatic path always caps at unit_price * quantity,
+        and the human path previously trusted any positive number."""
+        with self.assertRaisesRegex(ValueError, "实付金额"):
+            validate_human_decision(
+                request_type="Refund", requested_quantity=1, decision="Approve",
+                approved_quantity=1, approved_amount=999999,
+                max_approved_amount=359.0,
+            )
+
+    def test_approved_amount_at_the_paid_amount_boundary_is_allowed(self) -> None:
+        try:
+            validate_human_decision(
+                request_type="Refund", requested_quantity=1, decision="Approve",
+                approved_quantity=1, approved_amount=359.0,
+                max_approved_amount=359.0,
+            )
+        except ValueError as exc:
+            self.fail(f"approving exactly the paid amount should be allowed: {exc}")
+
 
 class EvidenceReviewValidationTests(unittest.TestCase):
     def test_rejected_evidence_requires_customer_visible_reason(self) -> None:

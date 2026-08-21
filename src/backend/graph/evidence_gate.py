@@ -68,6 +68,7 @@ def evidence_completeness_gate_node(
     if (
         evidence_review.get("requires_human_review", False)
         or "RISK-002" in policy_ids
+        or "RISK-003" in policy_ids
     ):
         reasons = []
 
@@ -75,6 +76,8 @@ def evidence_completeness_gate_node(
             reasons.append("申请证据状态要求人工审核")
         if "RISK-002" in policy_ids:
             reasons.append("命中大额申请强制人工规则 RISK-002")
+        if "RISK-003" in policy_ids:
+            reasons.append("命中新账号大额退款强制人工规则 RISK-003")
 
         return {
             "gate_result": {
