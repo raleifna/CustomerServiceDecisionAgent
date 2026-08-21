@@ -27,7 +27,13 @@ def store_customer_evidence(
     upload: UploadFile,
     customer_id: str,
     request_id: str,
+    customer_description: str,
 ) -> dict:
+    customer_description = customer_description.strip()
+    if len(customer_description) < 5:
+        raise ValueError("请至少用 5 个字描述图片中的问题")
+    if len(customer_description) > 1000:
+        raise ValueError("问题描述不能超过 1000 个字")
     target_dir = PROJECT_ROOT / "data" / "uploads" / customer_id / request_id
     target_dir.mkdir(parents=True, exist_ok=True)
     temp_path: Path | None = None
@@ -70,6 +76,7 @@ def store_customer_evidence(
             media_type=media_type,
             storage_path=relative_path,
             file_size_bytes=file_size,
+            customer_description=customer_description,
         )
     except Exception:
         if final_path is not None and final_path.exists():

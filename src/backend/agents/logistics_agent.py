@@ -1,5 +1,4 @@
-#未解决的运输破损
-#未解决的疑似丢件
+#未解决的物流停滞
 #曾经滞留，但已经解决
 #没有物流异常
 
@@ -45,16 +44,12 @@ def logistics_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
         len(unresolved_exception_types) > 0
     )
 
-    has_suspected_loss = (
-        "疑似丢件" in exception_types
+    has_tracking_stalled = (
+        "物流停滞超72小时" in exception_types
     )
 
-    has_unresolved_suspected_loss = (
-        "疑似丢件" in unresolved_exception_types
-    )
-
-    has_shipping_damage = (
-        "运输破损" in exception_types
+    has_unresolved_tracking_stalled = (
+        "物流停滞超72小时" in unresolved_exception_types
     )
 
     has_stalled_over_72h = (
@@ -75,12 +70,9 @@ def logistics_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
             "has_unresolved_exception": (
                 has_unresolved_exception
             ),
-            "has_suspected_loss": has_suspected_loss,
-            "has_unresolved_suspected_loss": (
-                has_unresolved_suspected_loss
-            ),
-            "has_shipping_damage": (
-                has_shipping_damage
+            "has_tracking_stalled": has_tracking_stalled,
+            "has_unresolved_tracking_stalled": (
+                has_unresolved_tracking_stalled
             ),
             "has_stalled_over_72h": (
                 has_stalled_over_72h

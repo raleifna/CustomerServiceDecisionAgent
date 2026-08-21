@@ -6,6 +6,7 @@ class CustomerServiceState(TypedDict, total=False):
     user_message: str
     conversation_context: dict[str, Any]
     conversation_result: dict[str, Any]
+    dialogue_history: list[dict[str, str]]
     resolver_result: dict[str, Any]
     intent_result: dict[str, Any]
     query_result: dict[str, Any]
@@ -14,6 +15,9 @@ class CustomerServiceState(TypedDict, total=False):
     request_id: str
     service_request: dict[str, Any]
     order: dict[str, Any]
+    order_items: list[dict[str, Any]]
+    request_items: list[dict[str, Any]]
+    order_item: dict[str, Any]
     customer: dict[str, Any]
     product: dict[str, Any]
 

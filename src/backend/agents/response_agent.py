@@ -1,8 +1,12 @@
 import os
+import re
 from typing import Any
 
 from src.backend.graph.state import CustomerServiceState
 from src.backend.llm import chat
+
+
+_MULTI_OPTION_PATTERN = re.compile(r"(?:^|\n)\s*[1-9][.、]\s")
 
 
 def _format_amount(amount: Any) -> str | None:
@@ -36,6 +40,16 @@ def _build_template_response(final_result: dict[str, Any]) -> str:
                 if approved_amount is not None:
                     response += f"，批准退款金额为 {approved_amount} 元"
                 response += "。退款将在后续履约流程完成后按原支付路径处理。"
+
+            if request_reason == "不想要了":
+                response += (
+                    "无理由退货请保持商品完好、附带原包装退回，"
+                    "退款将在平台验收退回商品后处理。"
+                )
+
+            execution = final_result.get("execution")
+            if execution and execution.get("workflow_status") == "Pending":
+                response += "相关履约任务已经创建，执行结果将另行更新。"
 
         elif decision == "PartialApprove":
             response = "您的申请已完成审核，本次仅能批准部分申请"
@@ -139,11 +153,17 @@ def _contains_required_facts(
 
     handling_status = final_result.get("handling_status")
     decision = final_result.get("decision")
+    request_reason = final_result.get("request_reason")
     required_keywords: tuple[str, ...] = ()
 
     if handling_status == "DecisionCompleted":
         if decision == "Approve":
             required_keywords = ("通过", "批准")
+            if request_reason == "不想要了" and not any(
+                keyword in polished_response
+                for keyword in ("验收", "完好", "原包装")
+            ):
+                return False
         elif decision == "PartialApprove":
             required_keywords = ("部分",)
         elif decision == "Reject":
@@ -166,13 +186,41 @@ def _contains_required_facts(
     ):
         return False
 
+    # Caught in the wild: a length-only check let a "here are 3 versions,
+    # pick one" reply through once (multiple short numbered options can add
+    # up to under the length cap even though it's clearly not one clean
+    # customer-facing answer).
+    if _MULTI_OPTION_PATTERN.search(polished_response):
+        return False
+
     # A polished message should remain close to the concise deterministic template.
     return len(polished_response) <= max(len(template_response) * 3, 200)
+
+
+def _format_recent_history(
+    history: list[dict[str, str]] | None,
+    turns: int = 3,
+) -> str:
+    """Format the last few dialogue turns so a polish pass can acknowledge
+    context (a pivot from "催发货" to "退了吧") instead of reading like it
+    forgot the conversation just happened.
+    """
+    if not history:
+        return ""
+    recent = history[-(turns * 2):]
+    if not recent:
+        return ""
+    lines = [
+        f"{'用户' if turn.get('role') == 'user' else 'Agent'}：{turn.get('content', '')}"
+        for turn in recent
+    ]
+    return "最近对话：\n" + "\n".join(lines) + "\n\n"
 
 
 def _polish_response(
     template_response: str,
     final_result: dict[str, Any],
+    dialogue_history: list[dict[str, str]] | None = None,
 ) -> str:
     """Polish wording with the LLM and safely fall back to the template."""
     if not _llm_response_enabled():
@@ -182,9 +230,15 @@ def _polish_response(
         "你是电商售后客服回复编辑器。你只能润色用户可见的客服话术，"
         "不能改变审批结论、金额、数量、处理状态或下一步动作，不能添加承诺，"
         "不能声称退款已经到账，也不能暴露内部规则、风控信息或系统推理。"
+        "如果提供了最近对话，可以让措辞自然地承接对话（比如客户中途改了主意，"
+        "可以顺带确认一下），但不能编造对话里没有的事实。"
+        "避免逐项罗列的机器人报告体，改写成一两句连贯自然的话，像人在说话；"
         "请保持简洁、自然、专业，只输出润色后的回复正文。"
     )
-    user_prompt = f"请润色下面的客服回复，保留全部事实：\n\n{template_response}"
+    user_prompt = (
+        _format_recent_history(dialogue_history)
+        + f"请润色下面的客服回复，保留全部事实：\n\n{template_response}"
+    )
 
     try:
         polished_response = chat(
@@ -218,6 +272,20 @@ def response_agent_node(
         }
 
     template_response = _build_template_response(final_result)
-    customer_response = _polish_response(template_response, final_result)
+    customer_response = _polish_response(
+        template_response, final_result, state.get("dialogue_history")
+    )
+
+    # Intake and adjudication can happen in the same graph turn.  Do not lose
+    # the successful write acknowledgement when the newly-created request is
+    # then routed to evidence collection or human review.
+    action_result = state.get("action_result") or {}
+    if (
+        action_result.get("action") == "CreateServiceRequest"
+        and action_result.get("status") == "Created"
+    ):
+        request_id = action_result.get("request_id") or final_result.get("request_id")
+        acknowledgement = f"已为订单创建售后申请（申请编号：{request_id}）。"
+        customer_response = acknowledgement + customer_response
 
     return {"customer_response": customer_response}

@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ChatRequest(BaseModel):
@@ -37,6 +37,7 @@ class ChatResponse(BaseModel):
     intent: str | None = None
     order_id: str | None = None
     request_id: str | None = None
+    request_reason: str | None = None
     handling_status: str | None = None
     decision: str | None = None
     action: str | None = None
@@ -79,8 +80,24 @@ class LogisticsSummary(BaseModel):
     resolved: bool
 
 
+class OrderItemSummary(BaseModel):
+    order_item_id: str
+    order_id: str
+    product_id: str
+    sku_id: str
+    sku_name: str
+    unit_price: float
+    quantity: int
+    discount_amount: float
+    paid_amount: float
+    shipped_product_id: str | None = None
+    shipped_quantity: int | None = None
+
+
 class OrderDetail(OrderSummary):
     logistics: list[LogisticsSummary]
+    order_items: list[OrderItemSummary] = Field(default_factory=list)
+    refunded_amount: float = 0.0
 
 
 class EvidenceSummary(BaseModel):
@@ -95,3 +112,157 @@ class EvidenceSummary(BaseModel):
     verification_status: str
     verified_facts: list[str]
     verification_confidence: float | None = None
+    customer_description: str | None = None
+    file_url: str = ""
+    review_notes: str | None = None
+
+
+class CustomerEvidenceReview(BaseModel):
+    evidence_id: str
+    verification_status: str
+    review_notes: str | None = None
+    reviewed_at: str | None = None
+
+
+class CustomerServiceRequestStatus(BaseModel):
+    request_id: str
+    workflow_status: str
+    decision: str | None = None
+    approved_amount: float | None = None
+    resolution_notes: str | None = None
+    resolved_at: str | None = None
+    return_order: dict[str, Any] | None = None
+    evidence_reviews: list[CustomerEvidenceReview] = Field(default_factory=list)
+    actions: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class CustomerServiceRequestProgress(BaseModel):
+    request_id: str
+    order_id: str
+    request_type: str
+    request_reason: str
+    requested_quantity: int
+    request_date: str
+    workflow_status: str
+    decision: str | None = None
+    approved_quantity: int | None = None
+    approved_amount: float | None = None
+    resolution_notes: str | None = None
+    resolved_at: str | None = None
+    evidence_reviews: list[CustomerEvidenceReview] = Field(default_factory=list)
+    evidence: list[EvidenceSummary] = Field(default_factory=list)
+    actions: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ReturnShipmentRequest(BaseModel):
+    customer_id: str = Field(pattern=r"^CUS\d{4}$")
+    carrier: str = Field(min_length=1, max_length=100)
+    tracking_number: str = Field(min_length=3, max_length=100)
+
+
+class WithdrawServiceRequestPayload(BaseModel):
+    customer_id: str = Field(pattern=r"^CUS\d{4}$")
+
+
+class ReturnInspectionRequest(BaseModel):
+    accepted: bool
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+class StaffServiceRequestSummary(BaseModel):
+    request_id: str
+    order_id: str
+    customer_id: str
+    request_type: str
+    request_reason: str
+    target_order_item_id: str | None = None
+    requested_quantity: int
+    request_date: str
+    workflow_status: str
+    decision: str | None = None
+    reasons: list[str] = Field(default_factory=list)
+    rule_hits: list[str] = Field(default_factory=list)
+    required_actions: list[str] = Field(default_factory=list)
+    assigned_to: str | None = None
+    lease_expires_at: str | None = None
+    row_version: int = 0
+
+
+class StaffEvidenceSummary(BaseModel):
+    evidence_id: str
+    request_id: str
+    original_filename: str
+    media_type: str
+    verification_status: str
+    submitted_date: str
+    file_url: str
+    customer_description: str | None = None
+    review_notes: str | None = None
+    reviewed_by: str | None = None
+    reviewed_at: str | None = None
+
+
+class StaffQueueResponse(BaseModel):
+    service_requests: list[StaffServiceRequestSummary]
+    evidence: list[StaffEvidenceSummary]
+    failed_actions: list["StaffActionSummary"] = Field(default_factory=list)
+
+
+class StaffActionSummary(BaseModel):
+    action_id: str
+    request_id: str
+    action_type: str
+    workflow_status: str
+    attempts: int
+    max_attempts: int
+    last_error: str | None = None
+    external_transaction_id: str | None = None
+
+
+class StaffServiceRequestDetail(BaseModel):
+    service_request: StaffServiceRequestSummary
+    order: dict[str, Any] | None = None
+    customer: dict[str, Any] | None = None
+    product: dict[str, Any] | None = None
+    logistics: list[dict[str, Any]] = Field(default_factory=list)
+    evidence: list[StaffEvidenceSummary] = Field(default_factory=list)
+    order_items: list[OrderItemSummary] = Field(default_factory=list)
+    request_items: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ServiceRequestResolutionRequest(BaseModel):
+    decision: str = Field(pattern=r"^(Approve|Reject|PartialApprove|NoActionRequired)$")
+    approved_quantity: int | None = Field(default=None, ge=0)
+    approved_amount: float | None = Field(default=None, ge=0)
+    expected_version: int = Field(ge=0)
+    resolution_notes: str | None = Field(default=None, max_length=2000)
+
+    @model_validator(mode="after")
+    def require_closure_reason(self):
+        if self.decision in {"Reject", "NoActionRequired"} and not (
+            self.resolution_notes and self.resolution_notes.strip()
+        ):
+            raise ValueError("关闭或拒绝申请时必须填写处理依据")
+        return self
+
+
+class ServiceRequestClaimRequest(BaseModel):
+    lease_minutes: int = Field(default=15, ge=5, le=60)
+
+
+class EvidenceReviewRequest(BaseModel):
+    verification_status: str = Field(pattern=r"^(Verified|Rejected)$")
+    review_notes: str | None = Field(default=None, max_length=2000)
+
+    @model_validator(mode="after")
+    def require_rejection_reason(self):
+        if self.verification_status == "Rejected" and not (
+            self.review_notes and self.review_notes.strip()
+        ):
+            raise ValueError("驳回证据时必须填写驳回原因")
+        return self
+
+
+class EvidenceReviewResponse(BaseModel):
+    evidence: StaffEvidenceSummary
+    requeued_decision: bool

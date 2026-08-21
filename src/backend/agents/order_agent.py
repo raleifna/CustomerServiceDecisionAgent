@@ -7,6 +7,10 @@
 # 申请距离签收天数
 
 from src.backend.graph.state import CustomerServiceState
+from src.backend.repositories.service_request_repository import (
+    get_already_approved_quantity,
+    get_completed_refund_count,
+)
 from datetime import date
 
 def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
@@ -18,7 +22,7 @@ def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
         return {
             "errors": cur_errors + ["Order Agent 缺少 order"],
         }
-    
+
     service_request = state.get("service_request")
     if service_request is None:
         cur_errors = state.get("errors", [])
@@ -27,8 +31,12 @@ def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
             "errors": cur_errors + ["Order Agent 缺少 service_request"],
         }
 
-    ordered_product_id = order.get("product_id")
-    shipped_product_id = order.get("shipped_product_id")
+    order_item = state.get("order_item")
+    if order_item is None:
+        return {"errors": state.get("errors", []) + ["Order Agent 缺少 order_item"]}
+
+    ordered_product_id = order_item.get("product_id")
+    shipped_product_id = order_item.get("shipped_product_id")
 
     if not ordered_product_id:
         cur_errors = state.get("errors", [])
@@ -46,8 +54,8 @@ def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
     else:
         product_match = ordered_product_id == shipped_product_id
 
-    ordered_product_qty = order.get("quantity")
-    shipped_product_qty= order.get("shipped_quantity")
+    ordered_product_qty = order_item.get("quantity")
+    shipped_product_qty= order_item.get("shipped_quantity")
 
     if ordered_product_qty is None:
         cur_errors = state.get("errors", [])
@@ -56,12 +64,36 @@ def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
             "errors": cur_errors + ["Order 缺少 quantity"],
         }
 
+    request_reason = service_request.get("request_reason")
+    request_id = service_request.get("request_id")
+    order_item_id = order_item.get("order_item_id")
+    already_approved_qty = (
+        get_already_approved_quantity(
+            order_item_id, request_reason, exclude_request_id=request_id
+        )
+        if order_item_id and request_reason
+        else 0
+    )
+    # Every quantity-bearing approval must be clamped against this — the
+    # ordered/shipped delta alone doesn't know a prior request for the same
+    # item+reason already got paid out and closed (uq_open_service_request_item
+    # only blocks concurrent *open* duplicates, not a fresh one filed later).
+    remaining_eligible_quantity = max(
+        ordered_product_qty - already_approved_qty, 0
+    )
+
     if shipped_product_qty is None:
         qty_match = None
         missing_qty = None
     else:
         qty_match = ordered_product_qty == shipped_product_qty
-        missing_qty = max(ordered_product_qty - shipped_product_qty, 0)
+        # The true shortfall is a fixed fact (ordered - shipped); a prior
+        # request already paid out `already_approved_qty` of it, so only the
+        # remainder is still open to approve.
+        missing_qty = max(
+            (ordered_product_qty - shipped_product_qty) - already_approved_qty,
+            0,
+        )
 
     shipped_date_value = order.get("shipped_date")
     delivered_date_value = order.get("delivered_date")
@@ -139,18 +171,23 @@ def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
             "errors": cur_errors + ["Order Agent 缺少 customer"],
         }
     
-    amount = order.get("amount")
+    amount = order_item.get("paid_amount")
     payment_status = order.get("payment_status")
 
     is_fragile = product.get("is_fragile")
     is_customized = product.get("is_customized")
 
     vip_level = customer.get("vip_level")
-    refund_history_count = customer.get("refund_history_count")
-    
+    seed_refund_history_count = customer.get("refund_history_count") or 0
+    live_refund_history_count = get_completed_refund_count(customer.get("customer_id"))
+    refund_history_count = max(seed_refund_history_count, live_refund_history_count)
+
     return {
         "order_evidence":{
             "order_id": order.get("order_id"),
+            "order_item_id": order_item.get("order_item_id"),
+            "sku_id": order_item.get("sku_id"),
+            "unit_price": order_item.get("unit_price"),
             "ordered_product_id": ordered_product_id,
             "shipped_product_id": shipped_product_id,
             "product_match": product_match,
@@ -159,6 +196,8 @@ def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
             "shipped_quantity": shipped_product_qty,
             "quantity_match": qty_match,
             "confirmed_missing_quantity": missing_qty,
+            "already_approved_quantity": already_approved_qty,
+            "remaining_eligible_quantity": remaining_eligible_quantity,
 
             "shipped_date": shipped_date_value,
             "promised_ship_date": order.get("promised_ship_date"),

@@ -1,15 +1,8 @@
 [
   {
-    "order_id": "ORD2026080001",
-    "carrier": "顺丰速运",
-    "exception_type": "运输破损",
-    "exception_recorded_date": "2026-08-04",
-    "resolved": false
-  },
-  {
     "order_id": "ORD2026080002",
     "carrier": "京东物流",
-    "exception_type": "疑似丢件",
+    "exception_type": "物流停滞超72小时",
     "exception_recorded_date": "2026-08-09",
     "resolved": false
   },

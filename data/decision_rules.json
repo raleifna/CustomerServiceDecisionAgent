@@ -1,0 +1,115 @@
+{
+  "version": "2026-08-20",
+  "rules": [
+    {
+      "id": "cancel_unshipped",
+      "priority": 100,
+      "when": [
+        {"path": "service_request.request_reason", "op": "eq", "value": "未发货取消订单"},
+        {"path": "policy_ids", "op": "contains", "value": "REFUND-010"}
+      ],
+      "decision": "Approve",
+      "confidence": 0.99,
+      "rule_hits": ["REFUND-010"],
+      "approved_quantity": {"op": "path", "path": "service_request.requested_quantity"},
+      "approved_amount": {"op": "unit_price_times_quantity"},
+      "reasons": ["订单已付款且尚未进入实际出库"]
+    },
+    {
+      "id": "customized_no_reason",
+      "priority": 95,
+      "when": [
+        {"path": "service_request.request_reason", "op": "eq", "value": "不想要了"},
+        {"path": "policy_ids", "op": "contains", "value": "REFUND-009"}
+      ],
+      "decision": "Reject", "confidence": 0.99,
+      "rule_hits": ["REFUND-009"], "reasons": ["定制商品不适用无理由退货"]
+    },
+    {
+      "id": "late_no_reason",
+      "priority": 90,
+      "when": [
+        {"path": "service_request.request_reason", "op": "eq", "value": "不想要了"},
+        {"path": "policy_ids", "op": "contains", "value": "REFUND-002"}
+      ],
+      "decision": "Reject", "confidence": 0.98,
+      "rule_hits": ["REFUND-002"], "reasons": ["申请提交时已超过签收后7天的无理由退货期限"]
+    },
+    {
+      "id": "no_reason_return",
+      "priority": 85,
+      "when": [
+        {"path": "service_request.request_reason", "op": "eq", "value": "不想要了"},
+        {"path": "policy_ids", "op": "contains", "value": "REFUND-001"}
+      ],
+      "decision": "Approve", "confidence": 0.98,
+      "rule_hits": ["REFUND-001"],
+      "approved_quantity": {"op": "path", "path": "service_request.requested_quantity"},
+      "approved_amount": {"op": "unit_price_times_quantity"},
+      "reasons": ["非定制商品在政策期限内申请无理由退款"]
+    },
+    {
+      "id": "wrong_product",
+      "priority": 80,
+      "when": [
+        {"path": "service_request.request_reason", "op": "eq", "value": "错发商品"},
+        {"path": "order_evidence.product_match", "op": "eq", "value": false},
+        {"path": "order_evidence.remaining_eligible_quantity", "op": "gt", "value": 0},
+        {"path": "policy_ids", "op": "contains", "value": "REFUND-004"}
+      ],
+      "decision": {"op": "partial_if_less", "requested": "service_request.requested_quantity", "approved": "approved_quantity"},
+      "confidence": 0.99,
+      "rule_hits": ["REFUND-004"],
+      "approved_quantity": {"op": "min", "paths": ["service_request.requested_quantity", "order_evidence.remaining_eligible_quantity"]},
+      "approved_amount": {"op": "unit_price_times_quantity", "request_types": ["Refund", "PartialRefund"]},
+      "reasons": ["仓库实际出库商品与客户订购商品不一致", "本次批准 {approved_quantity} 件"]
+    },
+    {
+      "id": "missing_product",
+      "priority": 75,
+      "when": [
+        {"path": "service_request.request_reason", "op": "eq", "value": "少发商品"},
+        {"path": "order_evidence.confirmed_missing_quantity", "op": "gt", "value": 0},
+        {"path": "policy_ids", "op": "contains", "value": "REFUND-005"}
+      ],
+      "decision": {"op": "partial_if_less", "requested": "service_request.requested_quantity", "approved": "approved_quantity"},
+      "confidence": 0.99,
+      "rule_hits": ["REFUND-005"], "optional_rule_hits": ["RISK-006"],
+      "approved_quantity": {"op": "min", "paths": ["service_request.requested_quantity", "order_evidence.confirmed_missing_quantity"]},
+      "approved_amount": {"op": "unit_price_times_quantity"},
+      "reasons": ["仓库记录确认少发 {order_evidence.confirmed_missing_quantity} 件", "本次批准 {approved_quantity} 件"]
+    },
+    {
+      "id": "damage_with_verified_evidence",
+      "priority": 65,
+      "when": [
+        {"path": "service_request.request_reason", "op": "eq", "value": "商品损坏"},
+        {"path": "evidence_review.has_usable_evidence", "op": "eq", "value": true},
+        {"path": "order_evidence.remaining_eligible_quantity", "op": "gt", "value": 0},
+        {"path": "policy_ids", "op": "contains", "value": "REFUND-008"}
+      ],
+      "decision": {"op": "partial_if_less", "requested": "service_request.requested_quantity", "approved": "approved_quantity"},
+      "confidence": {"op": "path", "path": "evidence_review.max_supporting_confidence", "default_from": "business_rules.decision.default_evidence_confidence"},
+      "rule_hits": ["REFUND-008"],
+      "approved_quantity": {"op": "min", "paths": ["service_request.requested_quantity", "order_evidence.remaining_eligible_quantity"]},
+      "approved_amount": {"op": "unit_price_times_quantity", "request_types": ["Refund", "PartialRefund"]},
+      "reasons": {"op": "path", "path": "evidence_review.supporting_facts", "default": ["客户提交的商品损坏证据已通过审核"]}
+    },
+    {
+      "id": "quality_evidence",
+      "priority": 60,
+      "when": [
+        {"path": "service_request.request_reason", "op": "eq", "value": "质量问题"},
+        {"path": "evidence_review.has_usable_evidence", "op": "eq", "value": true},
+        {"path": "order_evidence.remaining_eligible_quantity", "op": "gt", "value": 0},
+        {"path": "policy_ids", "op": "contains", "value": "REFUND-003"}
+      ],
+      "decision": {"op": "partial_if_less", "requested": "service_request.requested_quantity", "approved": "approved_quantity"},
+      "confidence": {"op": "path", "path": "evidence_review.max_supporting_confidence", "default_from": "business_rules.decision.default_evidence_confidence"},
+      "rule_hits": ["REFUND-003"],
+      "approved_quantity": {"op": "min", "paths": ["service_request.requested_quantity", "order_evidence.remaining_eligible_quantity"]},
+      "approved_amount": {"op": "unit_price_times_quantity", "request_types": ["Refund", "PartialRefund"]},
+      "reasons": {"op": "path", "path": "evidence_review.supporting_facts", "default": ["有效证据支持质量问题主张"]}
+    }
+  ]
+}

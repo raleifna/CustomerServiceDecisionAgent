@@ -5,10 +5,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
+from src.backend.api import staff
 from src.backend.api.schemas import (
     ChatRequest,
     ChatResponse,
+    CustomerServiceRequestStatus,
+    CustomerServiceRequestProgress,
+    WithdrawServiceRequestPayload,
+    ReturnShipmentRequest,
     CustomerSummary,
     EvidenceSummary,
     HealthResponse,
@@ -21,6 +27,7 @@ from src.backend.graph.workflow import (
 )
 from src.backend.repositories.mock_db_repository import (
     MOCK_DB_DIR,
+    PROJECT_ROOT,
     get_customer,
     get_order,
     get_orders_by_customer_id,
@@ -34,8 +41,20 @@ from src.backend.repositories.postgres_repository import (
     setup_application_schema,
 )
 from src.backend.repositories.evidence_repository import list_evidence_records
-from src.backend.repositories.service_request_repository import get_service_request
+from src.backend.repositories.service_request_repository import (
+    get_completed_refund_amount,
+    get_service_request,
+    get_service_requests_by_customer_id,
+    withdraw_service_request,
+)
+from src.backend.repositories.decision_lifecycle_repository import list_actions_for_request
 from src.backend.services.evidence_upload_service import store_customer_evidence
+from src.backend.repositories.order_item_repository import get_order_items
+from src.backend.repositories.return_order_repository import (
+    get_return_order_for_request, submit_return_shipment,
+)
+from src.backend.config.business_rules import BusinessRulesError, load_business_rules
+from src.backend.decision.rule_engine import DecisionRulesError, load_decision_rules
 
 
 logger = logging.getLogger(__name__)
@@ -98,6 +117,31 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
+app.include_router(staff.router)
+
+_UPLOADS_DIR = PROJECT_ROOT / "data" / "uploads"
+_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(_UPLOADS_DIR)), name="uploads")
+
+
+def _evidence_file_url(storage_path: str) -> str:
+    return "/uploads/" + storage_path.removeprefix("data/uploads/")
+
+
+def _to_evidence_summary(record: dict) -> EvidenceSummary:
+    return EvidenceSummary(
+        **{
+            key: record.get(key)
+            for key in (
+                "evidence_id", "request_id", "evidence_type", "submitted_by",
+                "submitted_date", "original_filename", "media_type",
+                "file_size_bytes", "verification_status", "verified_facts",
+                "verification_confidence", "customer_description", "review_notes",
+            )
+        },
+        file_url=_evidence_file_url(record["storage_path"]) if "storage_path" in record else "",
+    )
+
 
 def _safe_chat_response(
     conversation_id: str,
@@ -107,6 +151,7 @@ def _safe_chat_response(
     query_result = graph_result.get("query_result") or {}
     final_result = graph_result.get("final_result") or {}
     action_result = graph_result.get("action_result") or {}
+    service_request = graph_result.get("service_request") or {}
     context = graph_result.get("conversation_context") or {}
 
     customer_message = graph_result.get("customer_response")
@@ -131,6 +176,10 @@ def _safe_chat_response(
             or final_result.get("request_id")
             or context.get("active_request_id")
         ),
+        request_reason=(
+            service_request.get("request_reason")
+            or final_result.get("request_reason")
+        ),
         handling_status=final_result.get("handling_status"),
         decision=final_result.get("decision"),
         action=action_result.get("action"),
@@ -149,8 +198,18 @@ def health() -> HealthResponse:
     database_available = database_is_available(database_url)
     persistent_runtime = database_available if database_url else True
 
+    try:
+        load_business_rules()
+        decision_rule_count = len(load_decision_rules())
+        rules_status = f"available:{decision_rule_count}"
+        rules_available = True
+    except (BusinessRulesError, DecisionRulesError):
+        logger.exception("Business rule configuration is invalid")
+        rules_status = "invalid"
+        rules_available = False
+
     return HealthResponse(
-        status="ok" if files_available and persistent_runtime else "degraded",
+        status="ok" if files_available and persistent_runtime and rules_available else "degraded",
         service="customer-service-decision-agent",
         checks={
             "mock_db": "available" if files_available else "missing_files",
@@ -160,6 +219,8 @@ def health() -> HealthResponse:
                 else "memory_fallback" if not database_url else "unavailable"
             ),
             "llm_configured": bool(os.getenv("API_KEY")),
+            "decision_rules": rules_status,
+            "staff_auth": "configured" if os.getenv("STAFF_API_KEYS", "").strip() else "missing",
         },
     )
 
@@ -204,6 +265,41 @@ def list_customer_orders(customer_id: str) -> list[OrderSummary]:
 
 
 @app.get(
+    "/customers/{customer_id}/service-requests",
+    response_model=list[CustomerServiceRequestProgress],
+    tags=["customers"],
+)
+def list_customer_service_requests(customer_id: str) -> list[CustomerServiceRequestProgress]:
+    if get_customer(customer_id) is None:
+        raise HTTPException(status_code=404, detail="当前客户不存在。")
+    result = []
+    for request_record in get_service_requests_by_customer_id(customer_id):
+        request_id = request_record["request_id"]
+        evidence_records = list_evidence_records(request_id)
+        reviews = [
+            {
+                "evidence_id": evidence.get("evidence_id"),
+                "verification_status": evidence.get("verification_status"),
+                "review_notes": evidence.get("review_notes"),
+                "reviewed_at": evidence.get("reviewed_at"),
+            }
+            for evidence in evidence_records
+            if evidence.get("verification_status") in {"Verified", "Rejected"}
+        ]
+        result.append(CustomerServiceRequestProgress(
+            **{key: request_record.get(key) for key in (
+                "request_id", "order_id", "request_type", "request_reason",
+                "requested_quantity", "request_date", "workflow_status", "decision",
+                "approved_quantity", "approved_amount", "resolution_notes", "resolved_at",
+            )},
+            evidence_reviews=reviews,
+            evidence=[_to_evidence_summary(record) for record in evidence_records],
+            actions=list_actions_for_request(request_id),
+        ))
+    return result
+
+
+@app.get(
     "/customers/{customer_id}/orders/{order_id}",
     response_model=OrderDetail,
     tags=["customers"],
@@ -227,6 +323,8 @@ def get_customer_order_detail(customer_id: str, order_id: str) -> OrderDetail:
         product_category=product.get("category"),
         order_status=_order_status(order),
         logistics=get_logistics(order_id),
+        order_items=get_order_items(order_id),
+        refunded_amount=get_completed_refund_amount(order_id),
     )
 
 
@@ -245,6 +343,74 @@ def _owned_service_request(request_id: str, customer_id: str) -> dict:
     return service_request
 
 
+@app.get(
+    "/service-requests/{request_id}/status",
+    response_model=CustomerServiceRequestStatus,
+    tags=["service-requests"],
+)
+def get_customer_service_request_status(
+    request_id: str,
+    customer_id: str,
+) -> CustomerServiceRequestStatus:
+    """Return a customer-owned request's latest human/automatic outcome."""
+    service_request = _owned_service_request(request_id, customer_id)
+    resolved_at = service_request.get("resolved_at")
+    evidence_reviews = [
+        {
+            "evidence_id": evidence.get("evidence_id"),
+            "verification_status": evidence.get("verification_status"),
+            "review_notes": evidence.get("review_notes"),
+            "reviewed_at": evidence.get("reviewed_at"),
+        }
+        for evidence in list_evidence_records(request_id)
+        if evidence.get("verification_status") in {"Verified", "Rejected"}
+    ]
+    return CustomerServiceRequestStatus(
+        request_id=request_id,
+        workflow_status=service_request.get("workflow_status", "Pending"),
+        decision=service_request.get("decision"),
+        approved_amount=service_request.get("approved_amount"),
+        resolution_notes=service_request.get("resolution_notes"),
+        resolved_at=(resolved_at.isoformat() if hasattr(resolved_at, "isoformat") else resolved_at),
+        return_order=get_return_order_for_request(request_id),
+        evidence_reviews=evidence_reviews,
+        actions=list_actions_for_request(request_id),
+    )
+
+
+@app.post("/service-requests/{request_id}/withdraw", tags=["service-requests"])
+def withdraw_customer_service_request(
+    request_id: str,
+    payload: WithdrawServiceRequestPayload,
+) -> CustomerServiceRequestStatus:
+    _owned_service_request(request_id, payload.customer_id)
+    withdrawn = withdraw_service_request(request_id, payload.customer_id)
+    if withdrawn is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="该申请已完成或已进入退款/履约阶段，当前不能撤销。",
+        )
+    resolved_at = withdrawn.get("resolved_at")
+    return CustomerServiceRequestStatus(
+        request_id=request_id,
+        workflow_status=withdrawn["workflow_status"],
+        decision=withdrawn.get("decision"),
+        resolution_notes=withdrawn.get("resolution_notes"),
+        resolved_at=resolved_at,
+        return_order=None,
+        evidence_reviews=[],
+    )
+
+
+@app.post("/service-requests/{request_id}/return-shipment", tags=["service-requests"])
+def submit_customer_return_shipment(request_id: str, payload: ReturnShipmentRequest) -> dict:
+    _owned_service_request(request_id, payload.customer_id)
+    result = submit_return_shipment(request_id, payload.customer_id, payload.carrier, payload.tracking_number)
+    if result is None:
+        raise HTTPException(status_code=409, detail="退货单不存在或当前状态不能提交寄回信息。")
+    return result
+
+
 @app.post(
     "/service-requests/{request_id}/evidence",
     response_model=EvidenceSummary,
@@ -254,14 +420,29 @@ def _owned_service_request(request_id: str, customer_id: str) -> dict:
 def upload_service_request_evidence(
     request_id: str,
     customer_id: str = Form(...),
+    description: str = Form(...),
     file: UploadFile = File(...),
 ) -> EvidenceSummary:
-    _owned_service_request(request_id, customer_id)
+    service_request = _owned_service_request(request_id, customer_id)
+    rejected_rounds = sum(
+        1
+        for evidence in list_evidence_records(request_id)
+        if evidence.get("verification_status") == "Rejected"
+    )
+    if (
+        service_request.get("request_reason") in {"质量问题", "商品损坏"}
+        and rejected_rounds >= 2
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="已达到两轮补证上限，申请已进入最终人工复核，暂不能继续上传材料。",
+        )
     try:
         record = store_customer_evidence(
             upload=file,
             customer_id=customer_id,
             request_id=request_id,
+            customer_description=description,
         )
     except ValueError as exc:
         raise HTTPException(
@@ -288,7 +469,7 @@ def list_service_request_evidence(
 ) -> list[EvidenceSummary]:
     _owned_service_request(request_id, customer_id)
     return [
-        EvidenceSummary.model_validate(record)
+        _to_evidence_summary(record)
         for record in list_evidence_records(request_id)
     ]
 
@@ -331,7 +512,24 @@ def chat(payload: ChatRequest, request: Request) -> ChatResponse:
             (snapshot.values or {}).get("conversation_context") or {}
         )
         existing_context["authenticated_customer_id"] = payload.customer_id
+        # A request can be withdrawn from the separate progress page, outside
+        # the conversation graph. Do not let that closed request remain the
+        # active chat request on the next turn.
+        active_request_id = existing_context.get("active_request_id")
+        if active_request_id:
+            active_request = get_service_request(active_request_id)
+            if (
+                active_request is None
+                or active_request.get("customer_id") != payload.customer_id
+                or active_request.get("workflow_status") == "Closed"
+            ):
+                existing_context.pop("active_request_id", None)
+                existing_context.pop("pending_action", None)
+                existing_context.pop("pending_service_request", None)
+                existing_context.pop("pending_order_confirmation", None)
         if payload.order_id:
+            if existing_context.get("active_order_id") != payload.order_id:
+                existing_context["order_context_confirmed"] = False
             existing_context["active_order_id"] = payload.order_id
 
         result = request.app.state.conversation_graph.invoke(

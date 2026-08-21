@@ -59,6 +59,32 @@ def reflection_agent_node(
         }
 
     if "RISK-004" in policy_ids:
+        already_compensated = (
+            request_reason == "少发商品"
+            and order_evidence.get("confirmed_missing_quantity") == 0
+            and (order_evidence.get("already_approved_quantity") or 0) > 0
+        ) or (
+            request_reason in {"错发商品", "商品损坏", "质量问题"}
+            and (order_evidence.get("remaining_eligible_quantity") or 0) <= 0
+            and (order_evidence.get("already_approved_quantity") or 0) > 0
+        )
+        if already_compensated:
+            return {
+                "reflection_result": {
+                    "status": "HumanEscalation",
+                    "route": "human_escalation",
+                    "resolved": False,
+                    "reasons": [
+                        f"该商品的「{request_reason}」问题已在此前申请中获得足额赔付，"
+                        "本次为同一问题的重复申请"
+                    ],
+                    "required_actions": [
+                        "核对历史售后记录确认已赔付的数量与金额",
+                        "如客户反映的是新问题，需人工确认后重新受理",
+                    ],
+                }
+            }
+
         if request_reason == "未收到货":
             return {
                 "reflection_result": {
@@ -116,16 +142,17 @@ def reflection_agent_node(
             }
         }
 
-    if "SHIPPING-007" in policy_ids:
+    if "SHIPPING-002" in policy_ids or "SHIPPING-007" in policy_ids:
         return {
             "reflection_result": {
                 "status": "NeedsExternalVerification",
                 "route": "await_logistics_review",
                 "resolved": False,
-                "reasons": ["配送已经逾期，但物流尚未确认丢件"],
+                "reasons": ["物流轨迹停滞或配送逾期，需要承运商核查包裹状态"],
                 "required_actions": [
                     "向承运方发起包裹状态核查",
-                    "确认丢件后再按 SHIPPING-002 处理",
+                    "包裹恢复运输时更新预计送达时间",
+                    "承运商确认丢失或核查超时后再进入退款或补发流程",
                 ],
             }
         }
@@ -137,6 +164,20 @@ def reflection_agent_node(
                 "route": "request_more_evidence",
                 "resolved": False,
                 "reasons": ["现有材料只能确认损坏现象，不能确认损坏原因"],
+                "required_actions": [
+                    "请求补充完整商品和包装照片或开箱视频",
+                    "必要时提交授权售后检测报告",
+                ],
+            }
+        }
+
+    if "REFUND-003" in policy_ids:
+        return {
+            "reflection_result": {
+                "status": "NeedsMoreEvidence",
+                "route": "request_more_evidence",
+                "resolved": False,
+                "reasons": ["现有材料只能确认商品外观异常，不能确认质量责任原因"],
                 "required_actions": [
                     "请求补充完整商品和包装照片或开箱视频",
                     "必要时提交授权售后检测报告",

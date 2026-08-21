@@ -2,6 +2,7 @@ from datetime import date
 
 from src.backend.graph.state import CustomerServiceState
 from src.backend.repositories.policy_repository import get_policy_rule
+from src.backend.config.business_rules import load_business_rules
 
 
 def policy_agent_node(
@@ -31,6 +32,11 @@ def policy_agent_node(
             + [f"Policy Agent 缺少输入: {missing_text}"],
         }
 
+    rules = load_business_rules()
+    refund_rules = rules["refund"]
+    risk_rules = rules["risk"]
+    membership_rules = rules["membership"]
+
     candidate_policy_ids: list[str] = []
     selection_reasons: dict[str, list[str]] = {}
 
@@ -54,6 +60,9 @@ def policy_agent_node(
     confirmed_missing_quantity = order_evidence.get(
         "confirmed_missing_quantity"
     )
+    remaining_eligible_quantity = order_evidence.get(
+        "remaining_eligible_quantity"
+    )
     ordered_quantity = order_evidence.get("ordered_quantity")
     amount = order_evidence.get("amount")
     vip_level = order_evidence.get("vip_level")
@@ -63,16 +72,12 @@ def policy_agent_node(
         "has_logistics_exception",
         False,
     )
-    has_shipping_damage = logistics_evidence.get(
-        "has_shipping_damage",
+    has_tracking_stalled = logistics_evidence.get(
+        "has_tracking_stalled",
         False,
     )
-    has_suspected_loss = logistics_evidence.get(
-        "has_suspected_loss",
-        False,
-    )
-    has_unresolved_suspected_loss = logistics_evidence.get(
-        "has_unresolved_suspected_loss",
+    has_unresolved_tracking_stalled = logistics_evidence.get(
+        "has_unresolved_tracking_stalled",
         False,
     )
     has_stalled_over_72h = logistics_evidence.get(
@@ -87,26 +92,36 @@ def policy_agent_node(
     if request_reason == "不想要了":
         if is_customized:
             add_candidate("REFUND-009", "定制商品申请无理由退款")
-        elif isinstance(days_since_delivery, int) and days_since_delivery <= 7:
+        elif (
+            is_delivered
+            and isinstance(days_since_delivery, int)
+            and 0 <= days_since_delivery <= refund_rules["no_reason_return_days"]
+            and order_evidence.get("payment_status") == "Paid"
+        ):
             add_candidate("REFUND-001", "非定制商品在签收后7天内申请无理由退款")
 
-        if isinstance(days_since_delivery, int) and days_since_delivery > 30:
-            add_candidate("REFUND-002", "无理由退款申请距签收已超过30天")
+        if isinstance(days_since_delivery, int) and days_since_delivery > refund_rules["no_reason_return_days"]:
+            add_candidate("REFUND-002", "无理由退货申请距签收已超过7天")
 
-    non_quality_reasons = {
-        "不想要了",
-        "物流延误",
-    }
+    non_quality_reasons = set(refund_rules["non_quality_reasons"])
 
     if (
         request_type == "Refund"
         and request_reason in non_quality_reasons
         and isinstance(days_since_delivery, int)
-        and days_since_delivery > 30
+        and days_since_delivery > refund_rules["late_non_quality_days"]
     ):
         add_candidate("REFUND-002", "非质量退款申请距签收已超过30天")
 
-    if request_reason == "质量问题":
+    if (
+        request_reason == "质量问题"
+        and is_delivered
+        and isinstance(days_since_delivery, int)
+        and 0 <= days_since_delivery <= refund_rules["quality_claim_days"]
+        and isinstance(requested_quantity, int)
+        and isinstance(ordered_quantity, int)
+        and requested_quantity <= ordered_quantity
+    ):
         add_candidate("REFUND-003", "客户申请原因为质量问题")
 
     if request_reason == "错发商品":
@@ -116,12 +131,13 @@ def policy_agent_node(
         add_candidate("REFUND-005", "客户申请原因为少发商品")
 
     if request_reason == "商品损坏":
-        if has_shipping_damage:
-            add_candidate("REFUND-006", "物流系统存在运输破损记录")
-        else:
-            add_candidate("REFUND-008", "客户报告损坏但物流无运输破损记录")
+        add_candidate("REFUND-008", "商品损坏由客户申报并提交材料核验")
 
-    if request_reason == "未发货取消订单":
+    if (
+        request_reason == "未发货取消订单"
+        and not order_evidence.get("is_shipped", False)
+        and order_evidence.get("payment_status") == "Paid"
+    ):
         add_candidate("REFUND-010", "客户申请取消尚未发货的已付款订单")
 
     shipping_related_reason = request_reason in {
@@ -133,11 +149,8 @@ def policy_agent_node(
     if shipping_related_reason:
         add_candidate("SHIPPING-001", "需要判断订单物流生命周期状态")
 
-    if has_suspected_loss:
-        add_candidate("SHIPPING-002", "物流系统存在疑似丢件记录")
-
-    if has_shipping_damage:
-        add_candidate("SHIPPING-003", "物流系统存在运输破损记录")
+    if has_tracking_stalled:
+        add_candidate("SHIPPING-002", "物流轨迹超过72小时没有更新")
 
     if has_stalled_over_72h:
         add_candidate("SHIPPING-004", "物流系统存在滞留超72小时记录")
@@ -145,7 +158,7 @@ def policy_agent_node(
         if (
             request_type == "Refund"
             and isinstance(days_since_delivery, int)
-            and days_since_delivery > 30
+            and days_since_delivery > refund_rules["late_non_quality_days"]
         ):
             add_candidate("REFUND-007", "超时退款与历史物流异常需要冲突处理")
 
@@ -158,29 +171,29 @@ def policy_agent_node(
     if (
         request_reason == "未收到货"
         and is_in_transit_overdue
-        and not has_unresolved_suspected_loss
+        and not has_unresolved_tracking_stalled
     ):
         add_candidate("SHIPPING-007", "配送已逾期但物流尚未确认丢件")
 
-    if vip_level in {"Silver", "Gold", "Platinum"}:
+    if vip_level in set(membership_rules["eligible_levels"]):
         add_candidate("VIP-001", f"客户会员等级为 {vip_level}")
         add_candidate("VIP-003", "会员权益不能单独决定退款资格")
 
     if (
-        vip_level == "Platinum"
+        vip_level == membership_rules["priority_level"]
         and request_reason == "未收到货"
-        and has_unresolved_suspected_loss
+        and has_unresolved_tracking_stalled
     ):
-        add_candidate("VIP-002", "Platinum 客户存在未解决的疑似丢件")
+        add_candidate("VIP-002", "Platinum 客户存在未解决的物流停滞")
 
     risk_triggered = False
     conflict_detected = False
 
-    if isinstance(refund_history_count, int) and refund_history_count >= 10:
+    if isinstance(refund_history_count, int) and refund_history_count >= risk_rules["high_refund_count"]:
         add_candidate("RISK-001", "客户历史成功退款次数达到风险阈值")
         risk_triggered = True
 
-    if isinstance(amount, (int, float)) and amount >= 5000:
+    if isinstance(amount, (int, float)) and amount >= risk_rules["high_value_amount"]:
         add_candidate("RISK-002", "订单金额达到大额人工审核阈值")
         risk_triggered = True
 
@@ -197,10 +210,10 @@ def policy_agent_node(
         ).days
 
         if (
-            registration_age_days <= 30
+            0 <= registration_age_days <= risk_rules["new_account_days"]
             and refund_history_count == 0
             and isinstance(amount, (int, float))
-            and amount >= 5000
+            and amount >= risk_rules["high_value_amount"]
         ):
             add_candidate("RISK-003", "新注册账号在30天内申请大额退款")
             risk_triggered = True
@@ -212,6 +225,23 @@ def policy_agent_node(
     if request_reason == "少发商品" and quantity_match is True:
         conflict_detected = True
         add_candidate("RISK-004", "客户少发主张与仓库足量出库记录冲突")
+
+    if (
+        request_reason == "少发商品"
+        and isinstance(confirmed_missing_quantity, int)
+        and confirmed_missing_quantity <= 0
+        and quantity_match is not True
+    ):
+        conflict_detected = True
+        add_candidate("RISK-004", "仓库记录确认的少发数量已在此前申请中获得足额赔付")
+
+    if (
+        request_reason in {"错发商品", "商品损坏", "质量问题"}
+        and isinstance(remaining_eligible_quantity, int)
+        and remaining_eligible_quantity <= 0
+    ):
+        conflict_detected = True
+        add_candidate("RISK-004", "该商品此项售后原因已在此前申请中完成足额赔付")
 
     if request_reason == "未收到货" and is_delivered:
         conflict_detected = True

@@ -1,0 +1,170 @@
+[
+  {
+    "request_item_id": "SRI2026080001",
+    "request_id": "SR2026080001",
+    "order_item_id": "OI2026080001",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080002",
+    "request_id": "SR2026080002",
+    "order_item_id": "OI2026080002",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080003",
+    "request_id": "SR2026080003",
+    "order_item_id": "OI2026060003",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080004",
+    "request_id": "SR2026080004",
+    "order_item_id": "OI2026060004",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080005",
+    "request_id": "SR2026080005",
+    "order_item_id": "OI2026080005",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080006",
+    "request_id": "SR2026080006",
+    "order_item_id": "OI2026080006",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080007",
+    "request_id": "SR2026080007",
+    "order_item_id": "OI2026080007",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080008",
+    "request_id": "SR2026080008",
+    "order_item_id": "OI2026080008",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080009",
+    "request_id": "SR2026080009",
+    "order_item_id": "OI2026080009",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080010",
+    "request_id": "SR2026080010",
+    "order_item_id": "OI2026080010",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080011",
+    "request_id": "SR2026080011",
+    "order_item_id": "OI2026080011",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080012",
+    "request_id": "SR2026080012",
+    "order_item_id": "OI2026080012",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080013",
+    "request_id": "SR2026080013",
+    "order_item_id": "OI2026080013",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080014",
+    "request_id": "SR2026080014",
+    "order_item_id": "OI2026080014",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080015",
+    "request_id": "SR2026080015",
+    "order_item_id": "OI2026080015",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080016",
+    "request_id": "SR2026080016",
+    "order_item_id": "OI2026080016",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080017",
+    "request_id": "SR2026080017",
+    "order_item_id": "OI2026070017",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080018",
+    "request_id": "SR2026080018",
+    "order_item_id": "OI2026080018",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080019",
+    "request_id": "SR2026080019",
+    "order_item_id": "OI2026080019",
+    "requested_quantity": 2,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080020",
+    "request_id": "SR2026080020",
+    "order_item_id": "OI2026070020",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  },
+  {
+    "request_item_id": "SRI2026080021",
+    "request_id": "SR2026080021",
+    "order_item_id": "OI2026080021",
+    "requested_quantity": 1,
+    "approved_quantity": null,
+    "approved_amount": null
+  }
+]

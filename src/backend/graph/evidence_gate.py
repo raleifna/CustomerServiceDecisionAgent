@@ -1,4 +1,5 @@
 from src.backend.graph.state import CustomerServiceState
+from src.backend.decision.rule_engine import automatic_policy_ids
 
 
 def evidence_completeness_gate_node(
@@ -95,10 +96,10 @@ def evidence_completeness_gate_node(
         }
 
     quality_evidence_required = request_reason == "质量问题"
-    damage_evidence_required = (
-        request_reason == "商品损坏"
-        and not logistics_evidence.get("has_shipping_damage", False)
-    )
+    # A carrier can observe tracking/parcel anomalies, but cannot establish
+    # that the product inside is damaged. Product-damage claims always need
+    # customer evidence or a human-verified equivalent.
+    damage_evidence_required = request_reason == "商品损坏"
     evidence_required = (
         quality_evidence_required or damage_evidence_required
     )
@@ -144,6 +145,13 @@ def evidence_completeness_gate_node(
     ):
         reflection_reasons.append("机器审核只能确认损坏现象，不能确认责任原因")
 
+    if (
+        "REFUND-003" in policy_ids
+        and evidence_review.get("has_machine_reviewed_evidence", False)
+        and not evidence_review.get("has_verified_evidence", False)
+    ):
+        reflection_reasons.append("机器审核只能确认商品外观异常，不能确认质量责任原因")
+
     if reflection_reasons:
         return {
             "gate_result": {
@@ -151,6 +159,20 @@ def evidence_completeness_gate_node(
                 "route": "reflection",
                 "can_decide": False,
                 "reasons": reflection_reasons,
+            }
+        }
+
+    # A complete evidence bundle is not the same as an applicable automatic
+    # decision rule.  Keep uncovered/expired combinations out of the Decision
+    # Engine instead of turning a normal business boundary into SystemError.
+    automatic_decision_policies = automatic_policy_ids()
+    if not policy_ids.intersection(automatic_decision_policies):
+        return {
+            "gate_result": {
+                "status": "NeedsReflection",
+                "route": "reflection",
+                "can_decide": False,
+                "reasons": ["当前事实不满足任何可自动裁决的政策条款"],
             }
         }
 

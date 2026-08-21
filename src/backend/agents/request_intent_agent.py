@@ -46,18 +46,55 @@ def _normalize_intent(raw_intent: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _extract_intent(user_message: str) -> dict[str, Any]:
+def _format_recent_history(
+    history: list[dict[str, str]] | None,
+    turns: int = 3,
+) -> str:
+    """Format the last few dialogue turns for an extraction prompt.
+
+    A multi-turn creation flow ("我想退款" -> "请说明原因" -> "尺码不对")
+    only makes full sense with the preceding turns in view.
+    """
+    if not history:
+        return ""
+    recent = history[-(turns * 2):]
+    if not recent:
+        return ""
+    lines = [
+        f"{'用户' if turn.get('role') == 'user' else 'Agent'}：{turn.get('content', '')}"
+        for turn in recent
+    ]
+    return "最近对话（仅供理解上下文，不要从历史消息里提取字段）：\n" + "\n".join(lines) + "\n\n"
+
+
+def extract_after_sales_intent(
+    user_message: str,
+    history: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    """Extract request_type/request_reason/requested_quantity from free text.
+
+    Classification is semantic, not keyword-matched: phrasings like "尺码不对"、
+    "颜色不喜欢"、"拍错了" should all land on request_reason="不想要了" even
+    though they share no substring with that label. Raises on LLM failure;
+    callers decide how to degrade (see request_intent_node below and
+    service_request_action.py for two different fallback strategies).
+    """
     system_prompt = (
         "你是电商售后意图抽取器。请根据用户原话输出一个 JSON 对象，"
         "不要进行审批或补充用户未表达的信息。request_type 只能是 Refund、"
         "PartialRefund、Exchange 或 null；request_reason 只能是 不想要了、"
         "商品损坏、少发商品、未发货取消订单、未收到货、物流延误、质量问题、"
-        "错发商品 或 null；requested_quantity 只能是正整数或 null。"
+        "错发商品 或 null，请按语义归类，不要求用户原话完全匹配这些词——"
+        "例如“尺码不对”“颜色不喜欢”“拍错了”“不满意”都属于“不想要了”；"
+        "requested_quantity 只能是正整数或 null，用户说的中文数字"
+        "（如“两件”“三件”）也需要换算为阿拉伯数字。"
+        "如果提供了最近对话，可以用来理解当前消息在说什么，但只提取"
+        "最后这一条用户消息里表达的信息。"
     )
     user_prompt = (
-        "请将下面的用户消息提取为 JSON，字段必须是 request_type、"
-        "request_reason、requested_quantity：\n\n"
-        f"{user_message}"
+        _format_recent_history(history)
+        + "请将下面的用户消息提取为 JSON，字段必须是 request_type、"
+        f"request_reason、requested_quantity：\n\n{user_message}"
     )
     return _normalize_intent(
         chat_json(
@@ -130,7 +167,9 @@ def request_intent_node(
         }
 
     try:
-        extracted = _extract_intent(user_message)
+        extracted = extract_after_sales_intent(
+            user_message, state.get("dialogue_history")
+        )
     except Exception as exc:
         return {
             "intent_result": {

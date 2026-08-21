@@ -6,7 +6,7 @@
     "submitted_by": "Customer",
     "submitted_date": "2026-08-08",
     "description": "客户提交商品接通电源后无法正常启动的完整操作视频",
-    "verification_status": "MachineReviewed",
+    "verification_status": "Verified",
     "verified_facts": [
       "视频中的商品类别与订单商品一致",
       "视频展示了完整的接通电源和启动操作",
@@ -21,7 +21,7 @@
     "submitted_by": "Customer",
     "submitted_date": "2026-08-10",
     "description": "客户提交三件商品合照及其中一件存在明显裂纹的近照",
-    "verification_status": "MachineReviewed",
+    "verification_status": "Verified",
     "verified_facts": [
       "图片中的商品类别与订单商品一致",
       "图片中可见三件商品",
@@ -87,7 +87,7 @@
     "evidence_type": "Image",
     "submitted_by": "Customer",
     "submitted_date": "2026-08-12",
-    "description": "客户提交易损商品出现裂纹的照片，物流系统没有运输破损记录",
+    "description": "客户提交易损商品出现裂纹的照片，用于核验客户申报的商品损坏",
     "verification_status": "MachineReviewed",
     "verified_facts": [
       "图片中的商品类别与订单商品一致",

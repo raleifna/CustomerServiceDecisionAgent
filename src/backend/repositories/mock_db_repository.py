@@ -45,6 +45,24 @@ def get_order(order_id: str) -> dict[str, Any] | None:
         
     return None
 
+def get_order_items(order_id: str) -> list[dict[str, Any]]:
+    return [
+        item for item in load_table("order_items.json")
+        if item.get("order_id") == order_id
+    ]
+
+def get_order_item(order_item_id: str) -> dict[str, Any] | None:
+    for item in load_table("order_items.json"):
+        if item.get("order_item_id") == order_item_id:
+            return item
+    return None
+
+def get_seed_service_request_items(request_id: str) -> list[dict[str, Any]]:
+    return [
+        item for item in load_table("service_request_items.json")
+        if item.get("request_id") == request_id
+    ]
+
 def get_orders_by_customer_id(customer_id: str) -> list[dict[str, Any]]:
     orders = load_table("orders.json")
 
@@ -80,8 +98,22 @@ def get_logistics(order_id: str) -> list[dict[str, Any]]:
     for logistic in logistics:
         if logistic.get("order_id") == order_id:
             matches.append(logistic)
-        
+
     return matches
+
+def get_logistics_tracking(order_id: str) -> dict[str, Any] | None:
+    """Routine carrier tracking checkpoints — informational only, not a
+    decision-critical source. logistics.json (get_logistics above) stays the
+    only thing policy/decision logic reads; this just gives query_agent
+    something real to say for "我的快递到哪了" style questions.
+    """
+    tracking_records = load_table("logistics_tracking.json")
+
+    for record in tracking_records:
+        if record.get("order_id") == order_id:
+            return record
+
+    return None
 
 def get_evi(request_id: str) -> list[dict[str, Any]]:
     evidence_records = load_table("service_request_evidence.json")

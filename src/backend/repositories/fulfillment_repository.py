@@ -7,7 +7,7 @@ from typing import Any
 
 from src.backend.repositories.mock_db_repository import MOCK_DB_DIR
 from src.backend.repositories.postgres_repository import (
-    create_postgres_expedite_request,
+    create_postgres_fulfillment_request,
     get_database_url,
 )
 
@@ -32,8 +32,9 @@ def load_fulfillment_requests(
     return records
 
 
-def find_open_expedite_request(
+def find_open_fulfillment_request(
     order_id: str,
+    request_type: str,
     records: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any] | None:
     current_records = records if records is not None else load_fulfillment_requests()
@@ -41,12 +42,19 @@ def find_open_expedite_request(
     for record in current_records:
         if (
             record.get("order_id") == order_id
-            and record.get("request_type") == "ExpediteShipment"
+            and record.get("request_type") == request_type
             and record.get("workflow_status") in OPEN_WORKFLOW_STATUSES
         ):
             return record
 
     return None
+
+
+def find_open_expedite_request(
+    order_id: str,
+    records: list[dict[str, Any]] | None = None,
+) -> dict[str, Any] | None:
+    return find_open_fulfillment_request(order_id, "ExpediteShipment", records)
 
 
 def _next_request_id(
@@ -94,14 +102,16 @@ def _write_records_atomically(
             temp_path.unlink()
 
 
-def create_expedite_request(
+def create_fulfillment_request(
     order_id: str,
     customer_id: str,
+    request_type: str,
     *,
     created_date: date | None = None,
     file_path: Path | None = None,
 ) -> tuple[dict[str, Any], bool]:
-    """Create one open expedite request, or return the existing one."""
+    """Create one open fulfillment-side request of the given type, or return
+    the existing open one for (order_id, request_type)."""
     request_date = created_date or date.today()
 
     # An explicit path is used by isolated tests. Runtime uses PostgreSQL when
@@ -109,17 +119,18 @@ def create_expedite_request(
     if file_path is None:
         database_url = get_database_url()
         if database_url:
-            return create_postgres_expedite_request(
+            return create_postgres_fulfillment_request(
                 database_url,
                 order_id,
                 customer_id,
+                request_type,
                 request_date,
             )
         file_path = FULFILLMENT_REQUESTS_FILE
 
     with _write_lock:
         records = load_fulfillment_requests(file_path)
-        existing = find_open_expedite_request(order_id, records)
+        existing = find_open_fulfillment_request(order_id, request_type, records)
         if existing is not None:
             return existing, False
 
@@ -127,7 +138,7 @@ def create_expedite_request(
             "fulfillment_request_id": _next_request_id(records, request_date),
             "order_id": order_id,
             "customer_id": customer_id,
-            "request_type": "ExpediteShipment",
+            "request_type": request_type,
             "created_date": request_date.isoformat(),
             "workflow_status": "Submitted",
             "result": None,
@@ -136,3 +147,37 @@ def create_expedite_request(
         _write_records_atomically(records, file_path)
 
     return record, True
+
+
+def create_expedite_request(
+    order_id: str,
+    customer_id: str,
+    *,
+    created_date: date | None = None,
+    file_path: Path | None = None,
+) -> tuple[dict[str, Any], bool]:
+    """Create one open expedite-shipment request, or return the existing one."""
+    return create_fulfillment_request(
+        order_id,
+        customer_id,
+        "ExpediteShipment",
+        created_date=created_date,
+        file_path=file_path,
+    )
+
+
+def create_logistics_chase_request(
+    order_id: str,
+    customer_id: str,
+    *,
+    created_date: date | None = None,
+    file_path: Path | None = None,
+) -> tuple[dict[str, Any], bool]:
+    """Create one open logistics-chase request, or return the existing one."""
+    return create_fulfillment_request(
+        order_id,
+        customer_id,
+        "LogisticsChase",
+        created_date=created_date,
+        file_path=file_path,
+    )

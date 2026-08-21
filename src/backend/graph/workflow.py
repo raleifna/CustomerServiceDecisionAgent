@@ -1,10 +1,16 @@
 from src.backend.graph.state import CustomerServiceState
+from src.backend.llm import chat
 from src.backend.repositories.mock_db_repository import (
     get_customer,
     get_order,
     get_product,
     get_logistics,
-    get_evi,
+)
+from src.backend.repositories.evidence_repository import get_evidence_for_decision
+from src.backend.repositories.order_item_repository import (
+    get_order_item,
+    get_order_items,
+    get_service_request_items,
 )
 from src.backend.repositories.service_request_repository import get_service_request
 from src.backend.agents.order_agent import order_agent_node
@@ -20,12 +26,14 @@ from src.backend.agents.request_resolver_agent import request_resolver_node
 from src.backend.agents.request_intent_agent import request_intent_node
 from src.backend.agents.conversation_router_agent import conversation_router_node
 from src.backend.agents.query_agent import (
-    logistics_query_node,
-    order_status_query_node,
+    query_agent_node,
     service_request_status_query_node,
 )
 from src.backend.actions.fulfillment_action import fulfillment_action_node
+from src.backend.actions.logistics_chase_action import logistics_chase_action_node
 from src.backend.actions.service_request_action import service_request_action_node
+from src.backend.actions.human_handoff_action import human_handoff_action_node
+from src.backend.actions.withdraw_service_request_action import withdraw_service_request_action_node
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
@@ -44,6 +52,9 @@ def prepare_turn_node(state: CustomerServiceState) -> CustomerServiceState:
         "request_id": None,
         "service_request": None,
         "order": None,
+        "order_items": [],
+        "request_items": [],
+        "order_item": None,
         "customer": None,
         "product": None,
         "logistics": [],
@@ -59,6 +70,80 @@ def prepare_turn_node(state: CustomerServiceState) -> CustomerServiceState:
         "final_result": None,
         "customer_response": None,
     }
+
+
+_COMPRESS_AT = 16
+_KEEP_RECENT = 6
+_SUMMARY_PREFIX = "[之前对话摘要] "
+
+
+def _compress_dialogue_history(
+    history: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    """Roll old turns into one summary entry instead of truncating them away.
+
+    Each pass regenerates a single consolidated summary (folding in any prior
+    summary) rather than concatenating summaries onto each other forever, so
+    the prompt this feeds into tool-calling agents stays bounded.
+    """
+    if len(history) <= _COMPRESS_AT:
+        return history
+
+    existing_summary = None
+    rest = history
+    first = history[0]
+    if first.get("role") == "system" and first.get("content", "").startswith(
+        _SUMMARY_PREFIX
+    ):
+        existing_summary = first["content"][len(_SUMMARY_PREFIX):]
+        rest = history[1:]
+
+    to_compress = rest[:-_KEEP_RECENT]
+    keep = rest[-_KEEP_RECENT:]
+    if not to_compress:
+        return history
+
+    transcript = "\n".join(
+        f"{'用户' if turn['role'] == 'user' else 'Agent'}：{turn['content']}"
+        for turn in to_compress
+    )
+    prompt_parts = []
+    if existing_summary:
+        prompt_parts.append(f"已有摘要：{existing_summary}")
+    prompt_parts.append(f"新增对话：\n{transcript}")
+    prompt_parts.append(
+        "请把已有摘要和新增对话合并，用2-3句话总结关键信息"
+        "（客户诉求、涉及的订单/申请、已经确认的事实），不要编造。"
+    )
+
+    try:
+        summary = chat(
+            "\n\n".join(prompt_parts),
+            system_prompt="你是对话摘要助手，只输出摘要正文，不加其他说明。",
+            temperature=0.0,
+        )
+    except Exception:
+        # Don't let a summarization failure block the turn — plain
+        # truncation is a safe (if lossier) degrade.
+        return keep
+
+    return [{"role": "system", "content": _SUMMARY_PREFIX + summary}, *keep]
+
+
+def record_turn_node(state: CustomerServiceState) -> CustomerServiceState:
+    """Append this turn to dialogue history, compressing old turns once it grows long."""
+    user_message = state.get("user_message")
+    if not user_message:
+        return {}
+
+    history = list(state.get("dialogue_history") or [])
+    history.append({"role": "user", "content": user_message})
+    customer_response = state.get("customer_response")
+    if isinstance(customer_response, str) and customer_response:
+        history.append({"role": "assistant", "content": customer_response})
+
+    return {"dialogue_history": _compress_dialogue_history(history)}
+
 
 def load_service_request_node(state: CustomerServiceState,) -> CustomerServiceState:
     request_id = state.get("request_id")
@@ -132,23 +217,53 @@ def load_customer_node(state: CustomerServiceState,) -> CustomerServiceState:
     return {
         "customer": customer,
     }
+
+
+def load_order_items_node(state: CustomerServiceState) -> CustomerServiceState:
+    order = state.get("order")
+    service_request = state.get("service_request")
+    if order is None or service_request is None:
+        return {"errors": state.get("errors", []) + ["加载订单项缺少订单或售后申请"]}
+    order_items = get_order_items(order.get("order_id"))
+    request_items = get_service_request_items(service_request.get("request_id"))
+    if not order_items:
+        return {"errors": state.get("errors", []) + ["订单没有可售后的订单项"]}
+    if len(request_items) != 1:
+        return {
+            "order_items": order_items,
+            "request_items": request_items,
+            "errors": state.get("errors", [])
+            + ["当前裁决流程要求一条售后申请明确关联一个订单项"],
+        }
+    target = get_order_item(request_items[0].get("order_item_id"))
+    if target is None or target.get("order_id") != order.get("order_id"):
+        return {
+            "order_items": order_items,
+            "request_items": request_items,
+            "errors": state.get("errors", []) + ["售后申请项与订单项关联无效"],
+        }
+    return {
+        "order_items": order_items,
+        "request_items": request_items,
+        "order_item": target,
+    }
     
 
 
 def load_product_node(state: CustomerServiceState,) -> CustomerServiceState:
-    order = state.get("order")
+    order_item = state.get("order_item")
 
-    if order is None:
+    if order_item is None:
         cur_errors = state.get("errors", [])
         return {
-            "errors": cur_errors + ["缺少order"]
+            "errors": cur_errors + ["缺少order_item"]
         }
-    product_id = order.get("product_id")
+    product_id = order_item.get("product_id")
 
     if not product_id:
         cur_errors = state.get("errors", [])
         return {
-            "errors": cur_errors + ["order缺少product_id"]
+            "errors": cur_errors + ["order_item缺少product_id"]
         }
     
     product = get_product(product_id)
@@ -191,8 +306,8 @@ def load_evi_node(state: CustomerServiceState,) -> CustomerServiceState:
             "errors": cur_errors + ["缺少request_id"]
         }
     
-    submitted_evi = get_evi(request_id)
-    
+    submitted_evi = get_evidence_for_decision(request_id)
+
     return {
         "submitted_evi": submitted_evi
     }
@@ -214,20 +329,45 @@ def route_after_conversation_router(state: CustomerServiceState,) -> str:
         return "end"
 
     intent = conversation_result.get("conversation_intent")
-    if intent in {"OrderStatusQuery", "ShippingTimeQuery"}:
-        return "order_status_query"
-    if intent == "LogisticsQuery":
-        return "logistics_query"
+    if intent in {"OrderStatusQuery", "ShippingTimeQuery", "LogisticsQuery"}:
+        return "query_agent"
     if intent == "AfterSalesStatusQuery":
         return "request_resolver"
     if intent == "AfterSalesRequest":
+        if conversation_result.get("matched_by") in {
+            "reapplication_cancelled",
+            "pending_offer_declined",
+        }:
+            return "record_turn"
         if state.get("request_id") and not state.get("user_message"):
             return "request_resolver"
         return "service_request_action"
     if intent == "ExpediteShipmentConfirmation":
         return "fulfillment_action"
+    if intent == "LogisticsChaseConfirmation":
+        return "logistics_chase_action"
+    if intent == "HumanHandoff":
+        return "human_handoff_action"
+    if intent == "WithdrawServiceRequest":
+        return "withdraw_service_request_action"
 
     return "end"
+
+def route_after_service_request_action(state: CustomerServiceState,) -> str:
+    """If a service request was created (or already existed), continue
+    straight into the same evidence-and-decision pipeline used for status
+    queries instead of stopping at "created, pending". Cases with no
+    evidence requirement (e.g. an unshipped-order cancellation) get a real
+    decision in the same turn; cases still needing evidence/risk review
+    correctly fall through to the same gate/reflection/escalation logic —
+    this reuses that pipeline rather than special-casing an "obviously fine"
+    shortcut that would skip risk checks like RISK-002.
+    """
+    action_result = state.get("action_result")
+    if action_result and action_result.get("status") in {"Created", "Existing"}:
+        return "load_order"
+
+    return "record_turn"
 
 def route_after_request_intent(state: CustomerServiceState,) -> str:
     intent_result = state.get("intent_result")
@@ -253,7 +393,11 @@ def route_after_order(state:CustomerServiceState,) -> str:
     if state.get("order") is None:
         return "end"
     
-    return "load_customer"
+    return "load_order_items"
+
+
+def route_after_order_items(state: CustomerServiceState) -> str:
+    return "load_customer" if state.get("order_item") is not None else "end"
 
 def route_after_customer(state:CustomerServiceState,) -> str:
     if state.get("customer") is None:
@@ -301,13 +445,8 @@ workflow_builder.add_node(
 )
 
 workflow_builder.add_node(
-    "order_status_query",
-    order_status_query_node,
-)
-
-workflow_builder.add_node(
-    "logistics_query",
-    logistics_query_node,
+    "query_agent",
+    query_agent_node,
 )
 
 workflow_builder.add_node(
@@ -316,14 +455,26 @@ workflow_builder.add_node(
 )
 
 workflow_builder.add_node(
+    "record_turn",
+    record_turn_node,
+)
+
+workflow_builder.add_node(
     "fulfillment_action",
     fulfillment_action_node,
+)
+
+workflow_builder.add_node(
+    "logistics_chase_action",
+    logistics_chase_action_node,
 )
 
 workflow_builder.add_node(
     "service_request_action",
     service_request_action_node,
 )
+workflow_builder.add_node("human_handoff_action", human_handoff_action_node)
+workflow_builder.add_node("withdraw_service_request_action", withdraw_service_request_action_node)
 
 workflow_builder.add_edge(
     START,
@@ -339,33 +490,42 @@ workflow_builder.add_conditional_edges(
     "conversation_router",
     route_after_conversation_router,
     {
-        "order_status_query": "order_status_query",
-        "logistics_query": "logistics_query",
+        "query_agent": "query_agent",
         "request_resolver": "request_resolver",
         "fulfillment_action": "fulfillment_action",
+        "logistics_chase_action": "logistics_chase_action",
         "service_request_action": "service_request_action",
+        "human_handoff_action": "human_handoff_action",
+        "withdraw_service_request_action": "withdraw_service_request_action",
+        "record_turn": "record_turn",
         "end": END,
     },
 )
 
 workflow_builder.add_edge(
-    "order_status_query",
-    END,
-)
-
-workflow_builder.add_edge(
-    "logistics_query",
-    END,
+    "query_agent",
+    "record_turn",
 )
 
 workflow_builder.add_edge(
     "fulfillment_action",
-    END,
+    "record_turn",
 )
 
 workflow_builder.add_edge(
+    "logistics_chase_action",
+    "record_turn",
+)
+workflow_builder.add_edge("human_handoff_action", "record_turn")
+workflow_builder.add_edge("withdraw_service_request_action", "record_turn")
+
+workflow_builder.add_conditional_edges(
     "service_request_action",
-    END,
+    route_after_service_request_action,
+    {
+        "load_order": "load_order",
+        "record_turn": "record_turn",
+    },
 )
 
 workflow_builder.add_conditional_edges(
@@ -386,6 +546,7 @@ workflow_builder.add_node(
     "load_customer",
     load_customer_node,
 )
+workflow_builder.add_node("load_order_items", load_order_items_node)
 
 workflow_builder.add_node(
     "load_product",
@@ -461,7 +622,7 @@ workflow_builder.add_conditional_edges(
 
 workflow_builder.add_edge(
     "service_request_status_query",
-    END,
+    "record_turn",
 )
 
 workflow_builder.add_conditional_edges(
@@ -477,9 +638,15 @@ workflow_builder.add_conditional_edges(
     "load_order",
     route_after_order,
     {
-        "load_customer": "load_customer",
+        "load_order_items": "load_order_items",
         "end": END,
     },
+)
+
+workflow_builder.add_conditional_edges(
+    "load_order_items",
+    route_after_order_items,
+    {"load_customer": "load_customer", "end": END},
 )
 
 workflow_builder.add_conditional_edges(
@@ -556,6 +723,11 @@ workflow_builder.add_edge(
 
 workflow_builder.add_edge(
     "response_agent",
+    "record_turn",
+)
+
+workflow_builder.add_edge(
+    "record_turn",
     END,
 )
 
