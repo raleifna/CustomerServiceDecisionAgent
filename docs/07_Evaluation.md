@@ -122,6 +122,16 @@ docker compose --profile test up integration-tests \
   --build --abort-on-container-exit --exit-code-from integration-tests
 ```
 
+测试数据库使用 tmpfs，结束后不保留数据。若本地已有专用测试库，也可以设置
+`TEST_DATABASE_URL` 后直接运行：
+
+```bash
+TEST_DATABASE_URL=postgresql://user:pass@localhost/customer_service_test \
+python -m unittest discover -s tests/integration -v
+```
+
+为防止误清空开发或生产库，数据库名称必须包含 `test`，否则集成测试会跳过。
+
 **这类测试用单元测试（Mock 数据库）验证不出来**——`SKIP LOCKED`、事务隔离级别、
 唯一索引冲突都是需要真实数据库引擎才会触发的行为，这也是为什么单元测试和
 PostgreSQL 集成测试在本项目里是两套独立套件，而不是合并成一套（详见
@@ -144,8 +154,7 @@ CI 门禁。
 等真实动作的用例（如 `JUDGE_REASON_PHRASING_001`），如果没有数据库，动作会因
 `RuntimeError` 失败，Agent 会用一句得体的"暂时未能创建，请稍后重试"兜底——这句
 话文字上挑不出毛病，评委只看最终回复文本打分的话完全可能给出正常分数，从而
-把一条完全没跑通的执行链路误判为"通过"。这个坑是真实踩过的，具体经过和修复方式
-见 `docs/10_ResultsReport.md`。
+把一条完全没跑通的执行链路误判为"通过"，具体经过和修复方式见 `docs/10_ResultsReport.md`。
 
 ### 7.2 打分维度
 

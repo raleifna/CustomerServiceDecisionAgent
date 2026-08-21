@@ -14,15 +14,13 @@
    全流程真实跑通并通过测试验证，不是只有 UI 的静态 Demo。证据：确定性回归
    套件 34/34、单元测试 41/41、PostgreSQL 并发正确性测试 5/5、LLM 质量评测
    7/7（4 条关键场景验证了三次运行一致），见第 2 章证据清单。
-2. **系统内建的安全边界经过真实攻防式验证，不是纸面设计**：开发过程中真实
-   发现并修复了 3 个可能导致误放款或权限失控的业务逻辑漏洞，全部在系统集成
-   后才暴露，说明"设计阶段想到的安全边界"和"代码实际执行的安全边界"不是
-   一回事——这也是为什么本报告不满足于展示一份"看起来对"的架构图。证据：
+2. **系统内建的安全边界经过实际验证，不是纸面设计**：迭代过程中发现并修复了
+   3 个可能导致误放款或权限失控的业务逻辑漏洞，全部在系统集成后才暴露，说明
+   设计阶段设想的安全边界与代码实际执行的安全边界需要分别验证。证据：
    `docs/10_ResultsReport.md` 2.1-2.3 节。
 3. **两项 Success Metrics 尚未验证，不建议在没有真实数据前对外承诺具体数字**：
    Human Escalation Rate 和 Average Response Time 目前只有自建测试场景下的
-   观察值，不具备统计意义。这是有意识的克制，而不是遗漏——详见第 2 章
-   "尚未闭合的证据"。
+   观察值，不具备统计意义，详见第 2 章"尚未闭合的证据"。
 4. **距离生产上线还差风险阈值校准和真实流量验证两步**：技术闭环已经具备，
    `docs/08_RiskDriverAnalysis.md` 第 2 章指出的阈值未经真实数据校准，是
    当前最大的、且只能靠接入真实数据才能解决的不确定性。
@@ -34,11 +32,11 @@
 | 结论 | 证据 | 出处 |
 |---|---|---|
 | 决策逻辑正确 | 确定性回归套件 34/34（Routing/Decision/Context/Thread Isolation/Intake/Action×3） | `docs/07_Evaluation.md` §5 |
-| 并发与数据一致性正确 | PostgreSQL 集成测试 5/5，覆盖幂等、双 Worker 竞争、双客服竞争、事务回滚 | `docs/07_Evaluation.md` §6.1、`docs/06_LowLevelDesign.md` §5.4 |
-| 对话质量经过独立评测，而非自我感觉良好 | LLM-as-Judge 7/7，五维度打分 + 4 条关键场景 pass^k=3 一致验证，且评测脚本本身修复过一次"误判会漏检"的方法论漏洞 | `docs/07_Evaluation.md` §6 |
-| 安全边界是真实加固过的，不是从未受过质疑的假设 | 3 个真实发现并修复的业务逻辑漏洞（证据门槛缺失、金额上限缺失、风险规则隐性依赖），均有具体触发场景和回归测试 | `docs/10_ResultsReport.md` §2.1-2.3 |
-| 履约不会被误报为已完成 | 批准与到账严格分离（`ExecutionPending`/`Closed`/`ExecutionFailed`），且这个设计在一次真实运维事故（Worker 未启动）中被验证——问题被限制在"忘记启动服务"而非"数据被污染" | `docs/09_StrategyRollout.md` §1.3、`docs/10_ResultsReport.md` §2.4 |
-| 尚未闭合的证据 | Human Escalation Rate、Average Response Time 未实测；风险阈值未经真实数据校准；LLM-judge 样本量小（7 条） | `docs/10_ResultsReport.md` §5、`docs/08_RiskDriverAnalysis.md` §2 |
+| 并发与数据一致性正确 | PostgreSQL 集成测试 5/5，覆盖幂等、双 Worker 竞争、双客服竞争、事务回滚 | `docs/07_Evaluation.md` §6.2、`docs/06_LowLevelDesign.md` §5.4 |
+| 对话质量经过独立评测 | LLM-as-Judge 7/7，五维度打分 + 4 条关键场景 pass^k=3 一致验证，评测脚本已修复"误判可漏检失败动作"的方法论问题 | `docs/07_Evaluation.md` §7 |
+| 安全边界经过实际验证 | 3 个已发现并修复的业务逻辑漏洞（证据门槛缺失、金额上限缺失、风险规则隐性依赖），均有具体触发场景和回归测试 | `docs/10_ResultsReport.md` §2.1-2.3 |
+| 履约不会被误报为已完成 | 批准与到账严格分离（`ExecutionPending`/`Closed`/`ExecutionFailed`），该设计在一次运维事故（Worker 未启动）中经过验证——问题被限制在"服务未启动"而非"数据被污染" | `docs/09_StrategyRollout.md` §1.3、`docs/10_ResultsReport.md` §2.4 |
+| 尚未闭合的证据 | Human Escalation Rate、Average Response Time 未实测；风险阈值未经真实数据校准；LLM-judge 样本量小（7 条） | `docs/10_ResultsReport.md` §4、`docs/08_RiskDriverAnalysis.md` §2 |
 
 ---
 
@@ -89,11 +87,10 @@
 一线实践。
 
 **问：这些测试和评测结果，会不会是自己给自己出题、自己给自己判对？**
-答：会有这个风险，这也是本报告没有回避的地方——确定性套件的 Ground Truth
-和评测用例确实是自建的（见 `docs/02_DataDesign.md` §2.3），不是真实流量
-采样。这正是第 3 章路线图把"接入真实流量验证"列为近期首要事项的原因：
-自建测试证明的是"系统按设计的逻辑正确运行"，不能替代"系统在真实世界的
-表现"，两者需要分别验证，本报告没有把前者包装成后者。
+答：确定性套件的 Ground Truth 和评测用例是自建的（见 `docs/02_DataDesign.md`
+§2.3），不是真实流量采样，这也是第 3 章路线图把"接入真实流量验证"列为
+近期首要事项的原因。自建测试证明的是"系统按设计的逻辑正确运行"，不能替代
+"系统在真实世界的表现"，两者需要分别验证。
 
 **问：如果只能再投入一部分时间，应该优先做什么？**
 答：风险阈值的真实数据校准（`docs/08_RiskDriverAnalysis.md` §2）。这是唯一

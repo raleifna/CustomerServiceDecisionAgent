@@ -133,8 +133,8 @@ action_result.status ∈ {Created, Existing} → load_order（复用后续证据
 
 **关键设计**：数量类裁决必须扣减"同一订单项 + 同一 request_reason 此前已批准的数量"
 （`get_already_approved_quantity`），因为唯一索引 `uq_open_service_request_item` 只
-挡得住并发重复的*未关闭*申请，挡不住"上次已经批准关闭、这次又提交一笔新的"——
-这是本项目在真实迭代中发现并修复的问题，不是设计阶段就想到的。
+挡得住并发重复的*未关闭*申请，挡不住"上次已经批准关闭、这次又提交一笔新的"这种
+情况，需要在业务逻辑层显式扣减已批准数量。
 
 ## 4.2 Logistics Agent（`agents/logistics_agent.py`）
 
@@ -155,7 +155,7 @@ action_result.status ∈ {Created, Existing} → load_order（复用后续证据
 
 `has_usable_evidence` 只回答"有没有材料能用"，不回答"能不能自动裁决"——后者由
 Evidence Gate 结合 `request_reason` 和 `has_machine_reviewed_evidence` 再判一次
-（见 §4.6），这是本项目一次真实 bug 修复的落点。
+（见 §4.6）。
 
 ## 4.4 Policy Agent（`agents/policy_agent.py`）
 
@@ -199,10 +199,10 @@ RISK-003 的强制人工检查在 Evidence Gate 中独立实现（不依赖 RISK
 9. 以上都不命中                                    → ReadyForDecision → decision
 ```
 
-第 3 步的 RISK-003 检查、第 7 步的 REFUND-003 检查都是本项目迭代中发现并修复的：
-最初只对 RISK-002 和 REFUND-008 做了对应检查，REFUND-003（质量问题）和 RISK-003
-（新账号大额退款）曾经只是"因为阈值恰好相同/规则恰好共同命中"而被间接兜住，
-不是显式防护，具体修复记录见 `docs/10_ResultsReport.md`。
+第 3 步的 RISK-003 检查与第 7 步的 REFUND-003 检查，分别与 RISK-002、REFUND-008
+的检查保持对称：证据/风险信号的可信度判断需要对同类场景一致处理，不能因为
+"质量问题"和"商品损坏"、"新账号大额退款"和"大额退款"属于不同规则编号就区别
+对待。具体设计记录见 `docs/10_ResultsReport.md`。
 
 ## 4.7 Decision Engine（`decision/engine.py` + `decision/rule_engine.py`）
 
@@ -276,8 +276,18 @@ Query Agent（`agents/query_agent.py`）的订单/物流查询走独立的 Tool-
 **该 Worker 默认不随 `docker compose up` 启动**——`docker-compose.yml` 给它设置了
 `profiles: ["execution"]`，必须用 `docker compose --profile execution up` 才会带上；
 如果只用不带 profile 的默认命令，所有"已批准"的申请会一直卡在 `ExecutionPending`，
-表面上看起来批准成功，实际上退款/取消动作从未真正执行。这是本项目迭代中
-真实踩过的坑，记录在 `docs/10_ResultsReport.md`。
+表面上看起来批准成功，实际上退款/取消动作从未真正执行，详见 `docs/10_ResultsReport.md`。
+
+Worker 通过环境变量对接外部履约服务：
+
+```bash
+PAYMENT_REFUND_URL=http://payment-service/refunds
+WAREHOUSE_EXCHANGE_URL=http://warehouse-service/exchanges
+ORDER_CANCEL_URL=http://order-service/cancellations
+```
+
+每次调用带 `Idempotency-Key`，按指数退避重试；每次任务创建、重试、成功或失败
+都在同一事务中写入 Outbox 事件，不会因为重试而产生重复的履约动作。
 
 ## 5.3 待确认 Offer 机制
 
@@ -297,8 +307,75 @@ OfferHumanHandoff      → 确认后 intent=HumanHandoff                 → hum
 
 ## 5.4 Staff 工作台闭环
 
-`api/staff.py` + `api/staff_auth.py`：不透明 Token → 服务端解析的 `staff_id`/角色，
-人工裁决前必须先领取工单（15 分钟租约 + `row_version` 乐观锁），批准金额必须
+`api/staff.py` + `api/staff_auth.py`：`/staff/*` 不信任前端提交的处理人姓名，
+而是用 `.env` 中配置的不透明 Token 映射到服务端身份：
+
+```bash
+STAFF_API_KEYS='{"replace-with-long-random-token":{"staff_id":"agent_001","roles":["reviewer"]}}'
+```
+
+支持 `viewer`/`reviewer`/`admin` 三种角色。人工裁决前必须先领取工单（15 分钟
+租约 + `row_version` 乐观锁，防止两名客服同时覆盖结果），批准金额必须
 `<= 订单项实付金额`（`decision_lifecycle_repository.validate_human_decision`）——
-这条上限校验也是本项目迭代中补上的，此前人工裁决路径信任任意正数金额，与自动
-裁决路径（始终按 `unit_price × quantity` 计算）不一致。
+这条上限校验与自动裁决路径（始终按 `unit_price × quantity` 计算）保持一致。
+领取、证据审核、人工裁决和手动重试均记录在 `audit_logs`；达到最大重试次数的
+履约任务进入工作台的"履约失败任务"队列，可由有权限的客服重新入队。
+
+---
+
+# 6. API 参考与本地开发
+
+## 6.1 本地开发（不使用 Docker）
+
+```bash
+python -m pip install -r requirements.txt
+uvicorn src.backend.api.main:app --reload
+```
+
+未设置 `DATABASE_URL` 时，系统回退到内存会话和 JSON 履约记录，仅适合本地
+调试；需要持久化时按 `.env.example` 配置数据库连接。前端单独开发：
+
+```bash
+cd src/frontend
+npm install
+npm run dev
+```
+
+Vite 开发服务器将 `/api` 请求代理到 `http://127.0.0.1:8000`。
+
+## 6.2 接口地址
+
+- Health Check：`http://localhost:8000/health`
+- Mock Customers：`http://localhost:8000/customers`
+- Customer Orders：`http://localhost:8000/customers/{customer_id}/orders`
+- Order & Logistics Detail：`http://localhost:8000/customers/{customer_id}/orders/{order_id}`
+- Evidence Upload：`POST http://localhost:8000/service-requests/{request_id}/evidence`
+- Evidence List：`GET http://localhost:8000/service-requests/{request_id}/evidence?customer_id={customer_id}`
+- Chat API：`http://localhost:8000/chat`
+- Swagger UI：`http://localhost:8000/docs`
+
+多轮请求必须复用同一个 `conversation_id`：
+
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "conversation_id": "customer-001",
+    "customer_id": "CUS0021",
+    "order_id": "ORD2026080021",
+    "message": "订单ORD2026080021什么时候发货？"
+  }'
+```
+
+`customer_id` 是会话身份边界；`order_id` 仅在从订单页进入客服时传入，且必须
+属于当前客户。前端不传入意图，意图始终由 Agent 根据自然语言识别。
+
+退款、部分退款和换货诉求会先创建 PostgreSQL `service_requests` 记录，新申请
+初始状态为 `Pending`；质量问题的文字陈述不会被直接视为已验证证据，也不会
+自动批准，需要进入证据提交与审核流程。
+
+## 6.3 证据上传约束
+
+支持 JPG、PNG 和 WebP，单文件最大 10MB。后端校验文件内容签名而非只信任扩展名
+或浏览器 MIME；文件保存在 `data/uploads/`，PostgreSQL 只保存存储路径、类型、
+大小和审核状态等元数据。新上传证据初始状态为 `Pending`，不代表商品问题已确认。
