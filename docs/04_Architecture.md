@@ -378,8 +378,12 @@ State 中不放 Evaluation Ground Truth：`case_id`、`expected_decision` 和
 
 # 7. 状态写回与副作用边界
 
-证据收集和候选决策阶段均为只读。图内部只有 Finalization 节点（`graph/finalization.py`）
-可以更新 Postgres `service_requests` 表的 `workflow_status`/`decision`：
+证据收集和候选决策阶段均为只读。图内部有两个节点可以更新 Postgres
+`service_requests` 表的 `workflow_status`/`decision`：Finalization
+（`graph/finalization.py`，负责下表列出的正常裁决路径）和
+`withdraw_service_request_action`（客户主动撤销申请时，直接写
+`workflow_status='Closed'`、`decision='NoActionRequired'`，见
+`docs/06_LowLevelDesign.md` 4.9 节）。
 
 | 处理结果 | workflow_status | decision |
 |---|---|---|

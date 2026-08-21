@@ -228,10 +228,19 @@ RISK-003 的强制人工检查在 Evidence Gate 中独立实现（不依赖 RISK
 
 ## 4.9 Finalization（`graph/finalization.py`）
 
-Graph 内部**唯一**允许写回 `service_requests.workflow_status`/`decision` 的节点
-（见文件内注释）。Graph 运行结束之后，物理退货流程（5.5 节）会在客户寄回、
-客服签收、验货三个环节继续推进 `workflow_status`，但那是独立的后续 API 调用，
-不是同一次 Graph 执行的一部分。三条输入路径：
+正常裁决路径下写回 `service_requests.workflow_status`/`decision` 的节点。
+Graph 内还有一个例外：客户主动撤销申请时，路由到
+`withdraw_service_request_action` 节点（`actions/withdraw_service_request_action.py`），
+直接调用 `service_request_repository.withdraw_service_request()` 写
+`workflow_status='Closed'`、`decision='NoActionRequired'`，不经过 Finalization——
+仅当该申请还未进入任何履约任务（`action_tasks` 无 `Pending`/`Executing`/
+`Retrying`/`Succeeded` 记录）时才允许撤销。
+
+Graph 运行结束之后，物理退货流程（5.5 节）会在客户寄回、客服签收、验货三个
+环节继续推进 `workflow_status`，但那是独立的后续 API 调用，不是同一次 Graph
+执行的一部分。
+
+Finalization 本身的三条输入路径：
 
 ```text
 proposed_decision 非空        → 调用 persist_decision_lifecycle：
@@ -344,11 +353,11 @@ POST /service-requests/{request_id}/return-shipment   （客户，main.py）
   → submit_return_shipment：校验 AwaitingShipment → InTransit，
     写入 carrier/tracking_number，service_requests.workflow_status → ReturnInTransit
 
-POST /return-orders/{return_order_id}/receive          （客服 reviewer/admin，staff.py）
+POST /staff/return-orders/{return_order_id}/receive    （客服 reviewer/admin，staff.py）
   → receive_return：InTransit → AwaitingInspection，
     service_requests.workflow_status → ReturnAwaitingInspection
 
-POST /return-orders/{return_order_id}/inspect           （客服 reviewer/admin，staff.py）
+POST /staff/return-orders/{return_order_id}/inspect     （客服 reviewer/admin，staff.py）
   → inspect_return：
     验货通过 → return_orders.workflow_status = InspectionAccepted，
                创建 RefundPayment action_task + outbox_event（复用履约 Worker），
