@@ -84,9 +84,9 @@ Customer Request
 
 # 3. 项目范围（Project Scope）
 
-## 第一阶段支持
+## 系统支持的业务
 
-本项目第一版支持以下业务：
+本系统支持以下业务：
 
 - 退款申请
 - 物流查询
@@ -95,14 +95,15 @@ Customer Request
 - 换货申请
 - 售后咨询
 
-## 暂不支持
+## 范围边界
 
-为了控制项目规模，第一版暂不支持：
+系统聚焦订单创建后的售后决策场景，以下业务不在本系统范围内：
 
 - 在线支付
 - 商品推荐
 - 售前咨询
 - 优惠券发放
+- 价格保护（价保）
 - 投诉升级
 - ERP 库存管理
 
@@ -318,9 +319,11 @@ VIP 客户反馈包裹未收到，物流信息显示丢件 → 决策：批准�
 - `docs/04_Architecture.md` —— 系统架构设计
 - `docs/05_DecisionRules.md` —— 决策规则设计
 - `docs/06_LowLevelDesign.md` —— 详细设计
-- `docs/07_Evaluation.md` —— 评估报告（对应第 2.1 节 Success Metrics 实测结果）
-- `docs/08_ManualTesting.md` —— 手工测试清单
-- `docs/09_ResultsReport.md` —— 结果报告：系统现状、发现并修复的问题、评测结果
+- `docs/07_Evaluation.md` —— 评估报告（对应第 2.1 节 Success Metrics 实测结果，含情景推演与压力测试）
+- `docs/08_RiskDriverAnalysis.md` —— 关键驱动与风险归因分析
+- `docs/09_StrategyRollout.md` —— 策略方案与落地路径设计
+- `docs/10_ResultsReport.md` —— 结果报告：系统现状、发现并修复的问题、评测结果
+- `docs/11_DecisionReportRoadmap.md` —— 决策汇报与落地路线图
 
 ## Data Assets
 

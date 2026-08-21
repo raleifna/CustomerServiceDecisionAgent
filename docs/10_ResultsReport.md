@@ -101,7 +101,7 @@ demo 和逻辑正确是两回事**，下面每一条都对应一个具体的"输
 
 **修复**：清理失效容器，用 `docker compose --profile execution up -d` 正确
 启动；补充测试验证：批准后 4 秒内 worker 自动认领并执行了 `CancelOrder`
-动作，状态变为 `Succeeded` 并带有真实交易号。`docs/08_ManualTesting.md` 和
+动作，状态变为 `Succeeded` 并带有真实交易号。README"启动与体验"章节和
 `docs/06_LowLevelDesign.md` 5.2 节都补充了这个提醒，避免下次演示时踩同一个坑。
 
 ## 2.5 LLM-as-Judge 评测本身的方法论漏洞

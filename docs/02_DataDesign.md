@@ -109,27 +109,27 @@ Last Updated: 2026-08
 
 > **建模动机**：此前"客户提出退款/换货等诉求"这个动作只隐含在对话文本里，没有独立的数据实体记录申请本身的生命周期。把客户诉求单独建模为 Service Requests 后，**Decision Engine 处理的对象是"一条 Service Request"，而不是订单本身或一段对话**——Orders / Logistics / Products 是 Decision Engine 需要查询的证据来源，但裁决对象、状态流转、最终置信度都落在 Service Request 上。这也让 `docs/07_Evaluation.md` 阶段统计 Decision Accuracy、Human Escalation Rate 等指标时可以直接查表统计，而不必逐条重新解析对话文本。
 >
-> 命名从最初的 `Refund Requests` 改为 `Service Requests`：这张表从设计之初就包含退款、换货、部分退款、价保等多种申请类型（见下方 `request_type` 字段），沿用"Refund"命名容易让人误以为它只处理退款场景。
+> 命名从最初的 `Refund Requests` 改为 `Service Requests`：这张表包含退款、换货、部分退款多种申请类型（见下方 `request_type` 字段），沿用"Refund"命名容易让人误以为它只处理退款场景。
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | request_id | string | 申请唯一标识 |
 | order_id | string | 关联 Orders 表 |
 | customer_id | string | 关联 Customers 表 |
-| request_type | enum | `Refund`（退款）/ `Exchange`（换货）/ `PartialRefund`（部分退款）/ `PriceProtection`（价保） |
+| request_type | enum | `Refund`（退款）/ `Exchange`（换货）/ `PartialRefund`（部分退款） |
 | request_reason | string | 申请理由分类，如 `"商品损坏"` `"未收到货"` `"质量问题"` `"错发商品"` `"不想要了"` |
 | requested_quantity | integer \| null | 本次申请涉及的商品数量；咨询类请求可为 null，其他请求需 ≤ Orders 表中的 `quantity` |
 | request_date | date | 申请提交时间 |
-| workflow_status | enum | 流程状态：`Pending` / `InReview` / `NeedsReflection` / `EscalatedToHuman` / `Closed` |
+| workflow_status | enum | 流程状态：`Pending` / `NeedsReflection` / `EscalatedToHuman` / `ExecutionPending` / `ExecutionFailed` / `Closed` |
 | decision | enum \| null | 业务结论：`Approve` / `Reject` / `PartialApprove` / `NoActionRequired`；未完成决策时为 null |
 | approved_quantity | integer \| null | 实际批准的商品数量；仅在产生批准结果后填写 |
-| approved_amount | number \| null | 实际批准金额（元）；仅在产生退款或价保金额后填写 |
+| approved_amount | number \| null | 实际批准金额（元）；仅在产生退款金额后填写 |
 | decision_confidence | number \| null | Decision Engine 给出的最终置信度，未处理完成为 null |
 
 **字段语义约束**：
 
 - `workflow_status` 只表示客服决策工作流进度，不表示退款是否到账
-- `decision` 与流程状态相互独立；例如已作出批准决定但仍在执行后续流程时，可表示为 `workflow_status = InReview`、`decision = Approve`
+- `decision` 与流程状态相互独立；例如已作出批准决定但外部履约尚未完成时，表示为 `workflow_status = ExecutionPending`、`decision = Approve`
 - `PartialRefund` 是客户申请类型，`PartialApprove` 是系统只批准部分申请，二者不可混用
 - 使用 `PartialApprove` 时必须填写 `approved_quantity` 或 `approved_amount`
 - 物流咨询等不产生批准/拒绝结论的请求使用 `NoActionRequired`
@@ -199,7 +199,7 @@ Customers
 | 层 | 存的是什么 | 说明 |
 |---|---|---|
 | Orders / Logistics / Products | 企业事实数据 | 客观发生的交易、仓库出库和物流信息，不含任何客户诉求 |
-| Service Requests | 业务事件 | 客户对某个订单提出的诉求（退款/换货/物流咨询/价保等）；`workflow_status` 记录流程生命周期，`decision` 独立记录业务结论 |
+| Service Requests | 业务事件 | 客户对某个订单提出的诉求（退款/换货/物流咨询等）；`workflow_status` 记录流程生命周期，`decision` 独立记录业务结论 |
 | Service Request Evidence | 申请证据 | 保存客户材料、企业证明及其审核状态，将“客户主张”与“已验证事实”分开 |
 | Evaluation Input | 客户请求文本 | Service Request 的语言表达；其中的陈述默认属于客户主张，不自动等同于已验证事实 |
 | Decision Engine | 处理的对象 | **只处理 Service Request，不直接处理订单**——一个订单可能产生多条独立的 Service Request（如先申请换货，换货商品又出问题再申请退款），若 Decision Engine 直接绑定订单，就无法区分这是第几次诉求、也无法把"历史诉求记录"作为下一次裁决的证据之一 |
@@ -222,8 +222,6 @@ Customers
 | price | number | 商品单价 |
 | is_fragile | boolean | 是否易损商品，影响"商品损坏"类请求的可信度判断 |
 | is_customized | boolean | 是否定制商品（如刻字、定制尺寸）。定制商品通常不适用"无理由退货"条款，Policy Agent 检索退款政策时需要优先判断此字段，避免误判 |
-
-> **待扩展字段**：第 2.3 节类别 D/E 场景（换货缺货、拼团等）需要 `stock`（库存）、`is_promotion`（是否促销商品）等字段支持，本版本先在场景矩阵中标注需求，具体字段留待覆盖这些场景时再补充，避免为暂不实现的场景过早引入未使用字段。
 
 ## 2.3 场景覆盖矩阵
 
@@ -274,30 +272,21 @@ Mock 数据需要覆盖以下组合，确保 Decision Engine 的各类分支都�
 
 表中的“系统路径”用于说明数据覆盖目标，不写入运行时 Service Request。正式 Ground Truth 后续存放在独立 Evaluation Cases 中。
 
-### 类别 D：促销与价格类场景
+### 范围边界：不在本系统覆盖范围内的场景
 
-| 场景 | 说明 | 预期决策方向 |
-|---|---|---|
-| 价保申请（价格保护） | 订单在时效内，商品随后降价，客户申请补差价 | 需要 Policy Agent 检索"价保政策"这一独立条款类别 |
-| 满减/优惠券订单的部分退款 | 订单使用了满减优惠，若仅退部分商品，优惠金额如何分摊需要单独计算规则 | 涉及金额计算规则，不能简单按商品单价退款 |
-| 拼团订单未成团 | 订单状态为"拼团中"，团购失败后客户申请退款 | 与普通订单的退款政策路径不同，属于自动退款场景 |
+以下场景与 `docs/01_PRD.md` 第 3 章"范围边界"呼应，明确不在当前 Mock Database
+与 Decision Engine 的覆盖范围内，因此 Schema 中也不包含仅服务于这些场景的字段
+（如 `stock`、`is_promotion`、拼团状态）：
 
-### 类别 E：换货与售后延伸场景
+- 价保申请（价格保护）、满减/优惠券订单的分摊退款、拼团未成团——均属于促销
+  与价格类业务，涉及在线支付与营销系统集成，不属于售后决策范围；
+- 换货目标商品缺货、二次换货升级——属于库存与履约系统集成范畴；
+- 跨境订单清关归因、礼物订单收货人与下单人分离——属于跨境物流与地址簿系统
+  集成范畴。
 
-| 场景 | 说明 | 预期决策方向 |
-|---|---|---|
-| 换货商品本身也有问题（二次换货） | 客户已换货一次，换货商品仍有问题 | 升级为退款而非再次换货，涉及"重复换货"业务规则 |
-| 换货但原商品缺货 | Policy 判定应换货，但 `Products` 表中目标商品库存为 0（需扩展 Products 表加 `stock` 字段） | 需要转为退款或等待补货，属于换货流程的分支 |
-| 超时效但商品存在安全隐患（如食品变质、电器起火风险） | 常规时效政策不适用，涉及消费者权益/安全类特殊条款 | 无论是否超时效，一律批准退款并升级记录，不受常规 Trigger 影响 |
-
-### 类别 F：跨境 / 特殊物流场景
-
-| 场景 | 说明 | 预期决策方向 |
-|---|---|---|
-| 跨境订单清关延误 | `estimated_delivery_date` 计算方式与国内订单不同，清关时间不计入平台责任期 | 需要 Policy Agent 区分"清关延误"与"平台物流延误"两种归因 |
-| 礼物订单（赠送他人） | 收货地址与下单客户地址不一致，退款只能退给下单人而非收货人 | 影响 Response Agent 的回复对象，不影响退款资格判断本身 |
-
-**初版数据规模建议**：类别 A-C（核心场景）每类构造 3-5 条订单记录，类别 D-F（扩展场景）每类构造 2-3 条即可，覆盖度优先于数量，预计共 35-45 条 Mock 订单。类别 D-F 涉及的 Policy 条款和 Schema 字段扩展（如 `stock`、拼团状态等）需要在第 2.2 节表结构和第 3 章政策文档中同步补充，本版本先标注需求，具体字段设计留待下一版本迭代。
+类别 A-C（第 2.3 节）覆盖的是系统实际处理的核心场景，Mock Database 规模以
+覆盖度而非数量为优先——当前 21 条 Service Request Ground Truth（见上表）
+已覆盖类别 A-C 的全部组合与边界冲突场景。
 
 ## 2.4 数据文件组织
 

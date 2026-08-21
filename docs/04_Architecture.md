@@ -1,7 +1,7 @@
 # Architecture Design
 # CustomerServiceDecisionAgent
 
-> 本文档描述系统如何实现 [01_PRD.md](./01_PRD.md) 中定义的业务能力。当前版本用于约束首版代码的组件边界与最小接口；具体类名、Prompt、State 字段和 Conditional Edge 在代码跑通后补充到 `docs/06_LowLevelDesign.md`，不在实现前过度固定。
+> 本文档描述系统如何实现 [01_PRD.md](./01_PRD.md) 中定义的业务能力：组件边界、职责划分与技术选型。具体类名、Prompt、State 字段和 Conditional Edge 见 `docs/06_LowLevelDesign.md`。
 
 ---
 
@@ -35,9 +35,9 @@ Service Request
 - 对缺证据、证据冲突和高风险请求进入 Reflection 或人工升级；
 - 保存决策依据、命中政策和执行轨迹，支持 Evaluation。
 
-## 1.2 当前业务边界
+## 1.2 业务边界
 
-首版聚焦订单创建后的服务：退款、换货、部分退款、商品质量问题、错发/少发、物流异常和价保。售前推荐、优惠券发放、在线支付和普通闲聊不属于核心决策范围。
+系统处理订单创建后的售后服务：退款、换货、部分退款、商品质量问题、错发/少发、物流异常。售前推荐、优惠券发放、在线支付、价格保护和普通闲聊不属于核心决策范围（完整范围边界见 `docs/01_PRD.md` 第 3 章）。
 
 ## 1.3 为什么不是单 Agent + 工具调用
 
@@ -60,7 +60,7 @@ Service Request
 - Policy Agent：适用于当前请求的企业政策；
 - Decision Engine：只融合证据和执行规则，不直接访问原始数据文件。
 
-Order Agent 首版聚合读取 Orders、Customers 和 Products，是为了控制 Agent 数量；其输出中必须保留每个事实的来源表。未来接入独立 CRM 或商品服务时，可再拆成 Customer Agent 与 Product Agent，而不改变 Decision Engine 的输入协议。
+Order Agent 聚合读取 Orders、Customers 和 Products，是为了控制 Agent 数量；其输出中必须保留每个事实的来源表。若未来接入独立 CRM 或商品服务，可再拆成 Customer Agent 与 Product Agent，不改变 Decision Engine 的输入协议——这是当前拆分方式预留的扩展空间，不代表现状不完整。
 
 ---
 
@@ -132,7 +132,7 @@ Worker 调用支付、仓储或订单系统。业务申请在任务完成前保�
                             Response Agent      Human Escalation
 ```
 
-首版允许 Planner 为所有核心请求统一调度四个证据 Agent，以保证实现简单和证据完整；后续再根据 `request_type` 优化不必要的调用。
+系统为所有核心请求统一调度四个证据 Agent（Order/Logistics/Evidence/Policy），以保证实现简单和证据完整；不按 `request_type` 做条件性调用裁剪。
 
 ---
 
@@ -159,7 +159,7 @@ Worker 调用支付、仓储或订单系统。业务申请在任务完成前保�
 - 不把“商品坏了”等客户陈述标记为已验证事实；
 - 不检索政策、不计算最终置信度、不批准或拒绝请求。
 
-首版 Demo 以已经存在于 `service_requests.json` 的 `request_id` 为入口。未来实时会话中，可在意图和关联订单确认后创建新的 Service Request。
+实时会话中，Request Resolver 在意图和关联订单确认后创建新的 Service Request（`service_request_action_node`，见 `docs/06_LowLevelDesign.md` 4.1 节表格中 `service_request_action`）；查询已有申请进度时则直接按 `request_id` 解析。
 
 ## 4.2 Order Agent
 
@@ -350,77 +350,49 @@ VIP 身份本身不是风险触发器。VIP 只影响服务优先级或政策权
 
 ---
 
-# 5. 统一证据协议
+# 5. 证据输出的设计原则
 
-各证据 Agent 不应只返回自由文本。首版统一协议建议为：
+各证据 Agent 不返回自由文本，而是返回结构化、命名字段清晰的证据字典（如
+`order_evidence.product_match`、`logistics_evidence.has_unresolved_tracking_stalled`），
+每个字段的语义都可以直接追溯到某一张 Mock Database 表或某一条申请证据记录。这样
+Decision Engine 和 Policy Agent 消费的是明确的布尔/枚举判定，而不是需要二次解析
+的自由文本。完整字段列表见 `docs/06_LowLevelDesign.md` 第 4 章逐个 Agent 的
+输入输出说明。
 
-```json
-{
-  "agent": "OrderAgent",
-  "request_id": "SR2026080006",
-  "status": "Success",
-  "facts": [
-    {
-      "field": "shipment.product_match",
-      "value": false,
-      "source_type": "WarehouseRecord",
-      "source_id": "ORD2026080006",
-      "confidence": 1.0
-    }
-  ],
-  "warnings": [],
-  "error": null
-}
-```
-
-`status` 建议使用：
-
-```text
-Success / NoData / InvalidInput / SourceUnavailable / Error
-```
-
-其中 `NoData` 是有效查询结果，例如订单没有物流异常记录；`SourceUnavailable` 才表示数据源不可用。Decision Engine 不得把二者混淆。
+节点内部区分"查询到明确的空结果"与"数据源本身不可用"两种情况——例如订单
+没有物流异常记录是有效的查询结果（返回 `has_logistics_exception=false`），
+不代表 Logistics 数据源故障；`errors` 字段只用于记录后者这类真正的节点级异常。
 
 ---
 
-# 6. Graph State 最小契约
+# 6. Graph State 契约
 
-代码实现前只固定跨节点共享的稳定字段：
+`CustomerServiceState` 是所有节点共享的唯一状态载体，完整字段定义见
+`docs/06_LowLevelDesign.md` 第 1 章（与 `src/backend/graph/state.py` 一致）。
 
-```text
-request_id
-dialogue_context
-service_request
-plan
-order_evidence
-logistics_evidence
-submitted_evidence
-policy_evidence
-proposed_decision
-reflection_result
-final_decision
-workflow_status
-errors
-trace
-```
-
-State 中不放 Evaluation Ground Truth。`case_id`、`expected_decision` 和 `expected_policy_hits` 只存在于评估层，避免标签泄漏。
+State 中不放 Evaluation Ground Truth：`case_id`、`expected_decision` 和
+`expected_policy_hits` 只存在于 `data/evaluation/` 的评估文件中，避免评估标签
+泄漏进真实运行路径影响决策。
 
 ---
 
 # 7. 状态写回与副作用边界
 
-证据收集和候选决策阶段均为只读。只有 Finalization 节点可以更新 `service_requests.json`：
+证据收集和候选决策阶段均为只读。只有 Finalization 节点（`graph/finalization.py`）
+可以更新 Postgres `service_requests` 表的 `workflow_status`/`decision`：
 
 | 处理结果 | workflow_status | decision |
 |---|---|---|
 | 等待处理 | `Pending` | `null` |
-| 正在自动处理 | `InReview` | `null` 或候选结果不写回 |
-| 需要复核 | `NeedsReflection` | `null` |
+| 需要复核 / 缺证据 / 等待证据审核 | `NeedsReflection` | `null` |
 | 强制人工 | `EscalatedToHuman` | `null` |
-| 自动决策完成 | `Closed` | `Approve` / `Reject` / `PartialApprove` / `NoActionRequired` |
+| 自动或人工决策完成，等待外部履约执行 | `ExecutionPending` | `Approve` / `Reject` / `PartialApprove` / `NoActionRequired` |
+| 外部履约执行成功 | `Closed` | 同上，不变 |
+| 外部履约重试耗尽仍失败 | `ExecutionFailed` | 同上，不变 |
 
-退款到账、换货出库等履约执行状态不属于当前 `workflow_status`。首版 Decision Engine 只作决策，不直接调用支付、退款或仓库执行接口。
+退款到账、换货出库等履约执行状态不属于决策本身：Decision Engine 只产出裁决，
+真正的外部调用由独立 Worker 异步执行（见 `docs/06_LowLevelDesign.md` 5.2 节），
+这是刻意的职责分离，不是能力缺口——避免"批准"和"退款已经到账"被混为一谈。
 
 ---
 
@@ -453,9 +425,9 @@ State 中不放 Evaluation Ground Truth。`case_id`、`expected_decision` 和 `e
 
 ---
 
-# 10. 首版 Demo 路径
+# 10. Demo 路径
 
-首版至少展示四种不同路径：
+系统至少展示四种不同路径：
 
 ```text
 路径 A：证据充分 → 自动批准
@@ -471,31 +443,32 @@ SR2026080004 / SR2026080009 → 冲突或风险信号 → NeedsReflection
 SR2026080010 → 大额 + 新账号 + 材料需人工 → EscalatedToHuman
 ```
 
-Demo 应展示：
+前端"LIVE TRACE"面板（`src/frontend/src/App.tsx`）展示：
 
 - 每个 Agent 的查询状态与来源 ID；
 - 收集到的事实与证据置信度；
 - 命中的政策编号；
 - 冲突与风险触发器；
 - 最终状态和客户回复；
-- 完整 trace，而不只展示最终答案。
+- 完整处理轨迹，而不只是最终答案。
 
 ---
 
-# 11. 实现状态
+# 11. 架构决策到源码的映射
 
-本文档第 1-10 章写于实现之前，用于约束首版组件边界；系统现已实现并通过
-`docs/07_Evaluation.md` 中的确定性回归套件与 LLM-as-judge 质量套件验证。以下
-内容不再是"待补"，已在真实代码中落地，具体契约见 `docs/06_LowLevelDesign.md`：
+本文档第 1-10 章描述的每一项架构决策，在代码中都有对应实现，具体契约见
+`docs/06_LowLevelDesign.md`：
 
-- Graph State 类型定义：`src/backend/graph/state.py`；
-- LangGraph 节点、条件边与 fan-out/fan-in 编排：`src/backend/graph/workflow.py`；
-- Agent Prompt 与结构化输出：`src/backend/agents/*.py`（各 Agent 独立文件）；
-- Repository 层（Postgres 优先，JSON 种子数据回退）：`src/backend/repositories/*.py`；
-- 声明式裁决规则与最终权重/阈值：`data/decision_rules.json` + `data/business_rules.json`，运行方式见 `docs/05_DecisionRules.md`；
-- API 请求/响应 Schema：`src/backend/api/schemas.py`；
-- 履约重试、幂等与 Outbox：`src/backend/repositories/decision_lifecycle_repository.py` + `scripts/workers/run_action_worker.py`；
-- Evaluation 覆盖：确定性套件的路由/决策/幂等/线程隔离用例，及 LLM-judge 套件的语气/事实/完整性/policy_compliance/safety 五维度打分与 pass^k 一致性检验。
+| 架构决策 | 源码位置 |
+|---|---|
+| Graph State 类型定义 | `src/backend/graph/state.py` |
+| LangGraph 节点、条件边与编排 | `src/backend/graph/workflow.py` |
+| 各 Agent 的证据收集与结构化输出 | `src/backend/agents/*.py` |
+| Repository 层（Postgres 优先，JSON 种子数据回退） | `src/backend/repositories/*.py` |
+| 声明式裁决规则与业务参数 | `data/decision_rules.json` + `data/business_rules.json`，运行方式见 `docs/05_DecisionRules.md` |
+| API 请求/响应 Schema | `src/backend/api/schemas.py` |
+| 履约重试、幂等与 Outbox | `src/backend/repositories/decision_lifecycle_repository.py` + `scripts/workers/run_action_worker.py` |
+| Evaluation 覆盖 | 确定性套件（路由/决策/幂等/线程隔离）+ LLM-judge 套件（语气/事实/完整性/policy_compliance/safety 五维度 + pass^k），见 `docs/07_Evaluation.md` |
 
-系统运行中真实发现并修复的业务逻辑问题（而非设计阶段的预判）记录在
-`docs/09_ResultsReport.md`，不在本文档中补充。
+系统在真实运行和评测中发现并修复的业务逻辑问题记录在
+`docs/10_ResultsReport.md`，本文档只描述最终架构，不重复过程记录。

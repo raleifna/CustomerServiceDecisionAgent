@@ -25,6 +25,65 @@ Customer Request                     Customer Request
 
 一个电商客服场景下的多智能体决策编排系统：多个数据 Agent（订单 / 物流 / 政策）各自产出带置信度的证据，由 **Evidence Fusion Decision Engine** 融合业务规则、证据与置信度完成裁决——而非简单投票——最终给出可解释、可追溯的客服响应路径。基于 **LangGraph** 实现有状态的图编排。
 
+## 快速开始：启动与体验 Demo
+
+### 1. 准备环境变量
+
+```bash
+cp .env.example .env
+```
+
+编辑 `.env`，至少填写：
+
+```bash
+API_KEY=你的 DeepSeek API Key
+BASE_URL=https://api.deepseek.com
+MODEL=deepseek-chat
+ENABLE_LLM_RESPONSE=true
+STAFF_API_KEYS={"reviewer-token-a":{"staff_id":"agent_a","roles":["reviewer"]}}
+```
+
+### 2. 一键启动完整系统
+
+```bash
+docker compose --profile execution up --build -d
+```
+
+这条命令会启动 PostgreSQL、后端 API、前端和履约 Worker 四个服务。
+
+> **必须带 `--profile execution`**：履约 Worker（负责真正执行退款/取消订单/换货）
+> 默认不随 `docker compose up` 启动，不带这个参数的话，所有"已批准"的申请会一直
+> 停在 `ExecutionPending`，看起来批准成功、实际上从未真正执行。
+
+首次启动需要构建镜像，等待约 1-2 分钟；`docker compose ps` 确认四个容器都是
+`Up`/`healthy` 状态后即可访问：
+
+- **客户端**：http://localhost:3001
+- **Staff 人工工作台**：http://localhost:3001/staff
+- **API 文档（Swagger UI）**：http://localhost:8000/docs
+
+### 3. 体验一条完整的自动裁决路径
+
+1. 打开客户端 http://localhost:3001，选择任意 Mock 客户（如 `CUS0021`）；
+2. 选择一个订单，在对话框输入"我不想要了，帮我退款"（未发货订单会走"未发货取消"
+   自动批准路径）；
+3. 确认订单后，Agent 会创建售后申请并直接给出裁决结果（批准/拒绝/需要更多证据），
+   右侧面板可以看到每个 Agent 的处理轨迹；
+4. 若命中大额或高风险规则，申请会转人工——切到 Staff 工作台，用 `.env` 里配置的
+   Token 登录，领取工单后可以查看完整证据链并人工裁决。
+
+更多场景（质量问题证据上传与复核、多商品订单选择 SKU、超过 30 天提交上限转
+人工确认等）见 `docs/07_Evaluation.md` 中的用例说明，或直接在客户端里自由对话尝试。
+
+### 4. 停止与重置
+
+```bash
+docker compose down        # 停止，保留数据库数据卷
+docker compose down -v     # 停止并清空数据卷（重新从种子数据开始）
+```
+
+---
+
 ## Architecture Preview（系统层次预览）
 
 ```
@@ -58,9 +117,11 @@ Mock Enterprise Backend（订单/物流/客户数据）+ Knowledge Base（政策
 | [docs/04_Architecture.md](./docs/04_Architecture.md) | 系统架构设计：多 Agent 拆分理由、Decision Engine 设计、技术选型（How） |
 | [docs/05_DecisionRules.md](./docs/05_DecisionRules.md) | 声明式裁决规则（`decision_rules.json`）与业务参数（`business_rules.json`）的运行方式 |
 | [docs/06_LowLevelDesign.md](./docs/06_LowLevelDesign.md) | 各 Agent / Graph 节点的 State 输入输出、Conditional Edge 与关键源文件 |
-| [docs/07_Evaluation.md](./docs/07_Evaluation.md) | 确定性回归套件 + LLM-as-judge 质量套件：用例设计、运行方式与最新基线 |
-| [docs/08_ManualTesting.md](./docs/08_ManualTesting.md) | 手工测试清单：客户端、Staff 工作台、自动化回归 |
-| [docs/09_ResultsReport.md](./docs/09_ResultsReport.md) | 结果报告：系统现状、发现并修复的业务逻辑问题、评测结果 |
+| [docs/07_Evaluation.md](./docs/07_Evaluation.md) | 确定性回归套件 + LLM-as-judge 质量套件：情景推演、压力测试、用例设计与最新基线 |
+| [docs/08_RiskDriverAnalysis.md](./docs/08_RiskDriverAnalysis.md) | 关键驱动与风险归因分析：决策结果差异的驱动因子、高影响/高不确定场景 |
+| [docs/09_StrategyRollout.md](./docs/09_StrategyRollout.md) | 策略方案与落地路径设计：备选方案比较、推荐路径、责任矩阵 |
+| [docs/10_ResultsReport.md](./docs/10_ResultsReport.md) | 结果报告：系统现状、发现并修复的业务逻辑问题、评测结果 |
+| [docs/11_DecisionReportRoadmap.md](./docs/11_DecisionReportRoadmap.md) | 决策汇报与落地路线图：管理层结论、关键证据、路线图 |
 
 ## 技术栈速览
 
@@ -70,7 +131,7 @@ LangGraph · OpenAI SDK（调用 DeepSeek API）· FastAPI · PostgreSQL · Reac
 
 ## Success Metrics（对应 docs/01_PRD.md 第 2.1 节）
 
-实测结果见 [docs/09_ResultsReport.md](./docs/09_ResultsReport.md)。
+实测结果见 [docs/10_ResultsReport.md](./docs/10_ResultsReport.md)。
 
 | 指标 | 目标 |
 |---|---|
@@ -86,7 +147,7 @@ LangGraph · OpenAI SDK（调用 DeepSeek API）· FastAPI · PostgreSQL · Reac
 ```
 CustomerServiceDecisionAgent/
 ├── README.md
-├── docs/                          # 见上方"文档导航"，01-09
+├── docs/                          # 见上方"文档导航"，01-11
 ├── src/
 │   ├── backend/
 │   │   ├── agents/                # Order/Logistics/Evidence/Policy/Reflection/Response/Router 等节点
@@ -115,25 +176,9 @@ CustomerServiceDecisionAgent/
 
 ---
 
-## 后端 API
+## 后端 API 开发补充说明
 
-复制环境变量模板并填写本地密钥（不要提交 `.env`）：
-
-```bash
-cp .env.example .env
-```
-
-使用 Docker 启动：
-
-```bash
-docker compose up --build
-```
-
-Docker Compose 会同时启动 PostgreSQL，并自动创建 LangGraph Checkpoint 表及
-`fulfillment_requests` 表。数据库数据保存在命名卷中，重启容器后不会丢失。
-默认宿主机端口为 `15433`，可在 `.env` 中通过 `POSTGRES_PORT` 修改。
-
-本地启动：
+一键启动方式见上方"快速开始"。以下是不用 Docker、直接跑 Python 的本地开发方式：
 
 ```bash
 python -m pip install -r requirements.txt
@@ -142,6 +187,10 @@ uvicorn src.backend.api.main:app --reload
 
 直接运行 Python 且未设置 `DATABASE_URL` 时，系统会回退到内存会话和 JSON
 履约记录，仅适合本地调试；需要持久化时，请按 `.env.example` 配置本地数据库连接。
+
+Docker Compose 启动 PostgreSQL 时会自动创建 LangGraph Checkpoint 表及
+`fulfillment_requests` 表。数据库数据保存在命名卷中，重启容器后不会丢失。
+默认宿主机端口为 `15433`，可在 `.env` 中通过 `POSTGRES_PORT` 修改。
 
 ## 可靠履约 Worker
 

@@ -202,7 +202,7 @@ RISK-003 的强制人工检查在 Evidence Gate 中独立实现（不依赖 RISK
 第 3 步的 RISK-003 检查、第 7 步的 REFUND-003 检查都是本项目迭代中发现并修复的：
 最初只对 RISK-002 和 REFUND-008 做了对应检查，REFUND-003（质量问题）和 RISK-003
 （新账号大额退款）曾经只是"因为阈值恰好相同/规则恰好共同命中"而被间接兜住，
-不是显式防护，具体修复记录见 `docs/09_ResultsReport.md`。
+不是显式防护，具体修复记录见 `docs/10_ResultsReport.md`。
 
 ## 4.7 Decision Engine（`decision/engine.py` + `decision/rule_engine.py`）
 
@@ -241,7 +241,7 @@ reflection_result 非空        → 按 route 映射 workflow_status/handling_st
 能区分，之后再查询就分不清"还没传证据"和"传了在等审核"。当前的应对方式是在
 读取时从证据列表反推（前端 `App.tsx` 的 `hasEvidenceAwaitingReview` 判断），
 而不是改 `workflow_status` 的取值本身——后者会牵动 Staff 工作台的队列过滤和
-人工裁决权限判断，改动面明显更大，具体取舍记录在 `docs/09_ResultsReport.md`。
+人工裁决权限判断，改动面明显更大，具体取舍记录在 `docs/10_ResultsReport.md`。
 
 ## 4.10 Response Agent（`agents/response_agent.py`）
 
@@ -249,7 +249,7 @@ reflection_result 非空        → 按 route 映射 workflow_status/handling_st
 润色语气（`_polish_response`）。润色结果必须通过 `_contains_required_facts` 校验——
 金额、数量、状态等关键事实必须原样出现在润色后的文本里，否则丢弃润色结果、
 回退模板。系统提示词明确要求"避免逐项罗列的机器人报告体，改写成连贯自然的话"
-（这条约束是发现语气评分偏低后加入的，见 `docs/09_ResultsReport.md`）。
+（这条约束是发现语气评分偏低后加入的，见 `docs/10_ResultsReport.md`）。
 
 Query Agent（`agents/query_agent.py`）的订单/物流查询走独立的 Tool-calling 路径
 （`QUERY_TOOLS` + `_build_tool_executor`），不经过 Decision Engine，系统提示词同样
@@ -277,7 +277,7 @@ Query Agent（`agents/query_agent.py`）的订单/物流查询走独立的 Tool-
 `profiles: ["execution"]`，必须用 `docker compose --profile execution up` 才会带上；
 如果只用不带 profile 的默认命令，所有"已批准"的申请会一直卡在 `ExecutionPending`，
 表面上看起来批准成功，实际上退款/取消动作从未真正执行。这是本项目迭代中
-真实踩过的坑，记录在 `docs/09_ResultsReport.md`。
+真实踩过的坑，记录在 `docs/10_ResultsReport.md`。
 
 ## 5.3 待确认 Offer 机制
 

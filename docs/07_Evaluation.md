@@ -1,10 +1,12 @@
 # Evaluation
 
-本项目有两套互补的评测：**确定性 Evaluation Harness**（`run_evaluation.py`，本章
-1-5 节）用于快速、免费、可重复的业务逻辑回归；**LLM-as-Judge 质量评测**
-（`run_llm_judge.py`，本章第 6 节）用真实模型调用抓语气、事实准确性、
-policy_compliance 等确定性检查覆盖不到的问题类别。两者定位不同，不能互相替代：
-前者测"逻辑对不对"，后者测"这套逻辑跑出来的对话像不像一个称职的客服"。
+本项目的评测分三层，各自回答不同的问题：**确定性 Evaluation Harness**
+（`run_evaluation.py`，第 1-5 节）快速、免费、可重复地验证业务逻辑对不对；
+**情景推演与压力测试**（第 6 节）验证场景覆盖是否足够全、并发场景下数据是否
+一致；**LLM-as-Judge 质量评测**（`run_llm_judge.py`，第 7 节）用真实模型调用
+抓语气、事实准确性、policy_compliance 等前两层覆盖不到的问题类别。三层定位
+不同，不能互相替代：第一层测"逻辑对不对"，第二层测"覆盖得够不够、并发下
+稳不稳"，第三层测"这套逻辑跑出来的对话像不像一个称职的客服"。
 
 ## 1. 评估目标（确定性 Harness）
 
@@ -80,13 +82,56 @@ python scripts/evaluation/run_evaluation.py \
 补上机审证据门槛后，原本用 `MachineReviewed` 证据测"自动批准"的用例改为路由到
 "需要更多证据"），处理方式不是放宽断言迁就旧行为，而是把种子证据状态改成
 `Verified`，让用例继续测"证据齐全时应该自动批准"这条真正想测的路径。详细经过见
-`docs/09_ResultsReport.md`。
+`docs/10_ResultsReport.md`。
 
 ---
 
-## 6. LLM-as-Judge 质量评测
+## 6. 情景推演与压力测试
 
-### 6.1 定位与边界
+第 1-5 节的确定性套件回答"给定一个场景，系统走哪条路径"；本节回答两个不同
+的问题：**场景本身是否覆盖了足够多样的边界组合**，以及**多个请求同时发生时
+系统是否还能保持数据一致**。
+
+### 6.1 情景推演：场景覆盖矩阵
+
+`docs/02_DataDesign.md` 2.3 节按类别 A（时效/物流）、B（商品/订单本身）、C
+（客户行为风险）系统性构造了 21 条 Ground Truth（`SR2026080001`~`021`），每条
+对应决策引擎的一个真实分支或边界冲突组合（如"系统记录本人签收但客户称未收到"、
+"定制商品 7 天内无理由退货"）。这不是随意挑选的几个 happy-path 案例，而是按
+`docs/08_RiskDriverAnalysis.md` §1 归纳的驱动因子系统性排列组合后得到的覆盖
+矩阵——第 5 节的 34/34 就是这 21 条决策场景加上路由、上下文、Action 类用例
+的汇总结果。
+
+### 6.2 压力测试：并发正确性
+
+`tests/integration/test_postgres_lifecycle.py`（真实 PostgreSQL，非 Mock）
+专门验证高并发下容易暴露的数据一致性问题：
+
+| 测试 | 验证的失败模式 |
+|---|---|
+| `test_two_workers_cannot_claim_the_same_action` | 两个履约 Worker 实例同时抢同一个 `action_tasks` 记录时，`SKIP LOCKED` 是否真的防止了重复执行（重复退款是金融场景里最不可接受的一类 bug） |
+| `test_two_staff_members_cannot_claim_the_same_request` | 两名客服同时领取同一工单时，租约机制是否真的只放行一人，另一人是否正确收到冲突而非静默覆盖 |
+| `test_decision_action_and_outbox_are_idempotent` | 同一裁决重复触发履约流程时，是否会产生重复的 `action_tasks`/`outbox_events` |
+| `test_missing_request_rolls_back_decision` | 写入过程中途失败时，事务是否完整回滚，不留下部分写入的脏数据 |
+| `test_request_and_item_relation_are_committed_together` | 申请记录与申请项记录是否在同一事务原子提交，不会出现只有一半写成功的中间态 |
+
+运行方式：
+
+```bash
+docker compose --profile test up integration-tests \
+  --build --abort-on-container-exit --exit-code-from integration-tests
+```
+
+**这类测试用单元测试（Mock 数据库）验证不出来**——`SKIP LOCKED`、事务隔离级别、
+唯一索引冲突都是需要真实数据库引擎才会触发的行为，这也是为什么单元测试和
+PostgreSQL 集成测试在本项目里是两套独立套件，而不是合并成一套（详见
+`docs/06_LowLevelDesign.md` §5.1-5.2 中幂等与租约机制的设计说明）。
+
+---
+
+## 7. LLM-as-Judge 质量评测
+
+### 7.1 定位与边界
 
 `scripts/evaluation/run_llm_judge.py` 端到端跑真实 LLM 调用（意图分类、回复生成、
 评委打分），不 Mock 任何一环。它抓的是确定性 Harness 天然抓不到的问题：语气是否
@@ -100,9 +145,9 @@ CI 门禁。
 `RuntimeError` 失败，Agent 会用一句得体的"暂时未能创建，请稍后重试"兜底——这句
 话文字上挑不出毛病，评委只看最终回复文本打分的话完全可能给出正常分数，从而
 把一条完全没跑通的执行链路误判为"通过"。这个坑是真实踩过的，具体经过和修复方式
-见 `docs/09_ResultsReport.md`。
+见 `docs/10_ResultsReport.md`。
 
-### 6.2 打分维度
+### 7.2 打分维度
 
 `chat_json` 评委对每条用例的最后一条 Agent 回复打五个维度，每维 1-5 分，
 全部 `>= 3` 才算通过（`PASS_THRESHOLD = 3`）：
@@ -119,7 +164,7 @@ CI 门禁。
 本轮 `action_result`、`final_result`），让它能核对回复内容，而不是只凭"读起来
 合不合理"打分。
 
-### 6.3 确定性兜底：判分不完全交给评委
+### 7.3 确定性兜底：判分不完全交给评委
 
 即使五个维度评委都打了高分，以下两种情况会被脚本**强制判定为失败**，不采纳
 评委的文本层面分数：
@@ -129,10 +174,10 @@ action_result.status == "Failed"                        → 强制 FAIL
 用例标了 expect_action=true 但本轮没有产生任何 action_result → 强制 FAIL
 ```
 
-这是 §6.1 提到的那次误判之后加上的：不能只让"回复听起来怎么样"决定通过与否，
+这是 §7.1 提到的那次误判之后加上的：不能只让"回复听起来怎么样"决定通过与否，
 系统的真实执行结果优先级更高。
 
-### 6.4 pass^k：一次跑通不代表稳定
+### 7.4 pass^k：一次跑通不代表稳定
 
 `llm_judge_cases.json` 中的用例可以设置 `"pass_k": N`，跑 N 次而不是 1 次，
 **每一次都通过才算这条用例通过**。当前设了 `pass_k: 3` 的用例：
@@ -146,11 +191,11 @@ JUDGE_REASON_PHRASING_001                会触发真实建单/裁决动作，�
 汇总输出里会单独列出"不稳定用例"（部分次数通过、部分失败），这类用例即使
 `pass@1` 侥幸通过，也不应该视为已验证稳定。
 
-### 6.5 运行方式
+### 7.5 运行方式
 
 ```bash
 DATABASE_URL=postgresql://customer_service:customer_service_dev@localhost:15433/customer_service \
 python scripts/evaluation/run_llm_judge.py --report reports/llm_judge.json
 ```
 
-最新一次实测基线（7 条用例，含 4 条 `pass_k=3`）见 `docs/09_ResultsReport.md`。
+最新一次实测基线（7 条用例，含 4 条 `pass_k=3`）见 `docs/10_ResultsReport.md`。
