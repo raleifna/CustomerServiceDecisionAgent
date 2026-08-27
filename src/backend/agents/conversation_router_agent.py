@@ -533,6 +533,19 @@ def conversation_router_node(
     order_id = explicit_order_id or context.get("active_order_id")
     request_id = explicit_request_id or context.get("active_request_id")
 
+    # "Withdraw" only makes sense against an application that already exists.
+    # This guard is scoped to the LLM path only: the keyword list above is a
+    # curated set of explicit negations ("算了不退了") where "nothing to
+    # withdraw" is the correct reply even with no active_request_id. The LLM
+    # path is different — colloquial phrasing like "给我退掉吧" ("just refund
+    # it") reads as withdrawal language to the classifier, but with no
+    # active_request_id there is nothing submitted yet to withdraw; the
+    # customer is describing a fresh need, not retracting one. Without this
+    # guard the turn dead-ends on "没有可撤销的售后申请" instead of ever
+    # creating the request the customer actually asked for.
+    if matched_by == "llm" and intent == "WithdrawServiceRequest" and not request_id:
+        intent = "AfterSalesRequest"
+
     authenticated_customer_id = context.get("authenticated_customer_id")
     if order_id and authenticated_customer_id:
         order = get_order(order_id)

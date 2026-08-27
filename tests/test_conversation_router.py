@@ -1,4 +1,31 @@
+import src.backend.agents.conversation_router_agent as conversation_router_agent
 from src.backend.agents.conversation_router_agent import conversation_router_node
+
+
+def test_llm_withdraw_misclassification_falls_back_to_after_sales_request(monkeypatch):
+    # "给我退掉吧" has no active_request_id to withdraw and isn't in the
+    # curated withdrawal keyword list, so it reaches the LLM classifier. A
+    # real misclassification observed in manual testing: the LLM read the
+    # colloquial "退掉" as withdrawal language and returned
+    # WithdrawServiceRequest, which dead-ended the turn on "没有可撤销的售后
+    # 申请" instead of ever creating the refund request the customer asked
+    # for. Simulate that misclassification here and assert the guard
+    # recovers it.
+    monkeypatch.setattr(
+        conversation_router_agent,
+        "chat_json",
+        lambda *args, **kwargs: {"conversation_intent": "WithdrawServiceRequest"},
+    )
+
+    result = conversation_router_node({
+        "user_message": "这个一直没发货给我退掉吧",
+        "conversation_context": {
+            "authenticated_customer_id": "CUS0001",
+            "active_order_id": "ORD2026080001",
+        },
+    })
+
+    assert result["conversation_result"]["conversation_intent"] == "AfterSalesRequest"
 
 
 def test_status_query_overrides_stale_service_request_draft():
