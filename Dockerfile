@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 COPY --chown=appuser:appgroup src /app/src
 COPY --chown=appuser:appgroup data /app/data
 COPY --chown=appuser:appgroup scripts /app/scripts
+COPY --chown=appuser:appgroup db /app/db
 
 USER appuser
 

@@ -450,7 +450,9 @@ def main():
 
     new_customers = [
         {
-            "customer_id": cus_id, "vip_level": random.choices(
+            "customer_id": cus_id,
+            "source_unique_id": olist_customer_unique_id,  # real Olist customer_unique_id -- traceability link
+            "vip_level": random.choices(
                 ["Bronze", "Silver", "Gold", "Platinum"], weights=[55, 25, 15, 5]
             )[0],
             "register_date": None,  # Olist has no account-registration field; left null, not fabricated
@@ -458,12 +460,13 @@ def main():
             "_source": {
                 "vip_level": "SYNTHETIC_ENRICHMENT",
                 "canceled_order_count": "DERIVED",
+                "source_unique_id": "REAL",
                 "note": "refund_request_count/successful_refund_count/refund_amount_total are NOT "
                         "stored here -- they must be computed live from after_sales_requests/refunds "
                         "in the runtime schema, not pre-baked on the customer record.",
             },
         }
-        for cus_id in customer_map.values()
+        for olist_customer_unique_id, cus_id in customer_map.items()
     ]
     repeat_customers = sum(1 for cus_id in customer_map.values()
                             if sum(1 for o in new_orders if o["customer_id"] == cus_id) > 1)

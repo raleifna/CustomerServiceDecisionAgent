@@ -216,13 +216,17 @@ def _run_import(cur, source_dir: Path, batch_id: str, anchor_date: str, pipeline
     # -- 2. customers --
     for c in customers:
         row = {
-            "customer_id": c["customer_id"], "vip_level": c["vip_level"],
+            "customer_id": c["customer_id"], "source_unique_id": c["source_unique_id"],
+            "vip_level": c["vip_level"],
             "register_date": c["register_date"],
             "canceled_order_count": c["canceled_order_count"],
             "import_batch_id": batch_id,
         }
         upsert_row(cur, "customers", "customer_id", row,
-                   ["vip_level", "register_date", "canceled_order_count", "import_batch_id"], counters)
+                   ["source_unique_id", "vip_level", "register_date", "canceled_order_count", "import_batch_id"],
+                   counters)
+        _provenance(cur, "customer", c["customer_id"], "source_unique_id", "REAL",
+                    pipeline_version=pipeline_version, source_dataset="olist_customers_dataset.csv")
         _provenance(cur, "customer", c["customer_id"], "vip_level", "SYNTHETIC_ENRICHMENT",
                     pipeline_version=pipeline_version)
         _provenance(cur, "customer", c["customer_id"], "canceled_order_count", "DERIVED",

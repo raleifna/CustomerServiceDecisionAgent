@@ -8,3 +8,5 @@ __pycache__/
 .DS_Store
 reports/
 data/dialogue_dataset/
+data/external_raw/*.csv
+data/external_raw/amazon_pools.json
