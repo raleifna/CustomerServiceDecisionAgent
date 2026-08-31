@@ -536,6 +536,7 @@ def chat(payload: ChatRequest, request: Request) -> ChatResponse:
             {
                 "user_message": payload.message,
                 "conversation_context": existing_context,
+                "conversation_id": graph_thread_id,
             },
             config=graph_config,
         )

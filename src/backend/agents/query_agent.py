@@ -4,6 +4,7 @@ from typing import Any
 
 from src.backend.graph.state import CustomerServiceState
 from src.backend.llm import chat, chat_with_tools
+from src.backend.services import observability
 from src.backend.services.business_clock import get_business_clock
 from src.backend.services.query_tool_provider import get_query_tool_provider
 from src.backend.services.tool_errors import ToolError
@@ -250,16 +251,28 @@ def query_agent_node(state: CustomerServiceState) -> CustomerServiceState:
     as_of_date = business_clock.today()
     as_of_iso = as_of_date.isoformat()
 
+    conversation_id = state.get("conversation_id") or "unknown"
+    customer_id = (state.get("conversation_context") or {}).get("authenticated_customer_id")
+
     try:
-        order_id, clarification = _resolve_order_for_customer(state, provider)
-        if not order_id:
-            return {"customer_response": clarification or "请提供订单号，我才能查询。"}
+        with observability.agent_run(conversation_id, "query_agent", customer_id=customer_id) as run:
+            order_id, clarification = run.call(
+                "resolve_order_for_customer", {}, _resolve_order_for_customer, state, provider,
+            )
+            if not order_id:
+                return {"customer_response": clarification or "请提供订单号，我才能查询。"}
 
-        order_status = provider.get_order_status(order_id, as_of_date=as_of_date)
-        if order_status is None:
-            return {"customer_response": f"没有找到订单 {order_id}，请核对订单号。"}
+            order_status = run.call(
+                "get_order_status", {"order_id": order_id},
+                provider.get_order_status, order_id, as_of_date=as_of_date,
+            )
+            if order_status is None:
+                return {"customer_response": f"没有找到订单 {order_id}，请核对订单号。"}
 
-        logistics_status = provider.get_logistics_status(order_id, as_of_date=as_of_date)
+            logistics_status = run.call(
+                "get_logistics_status", {"order_id": order_id},
+                provider.get_logistics_status, order_id, as_of_date=as_of_date,
+            )
     except ToolError as exc:
         # A classified Tool/data-layer failure (DB unavailable, a data
         # integrity break) -- never let this raise past the graph node, and

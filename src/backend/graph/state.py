@@ -4,6 +4,11 @@ from typing_extensions import TypedDict
 class CustomerServiceState(TypedDict, total=False):
 
     user_message: str
+    # = the LangGraph checkpointer's thread_id (see api/main.py's
+    # graph_thread_id) -- the same identifier conversations.conversation_id
+    # is keyed on, so agent_runs logging can tie a run back to a
+    # conversation without minting a second id.
+    conversation_id: str
     conversation_context: dict[str, Any]
     conversation_result: dict[str, Any]
     dialogue_history: list[dict[str, str]]
