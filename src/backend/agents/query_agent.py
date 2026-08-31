@@ -265,7 +265,11 @@ def query_agent_node(state: CustomerServiceState) -> CustomerServiceState:
     # data source doesn't carry a promised_ship_date at all — that must never be
     # treated as "yes, offer it" nor silently coerced to "no".
     can_offer_expedite = bool(expedite.get("can_offer"))
-    is_overdue = bool(order_status.get("is_overdue"))
+    # expedite.is_overdue lives next to can_offer for the same reason: None
+    # (not False) when there's no promised_ship_date to judge against. Only
+    # read under `if can_offer_expedite` below, which is already False
+    # whenever is_overdue is None, so bool(None) -> False here is safe.
+    is_overdue = bool(expedite.get("is_overdue"))
 
     # A monitor-detected tracking stall is already in the platform workflow;
     # do not ask the customer whether to create the same chase again.

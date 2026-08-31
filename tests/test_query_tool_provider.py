@@ -20,7 +20,7 @@ def test_get_order_status_with_promised_ship_date_marks_expedite_available(provi
     result = provider.get_order_status("ORD2026080021", as_of_date=date(2026, 8, 20))
     assert result["expedite"]["availability"] == AVAILABLE
     assert result["expedite"]["can_offer"] is True  # not shipped + has a promised date
-    assert result["is_overdue"] is True  # promised date already passed as_of_date
+    assert result["expedite"]["is_overdue"] is True  # promised date already passed as_of_date
 
 
 def test_get_order_status_unknown_order_returns_none(provider):
@@ -58,6 +58,7 @@ def test_can_offer_is_none_not_false_when_unavailable():
 
     assert result["expedite"]["availability"] == UNAVAILABLE
     assert result["expedite"]["can_offer"] is None  # not False -- "we don't know", not "no"
+    assert result["expedite"]["is_overdue"] is None  # not False -- can't judge without a promised date
 
 
 def test_get_query_tool_provider_defaults_to_fixture(monkeypatch):

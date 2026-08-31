@@ -100,6 +100,7 @@ class PostgresQueryToolProviderIntegrationTests(unittest.TestCase):
         self.assertEqual(result["expedite"]["availability"], "UNAVAILABLE")
         self.assertEqual(result["expedite"]["reason"], "PROMISED_SHIP_DATE_NOT_PROVIDED")
         self.assertIsNone(result["expedite"]["can_offer"])  # None, not False
+        self.assertIsNone(result["expedite"]["is_overdue"])  # None, not False -- can't judge
 
     def test_tracking_is_unavailable_but_real_facts_still_come_through(self):
         result = self._provider().get_logistics_status("ORD-IT-001", as_of_date=date(2026, 6, 1))

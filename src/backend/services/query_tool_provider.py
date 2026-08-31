@@ -24,7 +24,12 @@ implementations of the same capability:
 claim "we checked and the answer is no", which is not true; `None` means
 "we don't have the fact needed to answer at all". Callers (query_agent.py)
 must branch on availability before trusting can_offer, not treat None as
-falsy.
+falsy. `expedite.is_overdue` follows the same rule and lives nested inside
+`expedite` rather than at the top level of get_order_status's result: it is
+specifically "is this order overdue on the promised *shipping* date", which
+only means something once a promised_ship_date exists at all. A top-level
+`is_overdue` would be too easy for a future caller to confuse with the
+unrelated *delivery*-overdue fact that get_logistics_status reports.
 """
 
 from dataclasses import dataclass
@@ -92,12 +97,16 @@ class FixtureQueryToolProvider:
             expedite = {
                 "availability": AVAILABLE, "reason": None,
                 "promised_ship_date": promised_ship_date, "can_offer": can_offer_expedite,
+                "is_overdue": is_overdue,
             }
         else:
-            is_overdue = False
+            # No promised_ship_date at all -- "is it overdue on shipping" is
+            # unanswerable, not "no". None here, never False; see the module
+            # docstring's can_offer rule -- the same rule applies to any
+            # judgment call nested under an UNAVAILABLE capability.
             expedite = {
                 "availability": UNAVAILABLE, "reason": REASON_PROMISED_SHIP_DATE_NOT_PROVIDED,
-                "promised_ship_date": None, "can_offer": None,
+                "promised_ship_date": None, "can_offer": None, "is_overdue": None,
             }
 
         return {
@@ -108,7 +117,6 @@ class FixtureQueryToolProvider:
             "estimated_delivery_date": order.get("estimated_delivery_date"),
             "is_shipped": bool(shipped_date),
             "is_delivered": bool(delivered_date),
-            "is_overdue": is_overdue,
             "expedite": expedite,
         }
 
@@ -229,10 +237,12 @@ class PostgresQueryToolProvider:
             ),
             "is_shipped": ctx.shipment_facts.is_shipped if ctx.shipment_facts else bool(order.shipped_date),
             "is_delivered": ctx.shipment_facts.is_delivered if ctx.shipment_facts else bool(order.delivered_date),
-            "is_overdue": False,  # order-level "shipping overdue" needs promised_ship_date -- not provided; see expedite block
             "expedite": {
+                # promised_ship_date isn't a concept this data source provides
+                # at all -- "is it overdue on shipping" is unanswerable, not
+                # "no, checked, on time". None, never False.
                 "availability": UNAVAILABLE, "reason": REASON_PROMISED_SHIP_DATE_NOT_PROVIDED,
-                "promised_ship_date": None, "can_offer": None,
+                "promised_ship_date": None, "can_offer": None, "is_overdue": None,
             },
         }
 
