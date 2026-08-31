@@ -1,5 +1,10 @@
 import src.backend.agents.conversation_router_agent as conversation_router_agent
-from src.backend.agents.conversation_router_agent import conversation_router_node
+from src.backend.agents.conversation_router_agent import (
+    _OWNERSHIP_UNVERIFIED_RESPONSE,
+    conversation_router_node,
+)
+from src.backend.services.order_ownership_service import DENIED, OwnershipResult
+from src.backend.services.tool_errors import DATABASE_UNAVAILABLE, ToolError
 
 
 def test_llm_withdraw_misclassification_falls_back_to_after_sales_request(monkeypatch):
@@ -72,6 +77,44 @@ def test_colloquial_refund_request_with_greeting_uses_selected_order():
 
     assert result["conversation_result"]["conversation_intent"] == "AfterSalesRequest"
     assert result["conversation_result"]["order_id"] == "ORD2026080001"
+
+
+def test_ownership_denied_gives_the_uniform_response_and_resets_context(monkeypatch):
+    class _DeniedService:
+        def verify_ownership(self, order_id, customer_id):
+            return OwnershipResult(DENIED)
+
+    monkeypatch.setattr(conversation_router_agent, "get_order_ownership_service", lambda: _DeniedService())
+
+    result = conversation_router_node({
+        "user_message": "这个订单 ORD2026080099 什么时候发货",
+        "conversation_context": {"authenticated_customer_id": "CUS0001"},
+    })
+
+    assert result["conversation_result"]["status"] == "Rejected"
+    assert result["conversation_result"]["order_id"] is None
+    assert result["customer_response"] == _OWNERSHIP_UNVERIFIED_RESPONSE
+    assert "active_order_id" not in result["conversation_context"]
+
+
+def test_ownership_check_infra_failure_fails_closed_with_the_same_uniform_response(monkeypatch):
+    # A DATABASE_UNAVAILABLE ToolError must be treated exactly like DENIED --
+    # never render order data on an unconfirmed ownership check, and never
+    # let the customer-facing message reveal *why* it failed (see the
+    # module's own note on order enumeration).
+    class _BrokenService:
+        def verify_ownership(self, order_id, customer_id):
+            raise ToolError(DATABASE_UNAVAILABLE, "db down", retryable=True)
+
+    monkeypatch.setattr(conversation_router_agent, "get_order_ownership_service", lambda: _BrokenService())
+
+    result = conversation_router_node({
+        "user_message": "这个订单 ORD2026080099 什么时候发货",
+        "conversation_context": {"authenticated_customer_id": "CUS0001"},
+    })
+
+    assert result["conversation_result"]["status"] == "Rejected"
+    assert result["customer_response"] == _OWNERSHIP_UNVERIFIED_RESPONSE
 
 
 def test_reapplication_confirmation_starts_a_fresh_request_flow():

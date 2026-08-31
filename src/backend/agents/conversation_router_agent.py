@@ -1,3 +1,5 @@
+import hashlib
+import logging
 import re
 
 from src.backend.agents.request_resolver_agent import (
@@ -6,7 +8,13 @@ from src.backend.agents.request_resolver_agent import (
 )
 from src.backend.graph.state import CustomerServiceState
 from src.backend.llm import chat, chat_json
-from src.backend.repositories.mock_db_repository import get_order
+from src.backend.services.order_ownership_service import (
+    AUTHORIZED,
+    get_order_ownership_service,
+)
+from src.backend.services.tool_errors import ToolError
+
+logger = logging.getLogger(__name__)
 
 
 VALID_CONVERSATION_INTENTS = {
@@ -51,6 +59,25 @@ _FALLBACK_REPLIES = {
         "还是申请退款或换货。"
     ),
 }
+
+
+# One uniform customer-facing message covers every way ownership
+# verification can fail to come back AUTHORIZED -- order not found, wrong
+# owner, or the verification itself couldn't run (DB down / a data
+# integrity problem). Not distinguishing these prevents order-number
+# enumeration (a different message per case would let an attacker tell
+# "doesn't exist" apart from "exists but isn't yours"), and also avoids
+# leaking "it's a system problem, try again" as its own distinct signal.
+_OWNERSHIP_UNVERIFIED_RESPONSE = "无法验证该订单，请核对订单号后重试。"
+
+
+def _redact_id(value: str | None) -> str:
+    """Never write a raw order_id/customer_id into logs for this
+    security-relevant check -- a short hash is enough to correlate repeated
+    failures without making log output enumerable."""
+    if not value:
+        return "<none>"
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
 
 
 def _generate_conversational_reply(user_message: str, intent: str) -> str:
@@ -548,8 +575,24 @@ def conversation_router_node(
 
     authenticated_customer_id = context.get("authenticated_customer_id")
     if order_id and authenticated_customer_id:
-        order = get_order(order_id)
-        if order is None or order.get("customer_id") != authenticated_customer_id:
+        try:
+            ownership = get_order_ownership_service().verify_ownership(
+                order_id, authenticated_customer_id
+            )
+            authorized = ownership.status == AUTHORIZED
+        except ToolError as exc:
+            # Fail closed: any classified failure (order not found, DB
+            # unavailable, a data integrity problem) is treated exactly
+            # like DENIED -- never render order data on an unconfirmed
+            # ownership check. The real code stays in this log line for
+            # diagnosis; it never reaches the customer_response below.
+            logger.warning(
+                "order ownership check failed: code=%s order=%s customer=%s",
+                exc.code, _redact_id(order_id), _redact_id(authenticated_customer_id),
+            )
+            authorized = False
+
+        if not authorized:
             context.pop("active_order_id", None)
             context.pop("active_request_id", None)
             context.pop("pending_action", None)
@@ -563,7 +606,7 @@ def conversation_router_node(
                     "order_id": None,
                     "request_id": None,
                 },
-                "customer_response": "该订单不属于当前账户，请检查订单号后重试。",
+                "customer_response": _OWNERSHIP_UNVERIFIED_RESPONSE,
             }
 
     if not explicit_order_id and order_id and matched_by != "llm":
