@@ -171,6 +171,7 @@ class OrderContextService:
         shipment_repository: ShipmentRepository,
         payment_repository: PaymentRepository,
     ):
+        self.order_repository = order_repository
         self._orders = order_repository
         self._products = product_repository
         self._shipments = shipment_repository

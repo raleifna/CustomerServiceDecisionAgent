@@ -398,6 +398,7 @@ def _mock_query_tool_call(
         if name == "get_order_status":
             order_id = result.get("order_id")
             parts.append(f"订单 {order_id} 支付状态 {result.get('payment_status')}。")
+            promised_ship_date = (result.get("expedite") or {}).get("promised_ship_date")
             if result.get("delivered_date"):
                 parts.append(f"已于 {result['delivered_date']} 签收。")
             elif result.get("shipped_date"):
@@ -406,8 +407,8 @@ def _mock_query_tool_call(
                     parts.append(f"，预计 {result['estimated_delivery_date']} 送达。")
                 else:
                     parts.append("。")
-            elif result.get("promised_ship_date"):
-                parts.append(f"尚未发货，承诺发货日期为 {result['promised_ship_date']}。")
+            elif promised_ship_date:
+                parts.append(f"尚未发货，承诺发货日期为 {promised_ship_date}。")
             else:
                 parts.append("尚未发货。")
         elif name == "get_logistics_status":
