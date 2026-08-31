@@ -7,3 +7,12 @@ dist/
 *.tsbuildinfo
 data/uploads/
 .claude/
+
+# Raw downloaded source datasets (Olist CSVs, Amazon Reviews 2023 samples) and
+# the large intermediate product-candidate cache -- publicly re-downloadable,
+# not worth versioning. The curated new_*.json outputs they produce (via
+# fetch_amazon_pools.py + build_olist_sample.py) ARE committed.
+data/external_raw/*.csv
+data/external_raw/amazon_pools.json
+data/external_raw/_probe.jsonl
+data/external_raw/amazon2023_samples/

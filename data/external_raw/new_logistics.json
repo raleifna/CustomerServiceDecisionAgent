@@ -1,0 +1,2902 @@
+[
+  {
+    "shipment_id": "SHP-RW-00100",
+    "order_id": "ORD-RW-00100",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-14",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00101",
+    "order_id": "ORD-RW-00101",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-08",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00102",
+    "order_id": "ORD-RW-00102",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-28",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00103",
+    "order_id": "ORD-RW-00103",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-08",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00104",
+    "order_id": "ORD-RW-00104",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-10",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00105",
+    "order_id": "ORD-RW-00105",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-11",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00106",
+    "order_id": "ORD-RW-00106",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-02-13",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00107",
+    "order_id": "ORD-RW-00107",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-31",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00108",
+    "order_id": "ORD-RW-00108",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-04-05",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00109",
+    "order_id": "ORD-RW-00109",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-25",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00110",
+    "order_id": "ORD-RW-00110",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-15",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00111",
+    "order_id": "ORD-RW-00111",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-20",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00112",
+    "order_id": "ORD-RW-00112",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-12",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00113",
+    "order_id": "ORD-RW-00113",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-21",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00114",
+    "order_id": "ORD-RW-00114",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-31",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00115",
+    "order_id": "ORD-RW-00115",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-02",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00116",
+    "order_id": "ORD-RW-00116",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-02",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00117",
+    "order_id": "ORD-RW-00117",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-01",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00118",
+    "order_id": "ORD-RW-00118",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-27",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00119",
+    "order_id": "ORD-RW-00119",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-12-14",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00120",
+    "order_id": "ORD-RW-00120",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-04",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00121",
+    "order_id": "ORD-RW-00121",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-05-11",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00122",
+    "order_id": "ORD-RW-00122",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-20",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00123",
+    "order_id": "ORD-RW-00123",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-03-30",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00124",
+    "order_id": "ORD-RW-00124",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-23",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00125",
+    "order_id": "ORD-RW-00125",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-20",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00126",
+    "order_id": "ORD-RW-00126",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-07",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00127",
+    "order_id": "ORD-RW-00127",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-02-20",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00128",
+    "order_id": "ORD-RW-00128",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2024-10-27",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00129",
+    "order_id": "ORD-RW-00129",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-08-15",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00130",
+    "order_id": "ORD-RW-00130",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-10-09",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00131",
+    "order_id": "ORD-RW-00131",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-02-08",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00132",
+    "order_id": "ORD-RW-00132",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-07-10",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00133",
+    "order_id": "ORD-RW-00133",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-04-16",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00134",
+    "order_id": "ORD-RW-00134",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-04-18",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00135",
+    "order_id": "ORD-RW-00135",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-11-28",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00136",
+    "order_id": "ORD-RW-00136",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-03-13",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00137",
+    "order_id": "ORD-RW-00137",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-04-16",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00138",
+    "order_id": "ORD-RW-00138",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-10-01",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00139",
+    "order_id": "ORD-RW-00139",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-07-09",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00140",
+    "order_id": "ORD-RW-00140",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-09-03",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00141",
+    "order_id": "ORD-RW-00141",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-01-25",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00142",
+    "order_id": "ORD-RW-00142",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-05-17",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00143",
+    "order_id": "ORD-RW-00143",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-05-03",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00144",
+    "order_id": "ORD-RW-00144",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-12-07",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00171",
+    "order_id": "ORD-RW-00171",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-08-30",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00179",
+    "order_id": "ORD-RW-00179",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-29",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00280",
+    "order_id": "ORD-RW-00280",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-26",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00281",
+    "order_id": "ORD-RW-00281",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-18",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00282",
+    "order_id": "ORD-RW-00282",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-03",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00283",
+    "order_id": "ORD-RW-00283",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-21",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00284",
+    "order_id": "ORD-RW-00284",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-06-27",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00285",
+    "order_id": "ORD-RW-00285",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-14",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00286",
+    "order_id": "ORD-RW-00286",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-15",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00287",
+    "order_id": "ORD-RW-00287",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-27",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00288",
+    "order_id": "ORD-RW-00288",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-10",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00289",
+    "order_id": "ORD-RW-00289",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-11",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00290",
+    "order_id": "ORD-RW-00290",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-15",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00291",
+    "order_id": "ORD-RW-00291",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-30",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00292",
+    "order_id": "ORD-RW-00292",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-01-02",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00293",
+    "order_id": "ORD-RW-00293",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-13",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00294",
+    "order_id": "ORD-RW-00294",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-12-27",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00295",
+    "order_id": "ORD-RW-00295",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-02",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00296",
+    "order_id": "ORD-RW-00296",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-26",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00297",
+    "order_id": "ORD-RW-00297",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-23",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00298",
+    "order_id": "ORD-RW-00298",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-15",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00299",
+    "order_id": "ORD-RW-00299",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-19",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00300",
+    "order_id": "ORD-RW-00300",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-18",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00301",
+    "order_id": "ORD-RW-00301",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-11",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00302",
+    "order_id": "ORD-RW-00302",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-04",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00303",
+    "order_id": "ORD-RW-00303",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-14",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00304",
+    "order_id": "ORD-RW-00304",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-10-23",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00305",
+    "order_id": "ORD-RW-00305",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-17",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00306",
+    "order_id": "ORD-RW-00306",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-16",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00307",
+    "order_id": "ORD-RW-00307",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-10-11",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00308",
+    "order_id": "ORD-RW-00308",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2024-10-23",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00309",
+    "order_id": "ORD-RW-00309",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-02-21",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00310",
+    "order_id": "ORD-RW-00310",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-10-25",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00311",
+    "order_id": "ORD-RW-00311",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-12-31",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00312",
+    "order_id": "ORD-RW-00312",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-07-31",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00313",
+    "order_id": "ORD-RW-00313",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-06-06",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00314",
+    "order_id": "ORD-RW-00314",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-03-14",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00315",
+    "order_id": "ORD-RW-00315",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-02-15",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00316",
+    "order_id": "ORD-RW-00316",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-04-16",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00317",
+    "order_id": "ORD-RW-00317",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-04-10",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00318",
+    "order_id": "ORD-RW-00318",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-07-13",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00319",
+    "order_id": "ORD-RW-00319",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-05-23",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00320",
+    "order_id": "ORD-RW-00320",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-06-24",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00321",
+    "order_id": "ORD-RW-00321",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-02-27",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00322",
+    "order_id": "ORD-RW-00322",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-07-04",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00323",
+    "order_id": "ORD-RW-00323",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2024-10-26",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00324",
+    "order_id": "ORD-RW-00324",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-07-10",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00326",
+    "order_id": "ORD-RW-00326",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-01",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00344",
+    "order_id": "ORD-RW-00344",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-05",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00460",
+    "order_id": "ORD-RW-00460",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-05-01",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00461",
+    "order_id": "ORD-RW-00461",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-19",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00462",
+    "order_id": "ORD-RW-00462",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-11",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00463",
+    "order_id": "ORD-RW-00463",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-13",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00464",
+    "order_id": "ORD-RW-00464",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-15",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00465",
+    "order_id": "ORD-RW-00465",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-11",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00466",
+    "order_id": "ORD-RW-00466",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-10-05",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00467",
+    "order_id": "ORD-RW-00467",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-16",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00468",
+    "order_id": "ORD-RW-00468",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-06",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00469",
+    "order_id": "ORD-RW-00469",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-13",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00470",
+    "order_id": "ORD-RW-00470",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-05-02",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00471",
+    "order_id": "ORD-RW-00471",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-14",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00472",
+    "order_id": "ORD-RW-00472",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-19",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00473",
+    "order_id": "ORD-RW-00473",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-09",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00474",
+    "order_id": "ORD-RW-00474",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-08",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00475",
+    "order_id": "ORD-RW-00475",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-09-21",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00476",
+    "order_id": "ORD-RW-00476",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-13",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00477",
+    "order_id": "ORD-RW-00477",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-26",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00478",
+    "order_id": "ORD-RW-00478",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-02",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00479",
+    "order_id": "ORD-RW-00479",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-08",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00480",
+    "order_id": "ORD-RW-00480",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-06",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00481",
+    "order_id": "ORD-RW-00481",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-09",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00482",
+    "order_id": "ORD-RW-00482",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-29",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00483",
+    "order_id": "ORD-RW-00483",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-29",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00484",
+    "order_id": "ORD-RW-00484",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-13",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00485",
+    "order_id": "ORD-RW-00485",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-28",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00486",
+    "order_id": "ORD-RW-00486",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-04-04",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00487",
+    "order_id": "ORD-RW-00487",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-04-23",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00488",
+    "order_id": "ORD-RW-00488",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-11-23",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00489",
+    "order_id": "ORD-RW-00489",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-07-09",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00490",
+    "order_id": "ORD-RW-00490",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-07-27",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00491",
+    "order_id": "ORD-RW-00491",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-07-03",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00492",
+    "order_id": "ORD-RW-00492",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-03-14",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00493",
+    "order_id": "ORD-RW-00493",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-03-27",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00494",
+    "order_id": "ORD-RW-00494",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-11-05",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00495",
+    "order_id": "ORD-RW-00495",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-04-19",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00496",
+    "order_id": "ORD-RW-00496",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-07-13",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00497",
+    "order_id": "ORD-RW-00497",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-03-14",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00498",
+    "order_id": "ORD-RW-00498",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-12-28",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00499",
+    "order_id": "ORD-RW-00499",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-04-08",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00500",
+    "order_id": "ORD-RW-00500",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-12-05",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00501",
+    "order_id": "ORD-RW-00501",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-09-18",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00502",
+    "order_id": "ORD-RW-00502",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-06-19",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00503",
+    "order_id": "ORD-RW-00503",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-04-18",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00504",
+    "order_id": "ORD-RW-00504",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-07-05",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00569",
+    "order_id": "ORD-RW-00569",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-06-18",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00570",
+    "order_id": "ORD-RW-00570",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-03-23",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00571",
+    "order_id": "ORD-RW-00571",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-23",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00572",
+    "order_id": "ORD-RW-00572",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-10-19",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00573",
+    "order_id": "ORD-RW-00573",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-18",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00574",
+    "order_id": "ORD-RW-00574",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-26",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00575",
+    "order_id": "ORD-RW-00575",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-01",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00576",
+    "order_id": "ORD-RW-00576",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-18",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00577",
+    "order_id": "ORD-RW-00577",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-01-02",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00578",
+    "order_id": "ORD-RW-00578",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-11-14",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00579",
+    "order_id": "ORD-RW-00579",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-02-11",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00580",
+    "order_id": "ORD-RW-00580",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-05-20",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00581",
+    "order_id": "ORD-RW-00581",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-08-29",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00588",
+    "order_id": "ORD-RW-00588",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-12-28",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00590",
+    "order_id": "ORD-RW-00590",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-12",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00690",
+    "order_id": "ORD-RW-00690",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-01",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00691",
+    "order_id": "ORD-RW-00691",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-28",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00692",
+    "order_id": "ORD-RW-00692",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-05-02",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00693",
+    "order_id": "ORD-RW-00693",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-05",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00694",
+    "order_id": "ORD-RW-00694",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-09",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00695",
+    "order_id": "ORD-RW-00695",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-08",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00696",
+    "order_id": "ORD-RW-00696",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-10",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00697",
+    "order_id": "ORD-RW-00697",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-28",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00698",
+    "order_id": "ORD-RW-00698",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-10",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00699",
+    "order_id": "ORD-RW-00699",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-25",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00700",
+    "order_id": "ORD-RW-00700",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-11",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00701",
+    "order_id": "ORD-RW-00701",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-11",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00702",
+    "order_id": "ORD-RW-00702",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-15",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00703",
+    "order_id": "ORD-RW-00703",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-28",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00704",
+    "order_id": "ORD-RW-00704",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-09",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00705",
+    "order_id": "ORD-RW-00705",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-12-11",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00706",
+    "order_id": "ORD-RW-00706",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-12-06",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00707",
+    "order_id": "ORD-RW-00707",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-08",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00708",
+    "order_id": "ORD-RW-00708",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-07",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00709",
+    "order_id": "ORD-RW-00709",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-07",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00710",
+    "order_id": "ORD-RW-00710",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-24",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00711",
+    "order_id": "ORD-RW-00711",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-07-31",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00712",
+    "order_id": "ORD-RW-00712",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-13",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00713",
+    "order_id": "ORD-RW-00713",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-08",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00714",
+    "order_id": "ORD-RW-00714",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-24",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00715",
+    "order_id": "ORD-RW-00715",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-03",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00716",
+    "order_id": "ORD-RW-00716",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-24",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00717",
+    "order_id": "ORD-RW-00717",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-03-27",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00718",
+    "order_id": "ORD-RW-00718",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-06-19",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00719",
+    "order_id": "ORD-RW-00719",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-01-24",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00720",
+    "order_id": "ORD-RW-00720",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-02-27",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00721",
+    "order_id": "ORD-RW-00721",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-07-16",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00722",
+    "order_id": "ORD-RW-00722",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-01-11",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00723",
+    "order_id": "ORD-RW-00723",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-03-15",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00724",
+    "order_id": "ORD-RW-00724",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-01-28",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00725",
+    "order_id": "ORD-RW-00725",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-02-18",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00726",
+    "order_id": "ORD-RW-00726",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-03-01",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00727",
+    "order_id": "ORD-RW-00727",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-05-09",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00728",
+    "order_id": "ORD-RW-00728",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-07-09",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00729",
+    "order_id": "ORD-RW-00729",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-11-21",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00730",
+    "order_id": "ORD-RW-00730",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-05-21",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00731",
+    "order_id": "ORD-RW-00731",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-12-07",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00732",
+    "order_id": "ORD-RW-00732",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-02-19",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00733",
+    "order_id": "ORD-RW-00733",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-10-19",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00734",
+    "order_id": "ORD-RW-00734",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-09-26",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00870",
+    "order_id": "ORD-RW-00870",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-19",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00871",
+    "order_id": "ORD-RW-00871",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-21",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00872",
+    "order_id": "ORD-RW-00872",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-09-25",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00873",
+    "order_id": "ORD-RW-00873",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-07",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00874",
+    "order_id": "ORD-RW-00874",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-10-04",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00875",
+    "order_id": "ORD-RW-00875",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-07",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00876",
+    "order_id": "ORD-RW-00876",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-04-04",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00877",
+    "order_id": "ORD-RW-00877",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-05",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00878",
+    "order_id": "ORD-RW-00878",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-05-01",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00879",
+    "order_id": "ORD-RW-00879",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-12",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00880",
+    "order_id": "ORD-RW-00880",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-18",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00881",
+    "order_id": "ORD-RW-00881",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-29",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00882",
+    "order_id": "ORD-RW-00882",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-11",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00883",
+    "order_id": "ORD-RW-00883",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-07-04",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00884",
+    "order_id": "ORD-RW-00884",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-08-30",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00885",
+    "order_id": "ORD-RW-00885",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-19",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00886",
+    "order_id": "ORD-RW-00886",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-01-03",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00887",
+    "order_id": "ORD-RW-00887",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-04-05",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00888",
+    "order_id": "ORD-RW-00888",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-21",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00889",
+    "order_id": "ORD-RW-00889",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-26",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00890",
+    "order_id": "ORD-RW-00890",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-09",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00891",
+    "order_id": "ORD-RW-00891",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-06-14",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00892",
+    "order_id": "ORD-RW-00892",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-03-07",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00893",
+    "order_id": "ORD-RW-00893",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-23",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00894",
+    "order_id": "ORD-RW-00894",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-05",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00895",
+    "order_id": "ORD-RW-00895",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-16",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00896",
+    "order_id": "ORD-RW-00896",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-21",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-00897",
+    "order_id": "ORD-RW-00897",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-02-23",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00898",
+    "order_id": "ORD-RW-00898",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-10-30",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00899",
+    "order_id": "ORD-RW-00899",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-06-05",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00900",
+    "order_id": "ORD-RW-00900",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-01-10",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00901",
+    "order_id": "ORD-RW-00901",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-07-10",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00902",
+    "order_id": "ORD-RW-00902",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-11-07",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00903",
+    "order_id": "ORD-RW-00903",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-04-24",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00904",
+    "order_id": "ORD-RW-00904",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-08-13",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00905",
+    "order_id": "ORD-RW-00905",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-09-18",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00906",
+    "order_id": "ORD-RW-00906",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-02-27",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00907",
+    "order_id": "ORD-RW-00907",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-03-04",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00908",
+    "order_id": "ORD-RW-00908",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-05-02",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00909",
+    "order_id": "ORD-RW-00909",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-12-12",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00910",
+    "order_id": "ORD-RW-00910",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-11-15",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00911",
+    "order_id": "ORD-RW-00911",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-12-28",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00912",
+    "order_id": "ORD-RW-00912",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-03-22",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00913",
+    "order_id": "ORD-RW-00913",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-05-02",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-00914",
+    "order_id": "ORD-RW-00914",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-10-05",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01001",
+    "order_id": "ORD-RW-01001",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-13",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01002",
+    "order_id": "ORD-RW-01002",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-06",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01003",
+    "order_id": "ORD-RW-01003",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-21",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01004",
+    "order_id": "ORD-RW-01004",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-04-05",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01005",
+    "order_id": "ORD-RW-01005",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-12",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01006",
+    "order_id": "ORD-RW-01006",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-10-11",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01007",
+    "order_id": "ORD-RW-01007",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-08-31",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01008",
+    "order_id": "ORD-RW-01008",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-06",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01009",
+    "order_id": "ORD-RW-01009",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-02",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01010",
+    "order_id": "ORD-RW-01010",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-22",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01011",
+    "order_id": "ORD-RW-01011",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-13",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01012",
+    "order_id": "ORD-RW-01012",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-10-03",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01013",
+    "order_id": "ORD-RW-01013",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-02",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01014",
+    "order_id": "ORD-RW-01014",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-01",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01015",
+    "order_id": "ORD-RW-01015",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-11-21",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01016",
+    "order_id": "ORD-RW-01016",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-01-14",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01017",
+    "order_id": "ORD-RW-01017",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-12-27",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01018",
+    "order_id": "ORD-RW-01018",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-10-03",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01019",
+    "order_id": "ORD-RW-01019",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-11-23",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01020",
+    "order_id": "ORD-RW-01020",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-09-03",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01021",
+    "order_id": "ORD-RW-01021",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-02-20",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01022",
+    "order_id": "ORD-RW-01022",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-01-04",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01023",
+    "order_id": "ORD-RW-01023",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-11-21",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01090",
+    "order_id": "ORD-RW-01090",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-19",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01091",
+    "order_id": "ORD-RW-01091",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-06-28",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01092",
+    "order_id": "ORD-RW-01092",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-07-17",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01093",
+    "order_id": "ORD-RW-01093",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-19",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01094",
+    "order_id": "ORD-RW-01094",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-25",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01095",
+    "order_id": "ORD-RW-01095",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-16",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01096",
+    "order_id": "ORD-RW-01096",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-03-27",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01097",
+    "order_id": "ORD-RW-01097",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-16",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01098",
+    "order_id": "ORD-RW-01098",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-05-08",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01099",
+    "order_id": "ORD-RW-01099",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-12",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01100",
+    "order_id": "ORD-RW-01100",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-02-08",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01101",
+    "order_id": "ORD-RW-01101",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-11-28",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01102",
+    "order_id": "ORD-RW-01102",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-07-15",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01103",
+    "order_id": "ORD-RW-01103",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2025-03-23",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  },
+  {
+    "shipment_id": "SHP-RW-01104",
+    "order_id": "ORD-RW-01104",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-08-09",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01105",
+    "order_id": "ORD-RW-01105",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-07-23",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01106",
+    "order_id": "ORD-RW-01106",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-08-14",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01107",
+    "order_id": "ORD-RW-01107",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-06-06",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01108",
+    "order_id": "ORD-RW-01108",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-07-20",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01109",
+    "order_id": "ORD-RW-01109",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-01-15",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01110",
+    "order_id": "ORD-RW-01110",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2026-04-11",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01111",
+    "order_id": "ORD-RW-01111",
+    "carrier": "第三方物流",
+    "exception_type": "超过预计送达时间仍未签收",
+    "exception_recorded_date": "2025-10-09",
+    "resolved": false,
+    "source_type": "DERIVED",
+    "derivation": "estimated_delivery_date has passed scenario_as_of_time with no delivered_date; Olist provides no continuous tracking feed, so a specific stall duration (e.g. '72 hours') is NOT asserted"
+  },
+  {
+    "shipment_id": "SHP-RW-01116",
+    "order_id": "ORD-RW-01116",
+    "carrier": "第三方物流",
+    "exception_type": "派送延迟",
+    "exception_recorded_date": "2026-04-30",
+    "resolved": true,
+    "source_type": "DERIVED",
+    "derivation": "delivered_date > estimated_delivery_date (both real Olist fields)"
+  }
+]

@@ -1,0 +1,82 @@
+# Olist -> Amazon Reviews 2023 category mapping rules.
+#
+# A candidate Amazon product qualifies for an Olist category's pool only if:
+#   1. its Amazon top-level category (meta_categories/meta_<amazon_category>.jsonl) matches, AND
+#   2. its title/features/categories text hits at least one include_keyword, AND
+#   3. it does not hit any exclude_keyword
+#
+# tier controls the sampling target (see sampling_tiers below).
+# Categories sharing an Amazon top-level file (electronics/computers_accessories,
+# both -> Electronics) use disjoint keyword sets so their candidate pools don't overlap.
+
+categories:
+  electronics:
+    amazon_category: Electronics
+    tier: major
+    include_keywords: [tv, television, camera, headphone, earphone, speaker,
+                        projector, monitor screen, remote control, radio, drone]
+    exclude_keywords: [laptop, keyboard, mouse, motherboard, ssd, hard drive,
+                        webcam, computer, pc case, gpu, cpu]
+
+  computers_accessories:
+    amazon_category: Electronics
+    tier: major
+    include_keywords: [laptop, keyboard, mouse, monitor, computer, usb, webcam,
+                        hub, hard drive, ssd, cable, docking station, pc]
+    exclude_keywords: [tv, television, camera, headphone, speaker, projector]
+
+  telephony:
+    amazon_category: Cell_Phones_and_Accessories
+    tier: major
+    include_keywords: []   # top-level category alone is high-confidence
+    exclude_keywords: []
+
+  home_appliances:
+    amazon_category: Appliances
+    tier: general
+    include_keywords: []
+    exclude_keywords: []
+
+  bed_bath_table:
+    amazon_category: Home_and_Kitchen
+    tier: major
+    include_keywords: [bedding, bedsheet, bed sheet, pillow, towel, bath,
+                        table linen, mattress, blanket, duvet, comforter,
+                        quilt, curtain]
+    exclude_keywords: [cookware, kitchen appliance, cleaning, pan, pot, knife]
+
+  health_beauty:
+    amazon_category: Beauty_and_Personal_Care
+    tier: major
+    include_keywords: [skincare, skin care, haircare, hair care, personal care,
+                        beauty tool, lotion, shampoo, cream, moisturizer,
+                        toothbrush, razor]
+    exclude_keywords: [perfume, fragrance, cologne, body spray]
+
+  toys:
+    amazon_category: Toys_and_Games
+    tier: general
+    include_keywords: []
+    exclude_keywords: []
+
+  office_furniture:
+    amazon_category: Office_Products
+    tier: small
+    include_keywords: [desk, office chair, filing cabinet, workstation, shelf,
+                        cabinet]
+    exclude_keywords: [pen, notebook, paper, binder, label, printer ink]
+
+sampling_tiers:
+  major: { target: 180 }
+  general: { target: 90 }
+  small: { target: 50 }
+
+# State-diversity buckets each category's sample should draw from, expressed
+# as an approximate minimum share of that category's target count.
+diversity_buckets:
+  delivered_on_time: 0.55
+  delivered_late: 0.15
+  in_transit_or_undelivered: 0.10
+  canceled: 0.05
+  multi_item: 0.10
+  high_value: 0.05
