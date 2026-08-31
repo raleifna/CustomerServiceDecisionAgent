@@ -1,9 +1,16 @@
 from src.backend.graph.state import CustomerServiceState
 from src.backend.llm import chat
-from src.backend.repositories.mock_db_repository import (
-    get_customer,
-    get_order,
-    get_product,
+from src.backend.repositories.customer_repository import (
+    CustomerNotFoundError,
+    get_customer_repository,
+)
+from src.backend.repositories.order_repository import (
+    OrderNotFoundError,
+    get_order_repository,
+)
+from src.backend.repositories.product_repository import (
+    ProductNotFoundError,
+    get_product_repository,
 )
 from src.backend.repositories.evidence_repository import get_evidence_for_decision
 from src.backend.repositories.order_item_repository import (
@@ -14,6 +21,11 @@ from src.backend.repositories.order_item_repository import (
 from src.backend.repositories.service_request_repository import get_service_request
 from src.backend.services.business_clock import get_business_clock
 from src.backend.services.logistics_service import get_logistics_provider
+from src.backend.services.order_evidence_adapter import (
+    customer_to_dict,
+    order_to_dict,
+    product_to_dict,
+)
 from src.backend.services.tool_errors import ToolError
 from src.backend.agents.order_agent import order_agent_node
 from src.backend.agents.logistics_agent import logistics_agent_node
@@ -181,15 +193,16 @@ def load_order_node(state: CustomerServiceState,) -> CustomerServiceState:
         return {
             "errors": cur_errors + ["service_request缺少order_id"]
         }
-    order = get_order(order_id)
-    if order is None:
+    try:
+        order = get_order_repository().get_by_id(order_id)
+    except OrderNotFoundError:
         cur_errors = state.get("errors", [])
         return {
             "errors": cur_errors + [f"找不到Order: {order_id}"]
         }
-    
+
     return {
-        "order": order,
+        "order": order_to_dict(order),
     }
 
 
@@ -208,16 +221,16 @@ def load_customer_node(state: CustomerServiceState,) -> CustomerServiceState:
         return {
             "errors": cur_errors + ["service_request缺少customer_id"]
         }
-    customer = get_customer(customer_id)
-
-    if customer is None:
+    try:
+        customer = get_customer_repository().get_by_id(customer_id)
+    except CustomerNotFoundError:
         cur_errors = state.get("errors", [])
         return {
             "errors": cur_errors + [f"找不到Customer: {customer_id}"]
         }
-    
+
     return {
-        "customer": customer,
+        "customer": customer_to_dict(customer),
     }
 
 
@@ -268,15 +281,16 @@ def load_product_node(state: CustomerServiceState,) -> CustomerServiceState:
             "errors": cur_errors + ["order_item缺少product_id"]
         }
     
-    product = get_product(product_id)
-    if product is None:
+    try:
+        product = get_product_repository().get_by_id(product_id)
+    except ProductNotFoundError:
         cur_errors = state.get("errors", [])
         return {
             "errors": cur_errors + [f"找不到product: {product_id}"]
         }
-    
+
     return {
-        "product": product,
+        "product": product_to_dict(product),
     }
 
 def load_logistics_node(state: CustomerServiceState,) -> CustomerServiceState:

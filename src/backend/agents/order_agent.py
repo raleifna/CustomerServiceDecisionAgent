@@ -45,10 +45,16 @@ def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
             "errors": cur_errors + ["Order 缺少 product_id"],
         }
 
-    # product_match: 
-    # True → 出库商品一致
+    # product_match:
+    # True  → 出库商品一致
     # False → 出库商品不一致
-    # None  → 尚未发货 
+    # None  → 无法判断 -- 尚未发货，或（V2/Olist 数据源）没有出库商品追踪数据。
+    #          这两种情况在 shipped_product_id 上表现相同（都是 None），本模块
+    #          不在这里强行区分：所有消费方（policy_agent.py 的 RISK-004）只用
+    #          `product_match is True` 做正向确认，从不对 None 取反或当作 False，
+    #          None 的两种成因对现有规则安全等价。真正的"这是缺失发货事实还是
+    #          缺失数据源支持"区分见下面的 fulfillment_tracking 字段（仅供审计
+    #          可见，不驱动任何规则）。
     if shipped_product_id is None:
         product_match = None
     else:
@@ -129,6 +135,21 @@ def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
 
     is_shipped = shipped_date is not None
     is_delivered = delivered_date is not None
+
+    # Audit-only signal for why product_match/quantity_match are None --
+    # never consumed by any rule, only exposed for transparency (same
+    # pattern as logistics_evidence.missing_evidence). "NOT_APPLICABLE"
+    # (not shipped, nothing to compare yet) and "UNAVAILABLE" (shipped, but
+    # this data source has no warehouse-fulfillment-vs-order-content
+    # tracking at all -- true for every V2/Olist order_item) collapse to
+    # the same bare None on shipped_product_id/shipped_quantity, but they
+    # are not the same fact and a future consumer must not conflate them.
+    if shipped_product_id is not None or shipped_product_qty is not None:
+        fulfillment_tracking = {"availability": "AVAILABLE", "reason": None}
+    elif not is_shipped:
+        fulfillment_tracking = {"availability": "NOT_APPLICABLE", "reason": "NOT_YET_SHIPPED"}
+    else:
+        fulfillment_tracking = {"availability": "UNAVAILABLE", "reason": "FULFILLMENT_TRACKING_NOT_PROVIDED"}
     if not is_shipped:
         delivery_status = "NotShipped"
     elif not is_delivered:
@@ -178,6 +199,12 @@ def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
     is_customized = product.get("is_customized")
 
     vip_level = customer.get("vip_level")
+    # customer.get("refund_history_count") is deliberately absent on the
+    # V2/Postgres backend -- order_evidence_adapter.customer_to_dict()
+    # never populates it there (V2's canceled_order_count is a DIFFERENT
+    # fact: cancellation is not evidence a refund happened). `or 0` makes
+    # the missing-key case resolve to 0 on both backends identically, and
+    # the live-computed count below is what actually matters either way.
     seed_refund_history_count = customer.get("refund_history_count") or 0
     live_refund_history_count = get_completed_refund_count(customer.get("customer_id"))
     refund_history_count = max(seed_refund_history_count, live_refund_history_count)
@@ -200,7 +227,11 @@ def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
             "remaining_eligible_quantity": remaining_eligible_quantity,
 
             "shipped_date": shipped_date_value,
-            "promised_ship_date": order.get("promised_ship_date"),
+            # promised_ship_date deliberately dropped -- a fixture-only
+            # concept nothing in this decision pipeline reads; see
+            # order_evidence_adapter.py's module docstring. The query flow
+            # (query_agent.py / QueryToolProvider) handles this field on
+            # its own, independently of order_evidence.
             "delivered_date": delivered_date_value,
             "estimated_delivery_date": estimated_delivery_date_value,
             "request_date": request_date_value,
@@ -221,6 +252,7 @@ def order_agent_node(state: CustomerServiceState,) -> CustomerServiceState:
             "is_customized": is_customized,
             "vip_level": vip_level,
             "refund_history_count": refund_history_count,
+            "fulfillment_tracking": fulfillment_tracking,
 
         }
     }
