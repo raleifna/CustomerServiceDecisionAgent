@@ -1,8 +1,29 @@
 from datetime import date
+from typing import Any
 
 from src.backend.graph.state import CustomerServiceState
 from src.backend.repositories.policy_repository import get_policy_rule
 from src.backend.config.business_rules import load_business_rules
+
+
+def _signal_value(
+    signal: Any, *, name: str, missing_evidence: list[dict[str, str]],
+) -> bool | None:
+    """Read a logistics_evidence {availability, value, reason, source_type}
+    signal (see logistics_service.py). Returns True/False only when
+    availability == AVAILABLE; returns None and records the gap in
+    missing_evidence when UNAVAILABLE. Callers must treat None as "this
+    fact-based rule cannot fire" -- a bare `if signal_value:` already does
+    that correctly (None is falsy), but a NEGATED condition
+    (`if not signal_value:`) does NOT -- `not None` is True in Python, so
+    any rule that means "fires when this is confirmed False" must compare
+    `signal_value is False` explicitly instead. See SHIPPING-007 below for
+    the one rule in this module that needed exactly that fix.
+    """
+    if signal.get("availability") == "UNAVAILABLE":
+        missing_evidence.append({"signal": name, "reason": signal.get("reason")})
+        return None
+    return bool(signal.get("value"))
 
 
 def policy_agent_node(
@@ -68,21 +89,22 @@ def policy_agent_node(
     vip_level = order_evidence.get("vip_level")
     refund_history_count = order_evidence.get("refund_history_count")
 
-    has_logistics_exception = logistics_evidence.get(
-        "has_logistics_exception",
-        False,
+    missing_evidence: list[dict[str, str]] = []
+    has_logistics_exception = _signal_value(
+        logistics_evidence.get("has_logistics_exception", {"availability": "UNAVAILABLE", "reason": "FIELD_MISSING"}),
+        name="has_logistics_exception", missing_evidence=missing_evidence,
     )
-    has_tracking_stalled = logistics_evidence.get(
-        "has_tracking_stalled",
-        False,
+    has_tracking_stalled = _signal_value(
+        logistics_evidence.get("tracking_stalled_over_72h", {"availability": "UNAVAILABLE", "reason": "FIELD_MISSING"}),
+        name="tracking_stalled_over_72h", missing_evidence=missing_evidence,
     )
-    has_unresolved_tracking_stalled = logistics_evidence.get(
-        "has_unresolved_tracking_stalled",
-        False,
+    has_unresolved_tracking_stalled = _signal_value(
+        logistics_evidence.get("unresolved_tracking_stalled_over_72h", {"availability": "UNAVAILABLE", "reason": "FIELD_MISSING"}),
+        name="unresolved_tracking_stalled_over_72h", missing_evidence=missing_evidence,
     )
-    has_stalled_over_72h = logistics_evidence.get(
-        "has_stalled_over_72h",
-        False,
+    has_stalled_over_72h = _signal_value(
+        logistics_evidence.get("stalled_in_transit_over_72h", {"availability": "UNAVAILABLE", "reason": "FIELD_MISSING"}),
+        name="stalled_in_transit_over_72h", missing_evidence=missing_evidence,
     )
     is_in_transit_overdue = order_evidence.get(
         "is_in_transit_overdue",
@@ -171,7 +193,13 @@ def policy_agent_node(
     if (
         request_reason == "未收到货"
         and is_in_transit_overdue
-        and not has_unresolved_tracking_stalled
+        # Must be a CONFIRMED "no" (is False), not merely falsy -- `not
+        # has_unresolved_tracking_stalled` would also be True when the
+        # signal is None (UNAVAILABLE on the Postgres backend), which
+        # would silently apply "逾期但未确认丢件" reasoning on top of a
+        # stall status this data source genuinely cannot rule out. See
+        # _signal_value's docstring.
+        and has_unresolved_tracking_stalled is False
     ):
         add_candidate("SHIPPING-007", "配送已逾期但物流尚未确认丢件")
 
@@ -292,5 +320,14 @@ def policy_agent_node(
             "candidate_policies": candidate_policies,
             "selection_reasons": selection_reasons,
             "missing_policy_ids": missing_policy_ids,
+            # Which logistics signals were UNAVAILABLE this turn and why --
+            # audit/debug visibility only. Not itself a gate trigger: an
+            # UNAVAILABLE signal already means the fact-based rule it would
+            # have fed (SHIPPING-002/004/007, VIP-002) never gets added as
+            # a candidate above, so evidence_completeness_gate_node's
+            # existing "no candidate intersects an automatic-decision
+            # policy -> NeedsReflection" fallback already routes this
+            # request to human review without needing a second mechanism.
+            "missing_evidence": missing_evidence,
         }
     }

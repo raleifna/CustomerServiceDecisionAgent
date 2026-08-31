@@ -4,7 +4,6 @@ from src.backend.repositories.mock_db_repository import (
     get_customer,
     get_order,
     get_product,
-    get_logistics,
 )
 from src.backend.repositories.evidence_repository import get_evidence_for_decision
 from src.backend.repositories.order_item_repository import (
@@ -13,6 +12,9 @@ from src.backend.repositories.order_item_repository import (
     get_service_request_items,
 )
 from src.backend.repositories.service_request_repository import get_service_request
+from src.backend.services.business_clock import get_business_clock
+from src.backend.services.logistics_service import get_logistics_provider
+from src.backend.services.tool_errors import ToolError
 from src.backend.agents.order_agent import order_agent_node
 from src.backend.agents.logistics_agent import logistics_agent_node
 from src.backend.agents.evidence_agent import evidence_agent_node
@@ -57,7 +59,7 @@ def prepare_turn_node(state: CustomerServiceState) -> CustomerServiceState:
         "order_item": None,
         "customer": None,
         "product": None,
-        "logistics": [],
+        "logistics": None,
         "submitted_evi": [],
         "errors": [],
         "order_evidence": None,
@@ -278,24 +280,38 @@ def load_product_node(state: CustomerServiceState,) -> CustomerServiceState:
     }
 
 def load_logistics_node(state: CustomerServiceState,) -> CustomerServiceState:
+    """Populates state["logistics"] with the signal-wrapped shape from
+    LogisticsProvider (Fixture or Postgres, APP_DATA_BACKEND-driven) --
+    not a raw list of exception records anymore. See
+    src/backend/services/logistics_service.py's module docstring for why
+    tracking_stalled_over_72h/stalled_in_transit_over_72h report
+    UNAVAILABLE on the Postgres backend regardless of what
+    shipment_events actually contains."""
     order = state.get("order")
     if order is None:
         cur_errors = state.get("errors", [])
         return {
             "errors": cur_errors + ["缺少order"]
         }
-    
+
     order_id = order.get("order_id")
     if not order_id:
         cur_errors = state.get("errors", [])
         return {
             "errors": cur_errors + ["order缺少order_id"]
         }
-    
-    logistics = get_logistics(order_id)
+
+    as_of_date = get_business_clock().today()
+    try:
+        facts = get_logistics_provider().get_logistics_facts(order_id, as_of_date=as_of_date)
+    except ToolError as exc:
+        cur_errors = state.get("errors", [])
+        return {
+            "errors": cur_errors + [f"物流信息加载失败: {exc.code}"]
+        }
 
     return {
-        "logistics":logistics,
+        "logistics": facts.as_dict(),
     }
 
 def load_evi_node(state: CustomerServiceState,) -> CustomerServiceState:

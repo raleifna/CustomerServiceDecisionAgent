@@ -26,7 +26,9 @@ class CustomerServiceState(TypedDict, total=False):
     customer: dict[str, Any]
     product: dict[str, Any]
 
-    logistics: list[dict[str, Any]]
+    # LogisticsFacts.as_dict() -- signal-wrapped, not a raw exception list.
+    # See src/backend/services/logistics_service.py.
+    logistics: dict[str, Any]
     submitted_evi: list[dict[str, Any]]
 
     errors: list[str]
