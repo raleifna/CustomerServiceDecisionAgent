@@ -58,9 +58,12 @@ random.seed(20260831)
 # ANCHOR_DATE_OVERRIDE=None means "use today" (convenient during iteration);
 # once a batch is frozen for an actual demo, pin it here explicitly so the
 # same import_batch_id always regenerates the same dates.
-ANCHOR_DATE_OVERRIDE = date(2026, 8, 31)  # frozen for the v2.0 demo dataset
-PIPELINE_VERSION = "v2.0"
-IMPORT_BATCH_ID = "olist-amazon-2026-08-31-v2.0"
+ANCHOR_DATE_OVERRIDE = date(2026, 8, 31)  # unchanged from v2.0 -- this bump only fixes the
+                                           # shipped_product_id/shipped_quantity fabrication below,
+                                           # not the timeline; keeping the same anchor keeps every
+                                           # other field byte-identical to v2.0 for a clean diff.
+PIPELINE_VERSION = "v2.1"
+IMPORT_BATCH_ID = "olist-amazon-2026-08-31-v2.1"
 
 SCENARIO_AS_OF_TIME = ANCHOR_DATE_OVERRIDE or date.today()  # BusinessClock's role in production
 PRICE_BAND_MIN, PRICE_BAND_MAX = 0.3, 3.0  # note 6: acceptable mapped-price / real-price ratio
@@ -398,8 +401,19 @@ def main():
         new_orders.append({
             "order_id": order_id, "customer_id": customer_id,
             "product_id": first_pro_id, "quantity": len(agg["items"]),
-            "shipped_product_id": first_pro_id if shipped_date else None,
-            "shipped_quantity": len(agg["items"]) if shipped_date else None,
+            # shipped_product_id/shipped_quantity are a warehouse-fulfillment
+            # fact -- "what did the warehouse actually pack and ship, as
+            # distinct from what was ordered" -- that Olist's dataset does
+            # not contain at all. Earlier versions of this script defaulted
+            # these to first_pro_id/len(items) whenever shipped_date was
+            # set, which asserted "shipped == ordered, no mis-ship/short-ship
+            # ever happened" as if it were an observed fact; that was
+            # fabrication, not derivation, and is fixed as of v2.1: always
+            # None here, regardless of shipment status. See the matching
+            # fix on new_order_items below (the field actually consumed by
+            # order_agent.py's fulfillment-match evidence).
+            "shipped_product_id": None,
+            "shipped_quantity": None,
             "order_date": shift(agg["purchase_dt"]),
             "shipped_date": shipped_date, "delivered_date": delivered_date,
             "delivery_recipient_type": "Unknown",
@@ -435,8 +449,13 @@ def main():
                 "product_id": pro_id, "sku_id": f"{pro_id}-DEFAULT", "sku_name": "默认规格",
                 "unit_price": price, "quantity": 1, "discount_amount": 0,
                 "paid_amount": price,
-                "shipped_product_id": pro_id if shipped_date else None,
-                "shipped_quantity": 1 if shipped_date else None,
+                # Always None -- see the matching comment on new_orders
+                # above. This is the field order_agent.py actually reads
+                # (order_item_repository.py serves order_items, not orders,
+                # for fulfillment-match evidence); a real value here would
+                # fabricate a warehouse-fulfillment fact Olist never gives.
+                "shipped_product_id": None,
+                "shipped_quantity": None,
             })
 
     # note (round 4): a canceled order is NOT evidence a refund was
