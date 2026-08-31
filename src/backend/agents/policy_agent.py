@@ -231,7 +231,36 @@ def policy_agent_node(
     )
     request_date_value = service_request.get("request_date")
 
-    if register_date_value and request_date_value:
+    # register_date is absent for every real V2/Olist customer (that
+    # dataset carries no signup date at all -- see customers.register_date's
+    # own DDL comment) but always present for a fixture customer, so this
+    # branch is unaffected there. RISK-003 is one of only two policy ids
+    # (with RISK-002) that force immediate HumanEscalation in
+    # evidence_completeness_gate_node -- it exists specifically to catch a
+    # high-risk pattern (new account, zero refund history, large amount),
+    # so an unknown registration age must NOT silently resolve to "assume
+    # not a new account" the way the logistics stall signals safely
+    # resolve to "assume no exceptional evidence". When the other two
+    # preconditions already hold and registration age is simply
+    # unknowable, this still routes to RISK-003's escalation -- honest
+    # about WHY in the reason text (uncertainty, not a confirmed
+    # new-account finding), never auto-approved or auto-denied on an
+    # unverified assumption either way.
+    if register_date_value is None:
+        missing_evidence.append({
+            "signal": "customer_register_date", "reason": "REGISTRATION_DATE_NOT_PROVIDED",
+        })
+        if (
+            refund_history_count == 0
+            and isinstance(amount, (int, float))
+            and amount >= risk_rules["high_value_amount"]
+        ):
+            add_candidate(
+                "RISK-003",
+                "无法确认账号注册时间（数据源未提供），无法排除新注册账号大额退款风险",
+            )
+            risk_triggered = True
+    elif request_date_value:
         registration_age_days = (
             date.fromisoformat(request_date_value)
             - date.fromisoformat(register_date_value)

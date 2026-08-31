@@ -28,7 +28,10 @@ def _base_state(**logistics_overrides):
         },
         "logistics_evidence": logistics_evidence,
         "evidence_review": {"requires_human_review": False},
-        "customer": {"register_date": None},
+        # A real register_date by default -- these tests are about the
+        # logistics stall signals, not RISK-003; see test_policy_agent_risk_003.py
+        # for register_date-availability behavior specifically.
+        "customer": {"register_date": "2020-01-01"},
     }
 
 
