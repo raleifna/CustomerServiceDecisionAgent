@@ -32,15 +32,23 @@ only means something once a promised_ship_date exists at all. A top-level
 unrelated *delivery*-overdue fact that get_logistics_status reports.
 """
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date
 from typing import Any, Protocol
 
 from src.backend.repositories import mock_db_repository
 from src.backend.services.order_context_service import (
+    OrderContextIntegrityError,
     OrderContextNotFoundError,
     OrderContextService,
     get_order_context_service,
+)
+from src.backend.services.tool_errors import (
+    DATA_INTEGRITY_ERROR,
+    DATABASE_UNAVAILABLE,
+    ORDER_NOT_FOUND,
+    ToolError,
 )
 
 AVAILABLE = "AVAILABLE"
@@ -207,8 +215,34 @@ class PostgresQueryToolProvider:
     def __init__(self, context_service: OrderContextService):
         self._context_service = context_service
 
+    @staticmethod
+    @contextmanager
+    def _translate_infra_errors():
+        """Turn a DB connectivity failure or a data-integrity break into a
+        classified ToolError instead of letting a raw psycopg exception (or
+        OrderContextIntegrityError) reach the Agent layer. Deliberately does
+        NOT catch OrderContextNotFoundError -- each call site decides
+        whether "not found" is a normal `None` return or an ORDER_NOT_FOUND
+        ToolError, since the two existing methods disagree on that."""
+        import psycopg
+
+        try:
+            yield
+        except OrderContextIntegrityError as exc:
+            raise ToolError(
+                DATA_INTEGRITY_ERROR,
+                "Order data failed an internal consistency check.",
+            ) from exc
+        except psycopg.OperationalError as exc:
+            raise ToolError(
+                DATABASE_UNAVAILABLE,
+                "The database is temporarily unavailable.",
+                retryable=True,
+            ) from exc
+
     def list_orders_for_customer(self, customer_id: str) -> list[CustomerOrderSummary]:
-        orders = self._context_service.order_repository.list_by_customer_id(customer_id)
+        with self._translate_infra_errors():
+            orders = self._context_service.order_repository.list_by_customer_id(customer_id)
         summaries = []
         for order in orders:
             if order.delivered_date:
@@ -221,8 +255,13 @@ class PostgresQueryToolProvider:
         return summaries
 
     def get_order_status(self, order_id: str, *, as_of_date: date) -> dict[str, Any] | None:
+        # Not-found stays a plain None here -- an unknown order_id is a
+        # normal, expected outcome (the customer mistyped it), not a
+        # failure a caller needs to branch on via ToolError. query_agent.py
+        # already turns this into a friendly "订单未找到" response.
         try:
-            ctx = self._context_service.get_order_context(order_id, as_of_date=as_of_date)
+            with self._translate_infra_errors():
+                ctx = self._context_service.get_order_context(order_id, as_of_date=as_of_date)
         except OrderContextNotFoundError:
             return None
         order = ctx.order
@@ -247,7 +286,18 @@ class PostgresQueryToolProvider:
         }
 
     def get_logistics_status(self, order_id: str, *, as_of_date: date) -> dict[str, Any]:
-        ctx = self._context_service.get_order_context(order_id, as_of_date=as_of_date)
+        # Unlike get_order_status, this method's return type has no None
+        # slot for "not found" -- query_agent.py only calls it after
+        # get_order_status has already confirmed the order exists, so
+        # reaching OrderContextNotFoundError here means the order vanished
+        # between the two calls (or a future caller skipped the first
+        # check). That is a real failure a caller must branch on, not a
+        # normal empty result -- ToolError(ORDER_NOT_FOUND), not None.
+        try:
+            with self._translate_infra_errors():
+                ctx = self._context_service.get_order_context(order_id, as_of_date=as_of_date)
+        except OrderContextNotFoundError as exc:
+            raise ToolError(ORDER_NOT_FOUND, "No order was found for the supplied order ID.") from exc
         facts = ctx.shipment_facts
         shipment = ctx.shipment
 

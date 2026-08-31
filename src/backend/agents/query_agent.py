@@ -6,6 +6,7 @@ from src.backend.graph.state import CustomerServiceState
 from src.backend.llm import chat, chat_with_tools
 from src.backend.services.business_clock import get_business_clock
 from src.backend.services.query_tool_provider import get_query_tool_provider
+from src.backend.services.tool_errors import ToolError
 
 # This module never imports mock_db_repository, a Repository, or
 # OrderContextService directly -- all order/logistics data comes through
@@ -14,6 +15,16 @@ from src.backend.services.query_tool_provider import get_query_tool_provider
 # src/backend/services/query_tool_provider.py's module docstring for why
 # there are two providers with genuinely different capabilities rather than
 # one provider with fields silently missing.
+
+
+def _customer_facing_tool_error_message(exc: ToolError) -> str:
+    """Translate a classified ToolError into a plain-language reply. Never
+    surfaces exc.message (an internal/diagnostic string) or the raw code --
+    the customer gets an honest but generic account of what happened, and
+    a retry hint only when the failure is actually retryable."""
+    if exc.retryable:
+        return "查询服务暂时不可用，请稍后再试一次。"
+    return "查询遇到问题，暂时无法获取该订单的完整信息，建议稍后重试或联系人工客服。"
 
 
 def _query_order_id(state: CustomerServiceState) -> str | None:
@@ -239,15 +250,24 @@ def query_agent_node(state: CustomerServiceState) -> CustomerServiceState:
     as_of_date = business_clock.today()
     as_of_iso = as_of_date.isoformat()
 
-    order_id, clarification = _resolve_order_for_customer(state, provider)
-    if not order_id:
-        return {"customer_response": clarification or "请提供订单号，我才能查询。"}
+    try:
+        order_id, clarification = _resolve_order_for_customer(state, provider)
+        if not order_id:
+            return {"customer_response": clarification or "请提供订单号，我才能查询。"}
 
-    order_status = provider.get_order_status(order_id, as_of_date=as_of_date)
-    if order_status is None:
-        return {"customer_response": f"没有找到订单 {order_id}，请核对订单号。"}
+        order_status = provider.get_order_status(order_id, as_of_date=as_of_date)
+        if order_status is None:
+            return {"customer_response": f"没有找到订单 {order_id}，请核对订单号。"}
 
-    logistics_status = provider.get_logistics_status(order_id, as_of_date=as_of_date)
+        logistics_status = provider.get_logistics_status(order_id, as_of_date=as_of_date)
+    except ToolError as exc:
+        # A classified Tool/data-layer failure (DB unavailable, a data
+        # integrity break) -- never let this raise past the graph node, and
+        # never let the raw exception message or code reach the customer.
+        # See ToolError's own docstring for what each code means; this
+        # message intentionally doesn't distinguish further than
+        # "retry might help" vs not.
+        return {"customer_response": _customer_facing_tool_error_message(exc)}
     conversation_intent = state.get("conversation_result", {}).get(
         "conversation_intent"
     )

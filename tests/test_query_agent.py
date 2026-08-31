@@ -1,4 +1,6 @@
-from src.backend.agents.query_agent import _system_managed_stall_response
+from src.backend.agents import query_agent
+from src.backend.agents.query_agent import _system_managed_stall_response, query_agent_node
+from src.backend.services.tool_errors import DATABASE_UNAVAILABLE, DATA_INTEGRITY_ERROR, ToolError
 
 
 def test_system_managed_stall_does_not_claim_parcel_is_lost():
@@ -54,3 +56,46 @@ def test_stall_response_with_unavailable_tracking_omits_location_text():
     assert response is not None
     assert "最新一条轨迹" not in response
     assert "丢失" not in response
+
+
+class _StubProviderRaisingToolError:
+    def __init__(self, exc: ToolError):
+        self._exc = exc
+
+    def list_orders_for_customer(self, customer_id):
+        raise self._exc
+
+    def get_order_status(self, order_id, *, as_of_date):
+        raise self._exc
+
+    def get_logistics_status(self, order_id, *, as_of_date):
+        raise self._exc
+
+
+def _minimal_state(order_id="ORD1"):
+    return {
+        "conversation_result": {"order_id": order_id},
+        "conversation_context": {},
+        "dialogue_history": [],
+        "user_message": "订单到哪了",
+    }
+
+
+def test_query_agent_node_reports_retryable_message_for_database_unavailable(monkeypatch):
+    exc = ToolError(DATABASE_UNAVAILABLE, "The database is temporarily unavailable.")
+    monkeypatch.setattr(query_agent, "get_query_tool_provider", lambda: _StubProviderRaisingToolError(exc))
+
+    result = query_agent_node(_minimal_state())
+
+    assert "稍后再试" in result["customer_response"]
+    assert "The database is temporarily unavailable" not in result["customer_response"]
+
+
+def test_query_agent_node_reports_generic_message_for_non_retryable_tool_error(monkeypatch):
+    exc = ToolError(DATA_INTEGRITY_ERROR, "Order data failed an internal consistency check.")
+    monkeypatch.setattr(query_agent, "get_query_tool_provider", lambda: _StubProviderRaisingToolError(exc))
+
+    result = query_agent_node(_minimal_state())
+
+    assert "人工客服" in result["customer_response"]
+    assert "consistency check" not in result["customer_response"]

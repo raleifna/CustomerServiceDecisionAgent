@@ -2,12 +2,18 @@ from datetime import date
 
 import pytest
 
+from src.backend.services.order_context_service import (
+    OrderContextIntegrityError,
+    OrderContextNotFoundError,
+)
 from src.backend.services.query_tool_provider import (
     AVAILABLE,
     UNAVAILABLE,
     FixtureQueryToolProvider,
+    PostgresQueryToolProvider,
     get_query_tool_provider,
 )
+from src.backend.services.tool_errors import DATABASE_UNAVAILABLE, DATA_INTEGRITY_ERROR, ORDER_NOT_FOUND, ToolError
 
 
 @pytest.fixture
@@ -70,3 +76,53 @@ def test_get_query_tool_provider_rejects_unknown_backend(monkeypatch):
     monkeypatch.setenv("APP_DATA_BACKEND", "some-typo")
     with pytest.raises(RuntimeError):
         get_query_tool_provider()
+
+
+class _RaisingContextService:
+    """Stub standing in for OrderContextService so these tests exercise
+    PostgresQueryToolProvider's error translation without a real database."""
+
+    def __init__(self, to_raise: Exception):
+        self._to_raise = to_raise
+        self.order_repository = self
+
+    def get_order_context(self, order_id, *, as_of_date):
+        raise self._to_raise
+
+    def list_by_customer_id(self, customer_id):
+        raise self._to_raise
+
+
+def test_get_order_status_returns_none_on_not_found():
+    provider = PostgresQueryToolProvider(_RaisingContextService(OrderContextNotFoundError("ORD-X")))
+    assert provider.get_order_status("ORD-X", as_of_date=date(2026, 8, 20)) is None
+
+
+def test_get_logistics_status_raises_order_not_found_as_tool_error():
+    provider = PostgresQueryToolProvider(_RaisingContextService(OrderContextNotFoundError("ORD-X")))
+    with pytest.raises(ToolError) as exc_info:
+        provider.get_logistics_status("ORD-X", as_of_date=date(2026, 8, 20))
+    assert exc_info.value.code == ORDER_NOT_FOUND
+    assert exc_info.value.retryable is False
+
+
+def test_get_order_status_translates_integrity_error():
+    provider = PostgresQueryToolProvider(
+        _RaisingContextService(OrderContextIntegrityError("ORD-X", ["PRO-MISSING"]))
+    )
+    with pytest.raises(ToolError) as exc_info:
+        provider.get_order_status("ORD-X", as_of_date=date(2026, 8, 20))
+    assert exc_info.value.code == DATA_INTEGRITY_ERROR
+    assert exc_info.value.retryable is False
+
+
+def test_list_orders_for_customer_translates_database_unavailable():
+    import psycopg
+
+    provider = PostgresQueryToolProvider(
+        _RaisingContextService(psycopg.OperationalError("connection refused"))
+    )
+    with pytest.raises(ToolError) as exc_info:
+        provider.list_orders_for_customer("CUS-X")
+    assert exc_info.value.code == DATABASE_UNAVAILABLE
+    assert exc_info.value.retryable is True

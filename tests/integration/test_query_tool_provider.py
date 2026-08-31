@@ -118,6 +118,32 @@ class PostgresQueryToolProviderIntegrationTests(unittest.TestCase):
         self.assertEqual(result["logistics_chase"]["availability"], "AVAILABLE")
         self.assertTrue(result["logistics_chase"]["can_offer"])
 
+    def test_order_item_with_missing_product_raises_data_integrity_tool_error(self):
+        from src.backend.services.tool_errors import DATA_INTEGRITY_ERROR, ToolError
+
+        import psycopg
+
+        with psycopg.connect(TEST_DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO order_items (order_item_id, order_id, product_id, sku_id, "
+                    "sku_name, unit_price, quantity, discount_amount, paid_amount) VALUES "
+                    "('OI-IT-BROKEN', 'ORD-IT-001', 'PRO-DOES-NOT-EXIST', 'SKU-X', 'x', 1, 1, 0, 1)"
+                )
+            connection.commit()
+
+        with self.assertRaises(ToolError) as exc_info:
+            self._provider().get_order_status("ORD-IT-001", as_of_date=date(2026, 6, 1))
+        self.assertEqual(exc_info.exception.code, DATA_INTEGRITY_ERROR)
+        self.assertFalse(exc_info.exception.retryable)
+
+    def test_unknown_order_id_raises_order_not_found_tool_error_from_logistics(self):
+        from src.backend.services.tool_errors import ORDER_NOT_FOUND, ToolError
+
+        with self.assertRaises(ToolError) as exc_info:
+            self._provider().get_logistics_status("ORD-IT-DOES-NOT-EXIST", as_of_date=date(2026, 6, 1))
+        self.assertEqual(exc_info.exception.code, ORDER_NOT_FOUND)
+
 
 if __name__ == "__main__":
     unittest.main()
