@@ -74,13 +74,31 @@ def test_no_match_on_plain_text_without_an_order_id():
     assert _matches(ORDER_ID_PATTERN, "我的快递到哪了") == []
 
 
-# --- REQUEST_ID_PATTERN: unchanged, same shape regardless of order source
-# (SR + YYYYMM + 4-digit sequence, minted by create_service_request()'s own
-# INSERT regardless of whether the underlying order is fixture or V2) ---
+# --- REQUEST_ID_PATTERN: two structurally disjoint shapes --
+# SR\d{10} (the 27 fixture requests, hand-authored, never in Postgres) and
+# SRL\d{10} (every request create_service_request() actually generates) ---
 
-def test_request_id_pattern_still_matches_its_one_shape():
+def test_request_id_pattern_matches_fixture_shape():
     assert _matches(REQUEST_ID_PATTERN, "申请编号 SR2026080001 处理得怎么样了") == ["SR2026080001"]
 
 
-def test_request_id_pattern_rejects_extra_trailing_digit():
+def test_request_id_pattern_matches_live_shape():
+    assert _matches(REQUEST_ID_PATTERN, "申请编号 SRL2026080001 处理得怎么样了") == ["SRL2026080001"]
+
+
+def test_request_id_pattern_rejects_extra_trailing_digit_fixture_shape():
     assert _matches(REQUEST_ID_PATTERN, "SR20260800011 不是申请编号") == []
+
+
+def test_request_id_pattern_rejects_extra_trailing_digit_live_shape():
+    assert _matches(REQUEST_ID_PATTERN, "SRL20260800011 不是申请编号") == []
+
+
+def test_request_id_pattern_does_not_confuse_the_two_shapes():
+    text = "有两条申请 SR2026080001 和 SRL2026080002"
+    assert _matches(REQUEST_ID_PATTERN, text) == ["SR2026080001", "SRL2026080002"]
+
+
+def test_request_id_pattern_rejects_embedded_in_a_longer_token():
+    assert _matches(REQUEST_ID_PATTERN, "XSRL2026080001 不是申请编号") == []
+    assert _matches(REQUEST_ID_PATTERN, "SRL2026080001X 不是申请编号") == []

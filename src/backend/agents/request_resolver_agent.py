@@ -21,12 +21,26 @@ ORDER_ID_PATTERN = re.compile(
     r"(?<![A-Z0-9-])(?:ORD\d{10}|ORD-RW-\d{5})(?![A-Z0-9-])",
     re.IGNORECASE,
 )
-# Service request ids are always minted by service_request_repository's
-# create_service_request() as 'SR' || YYYYMM || 4-digit sequence (see its
-# INSERT), regardless of whether the underlying order came from the fixture
-# or the V2 import -- there is no separate V2 request-id shape to add here.
+# Two request id shapes, structurally disjoint by construction (not by
+# coincidence -- see create_service_request()'s own comment):
+#   SR\d{10}    -- the 27 fixture service requests, hand-authored in the
+#                   mock DB's service_requests fixture file, never written
+#                   to Postgres at all.
+#   SRL\d{10}   -- every request a real conversation actually creates
+#                   (service_request_repository.create_service_request()),
+#                   'L' for "Live". Before this prefix existed, live
+#                   requests used the bare 'SR' shape too -- structurally
+#                   identical to the fixture ids, disjoint only because the
+#                   sequence hadn't climbed high enough to produce a
+#                   matching suffix yet. 'SRL' removes that reliance
+#                   entirely, the same way ORDER_ID_PATTERN's ORD-RW-\d{5}
+#                   is structurally distinct from the fixture's ORD\d{10}.
+# `SRL?` (the 'L' optional) matches both shapes correctly with no ambiguity:
+# after "SR", the very next character (a digit for the fixture shape, 'L'
+# for the live shape) is unambiguous, so there's no overlap to disambiguate
+# via alternative ordering the way ORDER_ID_PATTERN's ORD/ORD-RW- needed.
 REQUEST_ID_PATTERN = re.compile(
-    r"(?<![A-Z0-9])SR\d{10}(?![A-Z0-9])",
+    r"(?<![A-Z0-9])SRL?\d{10}(?![A-Z0-9])",
     re.IGNORECASE,
 )
 

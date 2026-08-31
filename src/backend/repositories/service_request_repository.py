@@ -36,6 +36,17 @@ def _normalize(record: dict[str, Any]) -> dict[str, Any]:
 
 
 def get_service_request(request_id: str) -> dict[str, Any] | None:
+    """Look up by id across the two-tier service-request store.
+
+    Not a "DB read failed, fall back to fixture" degrade -- the two id
+    spaces are disjoint by construction (SR\\d{10} fixture ids vs
+    SRL\\d{10} live ids, see create_service_request()'s own comment and
+    REQUEST_ID_PATTERN), so a Postgres miss here always means "this id is
+    a fixture id", never "the real record went missing". Falling through
+    to the seed lookup is the only way to read one of the 27 fixture
+    requests at all, since they are intentionally never written to
+    Postgres.
+    """
     database_url = get_database_url()
     if database_url:
         import psycopg
@@ -55,6 +66,13 @@ def get_service_request(request_id: str) -> dict[str, Any] | None:
 
 
 def get_service_requests_by_order_id(order_id: str) -> list[dict[str, Any]]:
+    """Union, not fallback: a fixture order's pre-scripted demo requests
+    (JSON) plus any real requests a live conversation has since created
+    against that same order_id (Postgres). Both are genuine records that
+    can coexist for the same order -- one order_id, two independent
+    sources of true rows -- unlike get_service_request()'s single-id
+    lookup, where a Postgres miss unambiguously means "this is a fixture
+    id" rather than "there might also be a live one to merge in"."""
     records = list(get_seed_requests_by_order_id(order_id))
     database_url = get_database_url()
     if not database_url:
@@ -347,7 +365,19 @@ def create_service_request(
             request_date, workflow_status
         )
         VALUES (
-            'SR' || to_char(%s::date, 'YYYYMM') ||
+            -- 'SRL' (Service Request, Live), not 'SR' -- the 27 fixture
+            -- service requests (data/mock_db/service_requests.json) are a
+            -- fixed demo case library that is NEVER written to Postgres
+            -- (see this function's own docstring), hand-authored as
+            -- 'SR' + YYYYMM + 4 digits. A live request generated with that
+            -- same 'SR' prefix and the same YYYYMM+4-digit shape could, in
+            -- principle, collide with one of those 27 ids once
+            -- service_request_sequence climbed high enough -- not a
+            -- silently-masked failure, but a genuine ambiguity (two
+            -- different real records sharing one id). The 'SRL' prefix
+            -- makes the two id spaces structurally disjoint instead of
+            -- relying on the sequence not having reached that number yet.
+            'SRL' || to_char(%s::date, 'YYYYMM') ||
             lpad(nextval('service_request_sequence')::text, 4, '0'),
             %s, %s, %s, %s, %s, %s, %s, %s, 'Pending'
         )
