@@ -7,10 +7,24 @@ from src.backend.repositories.service_request_repository import (
 )
 
 
+# Two order id shapes, both fixed-width, no wildcard middle section:
+#   ORD\d{10}       -- the 27-order fixture (e.g. ORD2026080001)
+#   ORD-RW-\d{5}    -- the real V2 Olist/Amazon import batch (e.g. ORD-RW-00001,
+#                       see build_olist_sample.py's order_id = f"ORD-RW-{n:05d}")
+# The boundary class includes '-' on both sides so a hyphenated id can't be
+# torn out of a longer hyphenated token, and so an id can't be matched with
+# extra trailing digits/segments silently dropped (a partial-id match here
+# would resolve to the wrong order). Deliberately NOT loosened to a generic
+# ORD-.* pattern -- a third id shape must be added explicitly, not silently
+# accepted by a wildcard.
 ORDER_ID_PATTERN = re.compile(
-    r"(?<![A-Z0-9])ORD\d{10}(?![A-Z0-9])",
+    r"(?<![A-Z0-9-])(?:ORD\d{10}|ORD-RW-\d{5})(?![A-Z0-9-])",
     re.IGNORECASE,
 )
+# Service request ids are always minted by service_request_repository's
+# create_service_request() as 'SR' || YYYYMM || 4-digit sequence (see its
+# INSERT), regardless of whether the underlying order came from the fixture
+# or the V2 import -- there is no separate V2 request-id shape to add here.
 REQUEST_ID_PATTERN = re.compile(
     r"(?<![A-Z0-9])SR\d{10}(?![A-Z0-9])",
     re.IGNORECASE,

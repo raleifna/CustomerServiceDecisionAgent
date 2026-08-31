@@ -7,6 +7,11 @@ from src.backend.services.order_ownership_service import DENIED, OwnershipResult
 from src.backend.services.tool_errors import DATABASE_UNAVAILABLE, ToolError
 
 
+class _DeniedService:
+    def verify_ownership(self, order_id, customer_id):
+        return OwnershipResult(DENIED)
+
+
 def test_llm_withdraw_misclassification_falls_back_to_after_sales_request(monkeypatch):
     # "给我退掉吧" has no active_request_id to withdraw and isn't in the
     # curated withdrawal keyword list, so it reaches the LLM classifier. A
@@ -79,11 +84,25 @@ def test_colloquial_refund_request_with_greeting_uses_selected_order():
     assert result["conversation_result"]["order_id"] == "ORD2026080001"
 
 
-def test_ownership_denied_gives_the_uniform_response_and_resets_context(monkeypatch):
-    class _DeniedService:
-        def verify_ownership(self, order_id, customer_id):
-            return OwnershipResult(DENIED)
+def test_v2_shaped_order_id_still_goes_through_ownership_check(monkeypatch):
+    # Recognizing the new ORD-RW-##### shape must not bypass the same
+    # authorization guard the old ORD########## shape goes through --
+    # format recognition and ownership verification are separate steps.
+    monkeypatch.setattr(
+        conversation_router_agent, "get_order_ownership_service", lambda: _DeniedService(),
+    )
 
+    result = conversation_router_node({
+        "user_message": "订单 ORD-RW-00001 什么时候到",
+        "conversation_context": {"authenticated_customer_id": "CUS-RW-00001"},
+    })
+
+    assert result["conversation_result"]["status"] == "Rejected"
+    assert result["conversation_result"]["order_id"] is None
+    assert result["customer_response"] == _OWNERSHIP_UNVERIFIED_RESPONSE
+
+
+def test_ownership_denied_gives_the_uniform_response_and_resets_context(monkeypatch):
     monkeypatch.setattr(conversation_router_agent, "get_order_ownership_service", lambda: _DeniedService())
 
     result = conversation_router_node({
