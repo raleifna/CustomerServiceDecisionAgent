@@ -297,15 +297,27 @@ def _run_import(cur, source_dir: Path, batch_id: str, anchor_date: str, pipeline
     # -- 6. payments --
     for p in payments:
         row = {
-            "payment_id": p["payment_id"], "order_id": p["order_id"], "amount": p["amount"],
+            "payment_id": p["payment_id"], "order_id": p["order_id"],
+            "payment_sequential": p["payment_sequential"], "amount": p["amount"],
             "currency": p["currency"], "payment_method": p["payment_method"],
-            "payment_installments": p["payment_installments"], "paid_at": p["paid_at"],
+            "payment_installments": p["payment_installments"],
+            "payment_reference_date": p["payment_reference_date"],
             "import_batch_id": batch_id,
         }
         upsert_row(cur, "payments", "payment_id", row,
-                   ["order_id", "amount", "payment_method", "import_batch_id"], counters)
+                   ["order_id", "payment_sequential", "amount", "payment_method", "import_batch_id"],
+                   counters)
+        # payment_sequential/payment_type/payment_installments/payment_value
+        # are real Olist fields; payment_reference_date is NOT -- Olist's
+        # payments CSV has no timestamp at all, so this is the order's
+        # purchase date reused as a reference point, not an observed
+        # payment-channel event time.
         _provenance(cur, "payment", p["payment_id"], None, "REAL",
                     pipeline_version=pipeline_version, source_dataset="olist_order_payments_dataset.csv")
+        _provenance(cur, "payment", p["payment_id"], "payment_reference_date", "DERIVED",
+                    pipeline_version=pipeline_version,
+                    transformation="order's purchase date reused as a reference point -- "
+                                   "Olist's payments dataset has no real payment timestamp")
 
     # -- 7. shipments --
     for s in shipments:
@@ -404,6 +416,15 @@ def _run_validation(cur, batch_id: str, anchor_date: str, source_dir: Path) -> l
                 GROUP BY product_id HAVING count(DISTINCT category) > 1 OR count(DISTINCT price) > 1
              ) t""",
           "products with inconsistent category/price under the same product_id")
+
+    # payment_sequential must not repeat within the same order
+    check("""SELECT count(*) n FROM (
+                SELECT p.order_id, p.payment_sequential FROM payments p
+                JOIN orders o ON o.order_id = p.order_id
+                WHERE o.import_batch_id = %s
+                GROUP BY p.order_id, p.payment_sequential HAVING count(*) > 1
+             ) t""",
+          "orders with a repeated payment_sequential value")
 
     # 4. non-canceled, ever-shipped orders have a shipment row
     check("""SELECT count(*) n FROM orders o

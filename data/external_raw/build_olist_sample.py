@@ -416,11 +416,15 @@ def main():
             new_payments.append({
                 "payment_id": f"PAY-RW-{payment_counter:06d}",
                 "order_id": order_id,
+                "payment_sequential": int(p["payment_sequential"]),  # real Olist field -- stable multi-payment ordering
                 "amount": cny(Decimal(p["payment_value"]) * BRL_TO_CNY),
                 "currency": "CNY",
                 "payment_method": PAYMENT_METHOD_CN.get(p["payment_type"], p["payment_type"]),
                 "payment_installments": int(p["payment_installments"]),
-                "paid_at": shift(agg["purchase_dt"]),
+                # Olist's payments CSV has no timestamp field at all -- this
+                # is the order's purchase date, not an observed payment
+                # event time. Named accordingly, not "paid_at".
+                "payment_reference_date": shift(agg["purchase_dt"]),
             })
 
         for it, unit_price_cny, pro_id in zip(agg["items"], item_rows, pro_ids_for_items):

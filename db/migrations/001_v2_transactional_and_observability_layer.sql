@@ -167,7 +167,18 @@ ALTER TABLE payments
 -- paid_at/event_time were corrected from TIMESTAMPTZ to DATE below, bring
 -- an already-created table in line too. Always safe to re-run (no-op once
 -- the columns are already DATE).
-ALTER TABLE payments ALTER COLUMN paid_at TYPE DATE USING paid_at::date;
+-- guarded: 003 later renames this column to payment_reference_date, so on
+-- a database where 003 has already run, `paid_at` no longer exists and
+-- this must be a no-op rather than an error.
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'payments' AND column_name = 'paid_at'
+    ) THEN
+        ALTER TABLE payments ALTER COLUMN paid_at TYPE DATE USING paid_at::date;
+    END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS ix_payments_order_id ON payments (order_id);
 
