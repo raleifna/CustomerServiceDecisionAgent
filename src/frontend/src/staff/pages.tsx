@@ -115,7 +115,7 @@ export function OverviewPage({ queue, returns, go, identity }: PageProps) {
 /* ---------- human review queue ---------- */
 
 export function QueuePage(props: PageProps) {
-  const { queue, selectedId, select, token, identity, done } = props;
+  const { queue, selectedId, select, token, identity, done, go } = props;
   const [filter, setFilter] = useState<"all" | "EscalatedToHuman" | "NeedsReflection">("all");
   const requests = useMemo(
     () => [...(queue?.service_requests ?? [])]
@@ -139,7 +139,7 @@ export function QueuePage(props: PageProps) {
         </>
       )}
       detail={selectedId
-        ? <RequestDetail key={selectedId} requestId={selectedId} token={token} identity={identity} onChanged={(message) => { select(null); done(message); }} onOpenRequest={select} />
+        ? <RequestDetail key={selectedId} requestId={selectedId} token={token} identity={identity} onChanged={(message) => { select(null); done(message); }} onOpenRequest={select} onOpenLive={(handoffId) => go("live", handoffId)} />
         : <Empty icon={<ClipboardList size={22} />} title="选择左侧工单开始处理" hint="按优先级排序：强制转人工 > 等待时长" />}
     />
   );
@@ -431,7 +431,7 @@ export function ActionsPage({ queue, token, identity, done, go }: PageProps) {
 
 /* ---------- all cases ---------- */
 
-export function HistoryPage({ token, identity, selectedId, select, done }: PageProps) {
+export function HistoryPage({ token, identity, selectedId, select, done, go }: PageProps) {
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
@@ -486,7 +486,7 @@ export function HistoryPage({ token, identity, selectedId, select, done }: PageP
       {selectedId && (
         <aside className="history__drawer">
           <button className="icon-btn history__close" onClick={() => select(null)} aria-label="关闭详情"><XCircle size={18} /></button>
-          <RequestDetail key={selectedId} requestId={selectedId} token={token} identity={identity} onChanged={(message) => { select(null); done(message); }} onOpenRequest={select} />
+          <RequestDetail key={selectedId} requestId={selectedId} token={token} identity={identity} onChanged={(message) => { select(null); done(message); }} onOpenRequest={select} onOpenLive={(handoffId) => go("live", handoffId)} />
         </aside>
       )}
     </div>

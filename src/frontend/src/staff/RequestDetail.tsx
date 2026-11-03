@@ -5,6 +5,7 @@ import {
   Clock,
   FileImage,
   Loader,
+  MessagesSquare,
   Package,
   ReceiptText,
   Truck,
@@ -45,13 +46,15 @@ type Props = {
   identity: StaffIdentity | null;
   onChanged: (message: string) => void;
   onOpenRequest?: (requestId: string) => void;
+  onOpenLive?: (handoffId: string) => void;
 };
 
-export function RequestDetail({ requestId, token, identity, onChanged, onOpenRequest }: Props) {
+export function RequestDetail({ requestId, token, identity, onChanged, onOpenRequest, onOpenLive }: Props) {
   const [detail, setDetail] = useState<StaffDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [lightbox, setLightbox] = useState<{ src: string; title: string } | null>(null);
+  const [contactError, setContactError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -73,6 +76,19 @@ export function RequestDetail({ requestId, token, identity, onChanged, onOpenReq
   const actionable = HUMAN_QUEUE_STATUSES.includes(request.workflow_status);
   const order = detail.order ?? {};
 
+  async function contactCustomer() {
+    setContactError(null);
+    try {
+      const handoff = await staffFetch<{ handoff_id: string }>(token, `/live/start-from-request/${encodeURIComponent(request.request_id)}`, {
+        method: "POST",
+        body: JSON.stringify({ message: `您好，我是人工客服，关于您的售后申请 ${request.request_id}（${request.request_reason}）想跟您确认一些情况。` }),
+      });
+      onOpenLive?.(handoff.handoff_id);
+    } catch (err) {
+      setContactError(err instanceof Error ? err.message : "无法发起会话");
+    }
+  }
+
   return (
     <div className="request-detail">
       <header className="request-detail__head">
@@ -86,7 +102,11 @@ export function RequestDetail({ requestId, token, identity, onChanged, onOpenReq
             {request.product?.tags.includes("V2 导入") && <span className="pill pill--blue" title="Olist + Amazon 导入批次的真实订单数据">V2 导入</span>}
             <span className="pill pill--gray">申请 {request.requested_quantity} 件</span>
             <span className="muted">提交于 {formatDateTime(request.created_at ?? request.request_date)}</span>
+            {canWrite && onOpenLive && request.workflow_status !== "Closed" && (
+              <button className="btn btn--ghost btn--sm request-detail__contact" onClick={() => void contactCustomer()}><MessagesSquare size={13} />联系顾客</button>
+            )}
           </div>
+          {contactError && <div className="staff-warning">{contactError}</div>}
         </div>
       </header>
 

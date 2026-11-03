@@ -7,7 +7,7 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Upload
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from src.backend.api import customer_auth, staff, staff_auth
+from src.backend.api import customer_auth, live_chat, staff, staff_auth
 from src.backend.api.auth_tokens import signed_upload_url, verify_file_signature
 from src.backend.api.customer_auth import current_customer_id
 from src.backend.api.schemas import (
@@ -128,6 +128,8 @@ app.add_middleware(
 
 app.include_router(customer_auth.router)
 app.include_router(staff_auth.router)
+app.include_router(live_chat.customer_router)
+app.include_router(live_chat.staff_router)
 app.include_router(staff.router)
 
 _UPLOADS_DIR = (PROJECT_ROOT / "data" / "uploads").resolve()
@@ -206,6 +208,7 @@ def _safe_chat_response(
         decision=final_result.get("decision"),
         action=action_result.get("action"),
         action_id=action_result.get("fulfillment_request_id"),
+        handoff_id=action_result.get("handoff_id"),
     )
 
 

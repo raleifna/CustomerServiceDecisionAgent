@@ -7,6 +7,7 @@ import {
   KeyRound,
   LayoutDashboard,
   LogOut,
+  MessagesSquare,
   PackageCheck,
   RefreshCw,
   ShieldCheck,
@@ -20,6 +21,7 @@ import { API_BASE } from "./shop/api";
 import { navigate, useLocation } from "./shop/router";
 import { StaffApiError, staffFetch, StaffIdentity, StaffQueue, StaffReturnOrder } from "./staff/api";
 import { DashboardPage } from "./staff/Dashboard";
+import { Handoff, LiveChatPage } from "./staff/LiveChat";
 import { ActionsPage, EvidencePage, HistoryPage, OverviewPage, PageProps, QueuePage, ReturnsPage } from "./staff/pages";
 import "./staff/staff.css";
 
@@ -32,6 +34,7 @@ const REFRESH_MS = 30_000;
 const SECTIONS = [
   { key: "", label: "工作台", icon: LayoutDashboard, title: "工作台概览" },
   { key: "queue", label: "人工工单", icon: ClipboardList, title: "待人工裁决的售后申请" },
+  { key: "live", label: "在线会话", icon: MessagesSquare, title: "与顾客的人工在线会话" },
   { key: "evidence", label: "证据审核", icon: FileImage, title: "待审核的证据材料" },
   { key: "returns", label: "退货验收", icon: PackageCheck, title: "退货收货与验收" },
   { key: "actions", label: "履约异常", icon: Wrench, title: "执行失败的履约任务" },
@@ -79,6 +82,7 @@ function StaffConsole() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [queue, setQueue] = useState<StaffQueue | null>(null);
   const [returns, setReturns] = useState<StaffReturnOrder[] | null>(null);
+  const [waitingChats, setWaitingChats] = useState(0);
   const [loading, setLoading] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -110,10 +114,12 @@ function StaffConsole() {
     if (!token) return;
     setLoading(true);
     try {
-      const [nextQueue, nextReturns] = await Promise.all([
+      const [nextQueue, nextReturns, sessions] = await Promise.all([
         staffFetch<StaffQueue>(token, "/queue"),
         staffFetch<StaffReturnOrder[]>(token, "/return-orders").catch(() => []),
+        staffFetch<Handoff[]>(token, "/live").catch(() => []),
       ]);
+      setWaitingChats(sessions.filter((session) => session.workflow_status === "Waiting").length);
       const pending = nextQueue.service_requests.length + nextQueue.evidence.length;
       if (pendingCountRef.current !== null && pending > pendingCountRef.current) {
         setToast(`有 ${pending - pendingCountRef.current} 项新的待处理工作进入队列`);
@@ -135,6 +141,17 @@ function StaffConsole() {
     const timer = window.setInterval(() => void reload(), REFRESH_MS);
     return () => window.clearInterval(timer);
   }, [identity, reload]);
+
+  // Push updates: the server announces queue changes and new chat sessions,
+  // so the 30s interval above is only a fallback.
+  useEffect(() => {
+    if (!identity || typeof EventSource === "undefined") return;
+    const source = new EventSource(`${API_BASE}/staff/live/stream?access_token=${encodeURIComponent(token)}`);
+    const refresh = () => void reload();
+    source.addEventListener("queue", refresh);
+    source.addEventListener("handoff", refresh);
+    return () => source.close();
+  }, [identity, token, reload]);
 
   useEffect(() => {
     if (!toast) return;
@@ -167,6 +184,7 @@ function StaffConsole() {
     evidence: queue?.evidence.length ?? 0,
     returns: (returns ?? []).filter((item) => item.workflow_status !== "AwaitingShipment").length,
     actions: queue?.failed_actions.length ?? 0,
+    live: waitingChats,
   };
 
   const go = (next: string, id?: string) => navigate(`/staff${next ? `/${next}` : ""}${id ? `?id=${encodeURIComponent(id)}` : ""}`);
@@ -215,6 +233,7 @@ function StaffConsole() {
         <main className="staff-content">
           {section === "" && <OverviewPage {...props} />}
           {section === "queue" && <QueuePage {...props} />}
+          {section === "live" && <LiveChatPage token={token} identity={identity} selectedId={selectedId} select={props.select} />}
           {section === "evidence" && <EvidencePage {...props} />}
           {section === "returns" && <ReturnsPage {...props} />}
           {section === "actions" && <ActionsPage {...props} />}

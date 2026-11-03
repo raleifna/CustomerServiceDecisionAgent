@@ -37,6 +37,7 @@ class ChatResponse(BaseModel):
     decision: str | None = None
     action: str | None = None
     action_id: str | None = None
+    handoff_id: str | None = None
 
 
 class HealthResponse(BaseModel):

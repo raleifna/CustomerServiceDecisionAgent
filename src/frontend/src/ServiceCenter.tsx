@@ -39,16 +39,46 @@ import { Breadcrumbs, Link, UserCenterLayout } from "./shop/components";
 import { useFetch, useMyProfile } from "./shop/hooks";
 import { ProductImage } from "./shop/ProductImage";
 import { ReturnShipmentCard } from "./shop/ReturnShipment";
+import { getAccessToken } from "./shop/store";
 import { navigate } from "./shop/router";
 
-type MessageRole = "agent" | "customer" | "system";
+type MessageRole = "agent" | "customer" | "system" | "staff";
 
 type Message = {
   id: string;
   role: MessageRole;
   content: string;
   time: string;
+  // Live human chat: the staff member who wrote it.
+  author?: string;
 };
+
+type LiveHandoff = {
+  handoff_id: string;
+  workflow_status: "Waiting" | "Active" | "Ended";
+  staff_id: string | null;
+  order_id: string | null;
+  request_id: string | null;
+};
+
+type LiveMessage = {
+  message_id: number;
+  handoff_id: string;
+  sender: "customer" | "staff" | "system";
+  sender_id: string | null;
+  content: string;
+  created_at: string;
+};
+
+function liveToMessage(message: LiveMessage): Message {
+  return {
+    id: `live-${message.message_id}`,
+    role: message.sender === "staff" ? "staff" : message.sender === "system" ? "system" : "customer",
+    content: message.content,
+    time: new Date(message.created_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+    author: message.sender === "staff" ? message.sender_id ?? "人工客服" : undefined,
+  };
+}
 
 type ChatResponse = {
   conversation_id: string;
@@ -61,6 +91,7 @@ type ChatResponse = {
   decision: string | null;
   action: string | null;
   action_id: string | null;
+  handoff_id?: string | null;
 };
 
 type ServiceRequestStatus = {
@@ -263,6 +294,9 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [lastResult, setLastResult] = useState<ChatResponse | null>(null);
+  // Open human handoff (live chat with staff); while set, messages go to the human.
+  const [liveHandoff, setLiveHandoff] = useState<LiveHandoff | null>(null);
+  const lastLiveIdRef = useRef(0);
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [hasSelectedCustomer, setHasSelectedCustomer] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
@@ -554,6 +588,29 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
     messagesRef.current = messages;
   }, [messages]);
 
+  // Live human chat: pick up an open session, then stream staff replies and
+  // session changes (accepted / ended) over SSE.
+  useEffect(() => {
+    if (!hasSelectedCustomer) return;
+    let source: EventSource | null = null;
+    let cancelled = false;
+    void refreshLiveSession().then(() => {
+      const token = getAccessToken();
+      if (cancelled || !token || typeof EventSource === "undefined") return;
+      source = new EventSource(`${API_BASE}/me/live/stream?access_token=${encodeURIComponent(token)}&after=${lastLiveIdRef.current}`);
+      source.addEventListener("message", (event) => appendLiveMessages([JSON.parse((event as MessageEvent).data) as LiveMessage]));
+      source.addEventListener("handoff", (event) => {
+        const handoff = JSON.parse((event as MessageEvent).data) as LiveHandoff;
+        setLiveHandoff(handoff.workflow_status === "Ended" ? null : handoff);
+      });
+    });
+    return () => {
+      cancelled = true;
+      source?.close();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasSelectedCustomer, customerId]);
+
   useEffect(() => {
     if (activeWorkspace !== "requests" || !routeFocus || isLoadingRequests) return;
     document.getElementById(`request-${routeFocus}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -586,9 +643,58 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
     [lastResult],
   );
 
+  function appendLiveMessages(list: LiveMessage[]) {
+    if (list.length === 0) return;
+    lastLiveIdRef.current = Math.max(lastLiveIdRef.current, ...list.map((message) => message.message_id));
+    setMessages((current) => {
+      const seen = new Set(current.map((message) => message.id));
+      const fresh = list.map(liveToMessage).filter((message) => !seen.has(message.id));
+      return fresh.length ? [...current, ...fresh] : current;
+    });
+  }
+
+  async function refreshLiveSession() {
+    try {
+      const response = await apiFetch("/me/live");
+      if (!response.ok) return;
+      const body = (await response.json()) as { handoff: LiveHandoff | null; messages: LiveMessage[] };
+      setLiveHandoff(body.handoff);
+      appendLiveMessages(body.messages);
+    } catch {
+      // Live chat is optional (it needs the database); the AI chat keeps working.
+    }
+  }
+
+  async function endLiveSession() {
+    const response = await apiFetch("/me/live/end", { method: "POST" });
+    if (response.ok) setLiveHandoff(null);
+  }
+
   async function sendMessage(rawMessage?: string) {
     const content = (rawMessage ?? input).trim();
     if (!content || isSending) return;
+
+    if (liveHandoff) {
+      setInput("");
+      setIsSending(true);
+      try {
+        const response = await apiFetch("/me/live/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        });
+        const body = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(body?.detail || "消息发送失败");
+        appendLiveMessages([body as LiveMessage]);
+      } catch (error) {
+        setInput(content);
+        setMessages((current) => [...current, { id: `system-${Date.now()}`, role: "system", content: error instanceof Error ? error.message : "消息发送失败", time: now() }]);
+        void refreshLiveSession();
+      } finally {
+        setIsSending(false);
+      }
+      return;
+    }
 
     // A new customer turn supersedes any in-flight status refresh. Without
     // aborting here, a closed request can report back after the new workflow
@@ -629,6 +735,7 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
       }
 
       const result = (await response.json()) as ChatResponse;
+      if (result.handoff_id) void refreshLiveSession();
       const isNewRequest = result.request_id !== lastResult?.request_id;
       setLastResult(result);
       setConnectionState("online");
@@ -1158,9 +1265,10 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
               <Fragment key={message.id}>
                 <div className={`message-row message-row--${message.role}`}>
                   <span className="message-avatar">
-                    {message.role === "customer" ? <UserRound size={14} /> : message.role === "system" ? <Zap size={14} /> : <Bot size={14} />}
+                    {message.role === "customer" ? <UserRound size={14} /> : message.role === "system" ? <Zap size={14} /> : message.role === "staff" ? <Headset size={14} /> : <Bot size={14} />}
                   </span>
                   <div className="message-stack">
+                    {message.author && <span className="message-author">人工客服 · {message.author}</span>}
                     <div className="message-bubble">{message.content}</div>
                     <time>{message.time}</time>
                   </div>
@@ -1233,16 +1341,28 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
           </div>
 
           <div className="composer-area">
-            <div className="quick-prompts">
-              {quickPrompts.map((prompt) => <button key={prompt} onClick={() => void sendMessage(prompt)}>{prompt}</button>)}
-            </div>
+            {liveHandoff ? (
+              <div className={`live-banner live-banner--${liveHandoff.workflow_status.toLowerCase()}`}>
+                <Headset size={16} />
+                <span>
+                  {liveHandoff.workflow_status === "Active"
+                    ? <>人工客服 <b>{liveHandoff.staff_id}</b> 正在为您服务，消息会直接发给客服</>
+                    : <>正在为您转接人工客服，排队中…您可以先补充想说的话</>}
+                </span>
+                <button type="button" onClick={() => void endLiveSession()}>结束人工服务</button>
+              </div>
+            ) : (
+              <div className="quick-prompts">
+                {quickPrompts.map((prompt) => <button key={prompt} onClick={() => void sendMessage(prompt)}>{prompt}</button>)}
+              </div>
+            )}
             <form className="composer" onSubmit={handleSubmit}>
               <Sparkles size={16} className="composer-sparkle" />
               <textarea
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="输入订单问题，Enter 发送，Shift + Enter 换行…"
+                placeholder={liveHandoff ? "发送给人工客服，Enter 发送…" : "输入订单问题，Enter 发送，Shift + Enter 换行…"}
                 rows={2}
                 disabled={isSending}
               />

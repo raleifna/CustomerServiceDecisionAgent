@@ -170,6 +170,29 @@ def setup_application_schema(database_url: str) -> None:
         # (decision/engine.py shadow_recommendation), compared with the human
         # outcome by services/ai_review_service.py.
         "ALTER TABLE service_requests ADD COLUMN IF NOT EXISTS ai_recommendation JSONB",
+        # Live human chat on top of human_handoffs (live_chat_repository.py).
+        """
+        ALTER TABLE human_handoffs
+            ADD COLUMN IF NOT EXISTS staff_id TEXT,
+            ADD COLUMN IF NOT EXISTS conversation_id TEXT,
+            ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMPTZ,
+            ADD COLUMN IF NOT EXISTS ended_at TIMESTAMPTZ,
+            ADD COLUMN IF NOT EXISTS end_reason TEXT,
+            ADD COLUMN IF NOT EXISTS last_activity_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        """,
+        "CREATE INDEX IF NOT EXISTS ix_human_handoffs_open ON human_handoffs (customer_id, workflow_status)",
+        "CREATE INDEX IF NOT EXISTS ix_human_handoffs_updated ON human_handoffs (updated_at)",
+        """
+        CREATE TABLE IF NOT EXISTS live_messages (
+            message_id BIGSERIAL PRIMARY KEY,
+            handoff_id TEXT NOT NULL REFERENCES human_handoffs(handoff_id),
+            sender TEXT NOT NULL CHECK (sender IN ('customer', 'staff', 'system')),
+            sender_id TEXT,
+            content TEXT NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS ix_live_messages_handoff ON live_messages (handoff_id, message_id)",
         """
         CREATE INDEX IF NOT EXISTS ix_evidence_request_id
         ON service_request_evidence (request_id, created_at)

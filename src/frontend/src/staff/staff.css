@@ -363,3 +363,31 @@ button.history-table__row.active { background: var(--brand-soft); }
 .disagreement__compare { display: flex; flex-wrap: wrap; gap: 4px 24px; color: var(--ink-2); }
 .disagreement small { color: var(--muted); font-size: 12px; }
 .bar-list li:has(.bar-list__label--mono) { grid-template-columns: 150px minmax(0, 1fr) 70px; }
+
+/* live chat */
+.request-detail__contact { margin-left: auto; }
+.live-chat__detail { display: flex; flex-direction: column; gap: 14px; min-height: 560px; }
+.live-chat__head { display: flex; gap: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line-2); }
+.live-chat__head > div:not(.product-image):not(.live-chat__actions) { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.live-chat__head h2 { margin: 0; overflow: hidden; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
+.live-chat__head small { color: var(--muted); font-size: 12px; }
+.live-chat__actions { display: flex; align-items: flex-start; gap: 8px; }
+.live-transcript { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 12px; }
+.live-transcript ol { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+.live-transcript li { display: flex; gap: 8px; color: var(--ink-2); line-height: 1.6; }
+.live-transcript li b { flex: 0 0 auto; color: var(--muted); font-weight: 500; }
+.live-transcript li.is-customer b { color: var(--blue); }
+.live-thread { flex: 1; min-height: 240px; max-height: 420px; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 10px; }
+.live-message { display: flex; flex-direction: column; gap: 3px; max-width: 75%; }
+.live-message--customer { align-self: flex-start; }
+.live-message--staff { align-self: flex-end; align-items: flex-end; }
+.live-message--system { align-self: center; max-width: 100%; }
+.live-message__meta { color: var(--muted); font-size: 11px; }
+.live-message__bubble { padding: 9px 12px; border-radius: 12px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.live-message--customer .live-message__bubble { border-radius: 4px 12px 12px 12px; background: var(--surface-2); }
+.live-message--staff .live-message__bubble { border-radius: 12px 4px 12px 12px; color: #fff; background: var(--green); }
+.live-message__system { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; color: var(--muted); background: var(--line-2); font-size: 11px; }
+.live-composer { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line-2); }
+.live-composer__row { display: flex; align-items: flex-end; gap: 10px; }
+.live-composer__row .staff-textarea { flex: 1; }
+.live-chat__hint { margin: 0; font-size: 12px; }
