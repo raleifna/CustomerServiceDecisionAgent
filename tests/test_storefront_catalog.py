@@ -1,4 +1,6 @@
+import os
 import unittest
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -93,15 +95,18 @@ class StorefrontApiTests(unittest.TestCase):
     def test_order_summary_and_detail_carry_product_card(self) -> None:
         order = load_table("orders.json")[0]
         customer_id, order_id = order["customer_id"], order["order_id"]
+        with patch.dict(os.environ, {"DEMO_LOGIN_ENABLED": "true", "AUTH_SECRET": "storefront-test"}):
+            token = self.client.post("/auth/demo-login", json={"customer_id": customer_id}).json()["access_token"]
+            headers = {"Authorization": f"Bearer {token}"}
 
-        orders = self.client.get(f"/customers/{customer_id}/orders").json()
-        summary = next(item for item in orders if item["order_id"] == order_id)
-        self.assertEqual(summary["product"]["product_id"], order["product_id"])
+            orders = self.client.get("/me/orders", headers=headers).json()
+            summary = next(item for item in orders if item["order_id"] == order_id)
+            self.assertEqual(summary["product"]["product_id"], order["product_id"])
 
-        detail = self.client.get(f"/customers/{customer_id}/orders/{order_id}").json()
-        self.assertEqual(detail["product"]["product_id"], order["product_id"])
-        self.assertEqual(detail["tracking"]["order_id"], order_id)
-        self.assertTrue(detail["tracking"]["checkpoints"])
+            detail = self.client.get(f"/me/orders/{order_id}", headers=headers).json()
+            self.assertEqual(detail["product"]["product_id"], order["product_id"])
+            self.assertEqual(detail["tracking"]["order_id"], order_id)
+            self.assertTrue(detail["tracking"]["checkpoints"])
 
 
 if __name__ == "__main__":

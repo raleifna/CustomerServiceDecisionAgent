@@ -52,6 +52,7 @@ from src.backend.repositories.audit_repository import write_audit_log
 from src.backend.services.business_clock import get_business_clock
 from src.backend.services.staff_order_lookup import staff_customer, staff_order, staff_product_card
 from src.backend.services.staff_stats_service import compute_staff_stats
+from src.backend.api.auth_tokens import signed_upload_url
 from src.backend.api.staff_auth import StaffPrincipal, require_roles
 from src.backend.repositories.order_item_repository import (
     get_order_items,
@@ -94,7 +95,7 @@ def get_staff_identity(
 
 
 def _evidence_file_url(storage_path: str) -> str:
-    return "/uploads/" + storage_path.removeprefix("data/uploads/")
+    return signed_upload_url(storage_path)
 
 
 def _to_evidence_summary(record: dict) -> StaffEvidenceSummary:

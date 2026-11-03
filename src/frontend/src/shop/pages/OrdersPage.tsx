@@ -46,7 +46,7 @@ export default function OrdersPage({ customerId, customer }: { customerId: strin
   const { query } = useLocation();
   const tab = TABS.find((item) => item.key === query.get("tab")) ?? TABS[0];
   const orders = useCustomerOrders(customerId);
-  const requests = useFetch<CustomerServiceRequestProgress[]>(`/customers/${customerId}/service-requests`);
+  const requests = useFetch<CustomerServiceRequestProgress[]>("/me/service-requests", [customerId]);
   const requestByOrder = useMemo(() => latestRequestByOrder(requests.data), [requests.data]);
   const list = (orders.data ?? []).filter(tab.match);
 

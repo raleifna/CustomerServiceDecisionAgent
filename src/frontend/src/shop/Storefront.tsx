@@ -15,9 +15,9 @@ import {
 import { FormEvent, useEffect, useState } from "react";
 
 import ServiceCenter from "../ServiceCenter";
-import { CATEGORIES, vipLabels } from "./api";
+import { apiFetch, CATEGORIES, vipLabels } from "./api";
 import { Link, LoginRequired } from "./components";
-import { useCustomers } from "./hooks";
+import { useDemoAccounts, useMyProfile } from "./hooks";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import HomePage from "./pages/HomePage";
@@ -26,31 +26,32 @@ import OrdersPage from "./pages/OrdersPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import ProductListPage from "./pages/ProductListPage";
 import { navigate, useLocation } from "./router";
-import { setActiveCustomerId, useActiveCustomerId, useCart } from "./store";
+import { CustomerSession, setSession, useActiveCustomerId, useCart } from "./store";
 
 const HOT_KEYWORDS = ["降噪耳机", "咖啡机", "跑步鞋", "空气净化器", "四件套"];
 
 export default function Storefront() {
   const location = useLocation();
-  const customers = useCustomers();
+  const customers = useDemoAccounts();
   const customerId = useActiveCustomerId();
+  const customer = useMyProfile(customerId);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loggingIn, setLoggingIn] = useState<string | null>(null);
   const cart = useCart();
   const [accountOpen, setAccountOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState(location.query.get("q") ?? "");
-  const customer = customers.find((item) => item.customer_id === customerId);
   const testAccounts = customers.filter((item) => item.test_scenario);
   const datasetAccounts = customers.filter((item) => !item.test_scenario);
   const [first, second] = location.segments;
   const isService = first === "service" || first === "after-sales";
 
-  // Coming back from the Staff console: /?resumeCustomer=CUS0001
+  // Coming back from the Staff console: /?resumeCustomer=… — the session is
+  // still in this browser, so just reopen the service center.
   useEffect(() => {
-    const resume = location.query.get("resumeCustomer");
-    if (!resume) return;
-    setActiveCustomerId(resume);
-    navigate("/service", { replace: true });
-  }, [location.query]);
+    if (!location.query.get("resumeCustomer")) return;
+    navigate(customerId ? "/service" : "/", { replace: true });
+  }, [location.query, customerId]);
 
   useEffect(() => {
     if (first === "search") setSearch(location.query.get("q") ?? "");
@@ -64,13 +65,29 @@ export default function Storefront() {
     navigate(q ? `/search?q=${encodeURIComponent(q)}` : "/search");
   }
 
-  function login(id: string) {
-    setActiveCustomerId(id);
-    setAccountOpen(false);
+  async function login(id: string) {
+    setLoggingIn(id);
+    setLoginError(null);
+    try {
+      const response = await apiFetch("/auth/demo-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_id: id }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(typeof body?.detail === "string" ? body.detail : "登录失败，请稍后重试。");
+      const session: CustomerSession = { access_token: body.access_token, customer_id: body.customer.customer_id, expires_at: body.expires_at };
+      setSession(session);
+      setAccountOpen(false);
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : "登录失败，请稍后重试。");
+    } finally {
+      setLoggingIn(null);
+    }
   }
 
   function logout() {
-    setActiveCustomerId(null);
+    setSession(null);
     setMenuOpen(false);
     navigate("/");
   }
@@ -203,13 +220,13 @@ export default function Storefront() {
                 <h3>测试账号 <small>订单日期贴近今天，可直接体验各类售后场景</small></h3>
                 <div className="account-modal__tests">
                   {testAccounts.map((item) => (
-                    <button key={item.customer_id} className={item.customer_id === customerId ? "active" : ""} onClick={() => login(item.customer_id)}>
+                    <button key={item.customer_id} className={item.customer_id === customerId ? "active" : ""} onClick={() => void login(item.customer_id)} disabled={loggingIn !== null}>
                       <span className="account-modal__test-head">
                         <b>{item.customer_id}</b>
                         <em className={`vip-badge vip-badge--${item.vip_level.toLowerCase()}`}>{vipLabels[item.vip_level] ?? item.vip_level}</em>
                       </span>
                       <strong>{item.test_scenario}</strong>
-                      <ul>{item.test_hints.map((hint) => <li key={hint}>{hint}</li>)}</ul>
+                      <ul>{(item.test_hints ?? []).map((hint) => <li key={hint}>{hint}</li>)}</ul>
                     </button>
                   ))}
                 </div>
@@ -219,14 +236,15 @@ export default function Storefront() {
               <summary>评测数据集客户（{datasetAccounts.length}）<small>订单多为 2026 年 6–8 月，大部分已超出售后时效</small></summary>
               <div className="account-modal__grid">
                 {datasetAccounts.map((item) => (
-                  <button key={item.customer_id} className={item.customer_id === customerId ? "active" : ""} onClick={() => login(item.customer_id)}>
+                  <button key={item.customer_id} className={item.customer_id === customerId ? "active" : ""} onClick={() => void login(item.customer_id)} disabled={loggingIn !== null}>
                     <span className="avatar"><UserRound size={16} /></span>
                     <span><b>{item.customer_id}</b><small>{vipLabels[item.vip_level] ?? item.vip_level} · 历史退款 {item.refund_history_count} 次</small></span>
                   </button>
                 ))}
               </div>
             </details>
-            {customers.length === 0 && <p className="muted account-modal__loading">正在加载账号列表…</p>}
+            {loginError && <p className="account-modal__error">{loginError}</p>}
+            {customers.length === 0 && <p className="muted account-modal__loading">正在加载账号列表…（若一直为空，说明后端未开启演示登录 DEMO_LOGIN_ENABLED）</p>}
           </div>
         </div>
       )}

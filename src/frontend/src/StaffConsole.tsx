@@ -16,13 +16,16 @@ import {
 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
+import { API_BASE } from "./shop/api";
 import { navigate, useLocation } from "./shop/router";
 import { StaffApiError, staffFetch, StaffIdentity, StaffQueue, StaffReturnOrder } from "./staff/api";
 import { DashboardPage } from "./staff/Dashboard";
 import { ActionsPage, EvidencePage, HistoryPage, OverviewPage, PageProps, QueuePage, ReturnsPage } from "./staff/pages";
 import "./staff/staff.css";
 
-const TOKEN_KEY = "staff_api_token";
+// Holds the short-lived session token from /staff/auth/login, never the
+// long-lived access key itself.
+const TOKEN_KEY = "staff_session_token";
 const RETURN_KEY = "staff:return-customer";
 const REFRESH_MS = 30_000;
 
@@ -47,17 +50,26 @@ function writeToken(token: string | null) {
   } catch { /* best-effort */ }
 }
 
-// The shop links here as /staff?returnCustomer=CUS0001; remember it so the
-// "返回商城" link still works after navigating between staff pages.
+// The shop links here as /staff?returnCustomer=…; remember that we came from
+// the shop so "返回商城" goes back to its service center.
 function returnHref() {
   try {
-    const fromUrl = new URLSearchParams(window.location.search).get("returnCustomer");
-    if (fromUrl) window.sessionStorage.setItem(RETURN_KEY, fromUrl);
-    const customer = window.sessionStorage.getItem(RETURN_KEY);
-    return customer ? `/?resumeCustomer=${encodeURIComponent(customer)}` : "/";
+    if (new URLSearchParams(window.location.search).get("returnCustomer")) window.sessionStorage.setItem(RETURN_KEY, "1");
+    return window.sessionStorage.getItem(RETURN_KEY) ? "/?resumeCustomer=1" : "/";
   } catch {
     return "/";
   }
+}
+
+async function exchangeAccessKey(accessKey: string): Promise<string> {
+  const response = await fetch(`${API_BASE}/staff/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ access_key: accessKey }),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(response.status === 401 ? "访问令牌无效，请检查后重试。" : body?.detail || "登录失败，请稍后重试。");
+  return body.access_token as string;
 }
 
 function StaffConsole() {
@@ -91,7 +103,7 @@ function StaffConsole() {
     if (!token) return;
     staffFetch<StaffIdentity>(token, "/me")
       .then(setIdentity)
-      .catch((error) => logout(error instanceof StaffApiError && error.status === 401 ? "访问令牌无效或已失效，请重新登录。" : "无法连接服务，请稍后重试。"));
+      .catch((error) => logout(error instanceof StaffApiError && error.status === 401 ? "登录已过期，请重新登录。" : "无法连接服务，请稍后重试。"));
   }, [token, logout]);
 
   const reload = useCallback(async () => {
@@ -131,7 +143,23 @@ function StaffConsole() {
   }, [toast]);
 
   if (!token || !identity) {
-    return <StaffLogin pending={Boolean(token) && !authError} error={authError} backHref={backHref} onLogin={(value) => { setAuthError(null); writeToken(value); setToken(value); }} />;
+    return (
+      <StaffLogin
+        pending={Boolean(token) && !authError}
+        error={authError}
+        backHref={backHref}
+        onLogin={async (accessKey) => {
+          setAuthError(null);
+          try {
+            const session = await exchangeAccessKey(accessKey);
+            writeToken(session);
+            setToken(session);
+          } catch (error) {
+            setAuthError(error instanceof Error ? error.message : "登录失败");
+          }
+        }}
+      />
+    );
   }
 
   const counts: Record<string, number> = {
@@ -200,11 +228,15 @@ function StaffConsole() {
   );
 }
 
-function StaffLogin({ pending, error, backHref, onLogin }: { pending: boolean; error: string | null; backHref: string; onLogin: (token: string) => void }) {
+function StaffLogin({ pending, error, backHref, onLogin }: { pending: boolean; error: string | null; backHref: string; onLogin: (accessKey: string) => Promise<void> }) {
   const [value, setValue] = useState("");
-  function submit(event: FormEvent) {
+  const [submitting, setSubmitting] = useState(false);
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    if (value.trim()) onLogin(value.trim());
+    if (!value.trim()) return;
+    setSubmitting(true);
+    await onLogin(value.trim());
+    setSubmitting(false);
   }
   return (
     <div className="staff-login">
@@ -217,8 +249,8 @@ function StaffLogin({ pending, error, backHref, onLogin }: { pending: boolean; e
           <span className="staff-login__input"><KeyRound size={16} /><input type="password" value={value} onChange={(event) => setValue(event.target.value)} placeholder="输入 Staff API Token" autoFocus /></span>
         </label>
         {error && <div className="staff-warning">{error}</div>}
-        <button className="btn btn--primary btn--lg btn--block" type="submit" disabled={!value.trim() || pending}>{pending ? "验证中…" : "登录"}</button>
-        <small className="muted">令牌在 <code>.env</code> 的 <code>STAFF_API_KEYS</code> 中配置，角色分为 reviewer / admin / viewer。</small>
+        <button className="btn btn--primary btn--lg btn--block" type="submit" disabled={!value.trim() || pending || submitting}>{pending || submitting ? "验证中…" : "登录"}</button>
+        <small className="muted">令牌在 <code>.env</code> 的 <code>STAFF_API_KEYS</code> 中配置，角色分为 reviewer / admin / viewer。登录后浏览器只保存 8 小时有效的会话凭证。</small>
         <a className="staff-login__back" href={backHref}><Store size={14} />返回商城</a>
       </form>
     </div>

@@ -56,6 +56,11 @@ services:
       ENABLE_LLM_RESPONSE: ${ENABLE_LLM_RESPONSE:-false}
       DATABASE_URL: postgresql://customer_service:${POSTGRES_PASSWORD:-customer_service_dev}@postgres:5432/customer_service
       STAFF_API_KEYS: ${STAFF_API_KEYS:-}
+      # Signs customer/staff session tokens and evidence image URLs. Unset =
+      # random per-process secret (everyone is logged out on restart).
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      # The demo has no customer passwords: "login" = pick a mock account.
+      DEMO_LOGIN_ENABLED: ${DEMO_LOGIN_ENABLED:-true}
     ports:
       - "8000:8000"
     volumes:

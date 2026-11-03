@@ -22,6 +22,7 @@ import { Fragment, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useStat
 
 import {
   API_BASE,
+  apiFetch,
   CustomerOrder,
   CustomerServiceRequestProgress,
   EvidenceRecord,
@@ -35,7 +36,7 @@ import {
   yuan,
 } from "./shop/api";
 import { Breadcrumbs, Link, UserCenterLayout } from "./shop/components";
-import { useCustomers, useFetch } from "./shop/hooks";
+import { useFetch, useMyProfile } from "./shop/hooks";
 import { ProductImage } from "./shop/ProductImage";
 import { ReturnShipmentCard } from "./shop/ReturnShipment";
 import { navigate } from "./shop/router";
@@ -255,7 +256,7 @@ type ServiceCenterProps = {
 function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, routePrefill, routeFocus }: ServiceCenterProps) {
   const activeCustomerId = customerId;
   const activeWorkspace = workspace;
-  const customers = useCustomers();
+  const activeCustomer = useMyProfile(customerId);
   const productContext = useFetch<ProductDetail>(routeProductId ? `/products/${encodeURIComponent(routeProductId)}` : null);
   const [conversationId, setConversationId] = useState(() => createConversationId());
   const [messages, setMessages] = useState<Message[]>(() => initialMessages());
@@ -310,7 +311,7 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`${API_BASE}/health`, { signal: controller.signal })
+    apiFetch(`/health`, { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error("Health check failed");
         setConnectionState("online");
@@ -334,8 +335,8 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
 
     async function refreshRequestStatus() {
       try {
-        const response = await fetch(
-          `${API_BASE}/service-requests/${requestId}/status?customer_id=${encodeURIComponent(activeCustomerId)}`,
+        const response = await apiFetch(
+          `/service-requests/${requestId}/status`,
           { signal: controller.signal },
         );
         if (response.status === 404) {
@@ -495,7 +496,7 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
   useEffect(() => {
     if (!hasSelectedCustomer) return;
     const controller = new AbortController();
-    fetch(`${API_BASE}/customers/${activeCustomerId}/orders`, { signal: controller.signal })
+    apiFetch("/me/orders", { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error("订单列表加载失败");
         return response.json() as Promise<CustomerOrder[]>;
@@ -515,7 +516,7 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
     if (!hasSelectedCustomer || activeWorkspace !== "requests") return;
     const controller = new AbortController();
     setIsLoadingRequests(true);
-    fetch(`${API_BASE}/customers/${activeCustomerId}/service-requests`, { signal: controller.signal })
+    apiFetch("/me/service-requests", { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error("售后进度加载失败");
         return response.json() as Promise<CustomerServiceRequestProgress[]>;
@@ -534,7 +535,7 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
     if (!activeOrderId) return;
 
     const controller = new AbortController();
-    fetch(`${API_BASE}/customers/${activeCustomerId}/orders/${activeOrderId}`, {
+    apiFetch(`/me/orders/${activeOrderId}`, {
       signal: controller.signal,
     })
       .then((response) => {
@@ -573,7 +574,6 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
   }, [activeOrderId]);
 
   const activeOrder = lastResult?.order_id || activeOrderId;
-  const activeCustomer = customers.find((item) => item.customer_id === activeCustomerId);
   const metadata = useMemo(
     () => [
       ["问题类型", lastResult?.intent ? intentLabels[lastResult.intent] || lastResult.intent : "等待提问"],
@@ -613,12 +613,11 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
     setIsSending(true);
 
     try {
-      const response = await fetch(`${API_BASE}/chat`, {
+      const response = await apiFetch(`/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           conversation_id: conversationId,
-          customer_id: activeCustomerId,
           order_id: activeOrder,
           message: content,
         }),
@@ -752,10 +751,9 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
 
   async function submitEvidenceUpload(requestId: string, description: string, file: File): Promise<EvidenceRecord> {
     const form = new FormData();
-    form.append("customer_id", activeCustomerId);
     form.append("description", description.trim());
     form.append("file", file);
-    const response = await fetch(`${API_BASE}/service-requests/${requestId}/evidence`, {
+    const response = await apiFetch(`/service-requests/${requestId}/evidence`, {
       method: "POST",
       body: form,
     });
@@ -847,11 +845,7 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
     if (!window.confirm(`确定撤销售后申请 ${request.request_id} 吗？撤销后本次申请将停止审核。`)) return;
     setWithdrawingRequestId(request.request_id);
     try {
-      const response = await fetch(`${API_BASE}/service-requests/${request.request_id}/withdraw`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_id: activeCustomerId }),
-      });
+      const response = await apiFetch(`/service-requests/${request.request_id}/withdraw`, { method: "POST" });
       const body = await response.json().catch(() => null);
       if (!response.ok) throw new Error(body?.detail || "撤销申请失败");
       setCustomerRequests((current) => current.map((item) => item.request_id === request.request_id
@@ -1002,7 +996,6 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
                     {request.return_order && (
                       <ReturnShipmentCard
                         returnOrder={request.return_order}
-                        customerId={activeCustomerId}
                         refundSucceeded={refund?.workflow_status === "Succeeded"}
                         onSubmitted={(next) => handleRequestPageReturnSubmitted(request.request_id, next)}
                       />
@@ -1228,7 +1221,7 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
             )}
             {returnOrder && (
               <div className="chat-return-card">
-                <ReturnShipmentCard returnOrder={returnOrder} customerId={activeCustomerId} compact onSubmitted={handleChatReturnSubmitted} />
+                <ReturnShipmentCard returnOrder={returnOrder} compact onSubmitted={handleChatReturnSubmitted} />
               </div>
             )}
             {isSending && (
@@ -1266,7 +1259,7 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
             <section className="context-section context-guide">
               <h3>测试指引</h3>
               <b>{activeCustomer.test_scenario}</b>
-              <ul>{activeCustomer.test_hints.map((hint) => <li key={hint}>{hint}</li>)}</ul>
+              <ul>{(activeCustomer.test_hints ?? []).map((hint) => <li key={hint}>{hint}</li>)}</ul>
             </section>
           )}
           <section className="context-section">

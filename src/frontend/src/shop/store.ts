@@ -1,10 +1,10 @@
 import { useSyncExternalStore } from "react";
 
-// Signed-in demo account and shopping cart. Both are per-browser
-// conveniences only (localStorage, best-effort): orders and after-sales
-// records always come from the backend, never from here.
+// Customer session (the signed token from /auth/demo-login) and the shopping
+// cart. Both are per-browser, best-effort localStorage: the backend derives
+// the customer from the token on every request, so nothing here is trusted.
 
-const CUSTOMER_KEY = "shopcare:active-customer";
+const SESSION_KEY = "shopcare:session:v1";
 const CART_KEY = "shopcare:cart:v1";
 const CHANGE_EVENT = "shopcare:store";
 
@@ -45,7 +45,7 @@ function cached<T>(key: string, fallback: T): T {
 
 function subscribe(callback: () => void) {
   const onStorage = (event: StorageEvent) => {
-    if (event.key === CUSTOMER_KEY || event.key === CART_KEY) {
+    if (event.key === SESSION_KEY || event.key === CART_KEY) {
       cache.clear();
       callback();
     }
@@ -58,12 +58,24 @@ function subscribe(callback: () => void) {
   };
 }
 
-export function useActiveCustomerId(): string | null {
-  return useSyncExternalStore(subscribe, () => cached<string | null>(CUSTOMER_KEY, null));
+export type CustomerSession = { access_token: string; customer_id: string; expires_at: string };
+
+function currentSession(): CustomerSession | null {
+  const session = cached<CustomerSession | null>(SESSION_KEY, null);
+  if (!session) return null;
+  return new Date(session.expires_at).getTime() > Date.now() ? session : null;
 }
 
-export function setActiveCustomerId(customerId: string | null) {
-  write(CUSTOMER_KEY, customerId);
+export function useActiveCustomerId(): string | null {
+  return useSyncExternalStore(subscribe, () => currentSession()?.customer_id ?? null);
+}
+
+export function getAccessToken(): string | null {
+  return currentSession()?.access_token ?? null;
+}
+
+export function setSession(session: CustomerSession | null) {
+  write(SESSION_KEY, session);
 }
 
 export function useCart(): CartLine[] {

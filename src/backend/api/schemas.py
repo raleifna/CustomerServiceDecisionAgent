@@ -13,11 +13,6 @@ class ChatRequest(BaseModel):
         description="Stable ID used to isolate one conversation thread",
         examples=["customer-001"],
     )
-    customer_id: str = Field(
-        pattern=r"^CUS\d{4}$",
-        description="Authenticated mock customer that owns this conversation",
-        examples=["CUS0021"],
-    )
     order_id: str | None = Field(
         default=None,
         pattern=r"^ORD\d{10}$",
@@ -48,18 +43,6 @@ class HealthResponse(BaseModel):
     status: str
     service: str
     checks: dict[str, Any]
-
-
-class CustomerSummary(BaseModel):
-    customer_id: str
-    vip_level: str
-    register_date: str
-    refund_history_count: int
-    # Only set for the generated demo test accounts (see
-    # scripts/demo/seed_test_accounts.py): what the account is for and what
-    # to try saying in the chat.
-    test_scenario: str | None = None
-    test_hints: list[str] = Field(default_factory=list)
 
 
 class ProductCard(BaseModel):
@@ -235,13 +218,8 @@ class CustomerServiceRequestProgress(BaseModel):
 class ReturnShipmentRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    customer_id: str = Field(pattern=r"^CUS\d{4}$")
     carrier: str = Field(min_length=1, max_length=100)
     tracking_number: str = Field(min_length=6, max_length=40, pattern=r"^[A-Za-z0-9-]+$")
-
-
-class WithdrawServiceRequestPayload(BaseModel):
-    customer_id: str = Field(pattern=r"^CUS\d{4}$")
 
 
 class ReturnInspectionRequest(BaseModel):

@@ -47,7 +47,7 @@ export default function HomePage({ customer, onLogin }: { customer: Customer | u
   const products = useCatalog();
   const customerId = useActiveCustomerId();
   const orders = useCustomerOrders(customerId);
-  const requests = useFetch<CustomerServiceRequestProgress[]>(customerId ? `/customers/${customerId}/service-requests` : null);
+  const requests = useFetch<CustomerServiceRequestProgress[]>(customerId ? "/me/service-requests" : null, [customerId]);
   const openAfterSales = (requests.data ?? []).filter((request) => request.workflow_status !== "Closed").length;
   const [slide, setSlide] = useState(0);
 

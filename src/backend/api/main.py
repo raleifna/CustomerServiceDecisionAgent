@@ -3,19 +3,19 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
-from src.backend.api import staff
+from src.backend.api import customer_auth, staff, staff_auth
+from src.backend.api.auth_tokens import signed_upload_url, verify_file_signature
+from src.backend.api.customer_auth import current_customer_id
 from src.backend.api.schemas import (
     ChatRequest,
     ChatResponse,
     CustomerServiceRequestStatus,
     CustomerServiceRequestProgress,
-    WithdrawServiceRequestPayload,
     ReturnShipmentRequest,
-    CustomerSummary,
     EvidenceSummary,
     HealthResponse,
     OrderDetail,
@@ -37,7 +37,6 @@ from src.backend.repositories.mock_db_repository import (
     get_logistics,
     get_logistics_tracking,
     load_table,
-    load_test_account_guide,
 )
 from src.backend.repositories.product_catalog_repository import (
     get_storefront_product_card,
@@ -127,15 +126,28 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
+app.include_router(customer_auth.router)
+app.include_router(staff_auth.router)
 app.include_router(staff.router)
 
-_UPLOADS_DIR = PROJECT_ROOT / "data" / "uploads"
+_UPLOADS_DIR = (PROJECT_ROOT / "data" / "uploads").resolve()
 _UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(_UPLOADS_DIR)), name="uploads")
+
+
+@app.get("/uploads/{file_path:path}", include_in_schema=False)
+def get_uploaded_file(file_path: str, exp: str | None = None, sig: str | None = None) -> FileResponse:
+    """Evidence images are private: only URLs signed by this API (handed to
+    the owning customer or to staff, valid for an hour) can fetch them."""
+    if not verify_file_signature(file_path, exp, sig):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="文件链接无效或已过期。")
+    target = (_UPLOADS_DIR / file_path).resolve()
+    if not target.is_relative_to(_UPLOADS_DIR) or not target.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="文件不存在。")
+    return FileResponse(target, headers={"Cache-Control": "private, max-age=3600"})
 
 
 def _evidence_file_url(storage_path: str) -> str:
-    return "/uploads/" + storage_path.removeprefix("data/uploads/")
+    return signed_upload_url(storage_path)
 
 
 def _to_evidence_summary(record: dict) -> EvidenceSummary:
@@ -235,19 +247,6 @@ def health() -> HealthResponse:
     )
 
 
-@app.get("/customers", response_model=list[CustomerSummary], tags=["customers"])
-def list_customers() -> list[CustomerSummary]:
-    guide = load_test_account_guide()
-    return [
-        CustomerSummary.model_validate({
-            **item,
-            "test_scenario": guide.get(item["customer_id"], {}).get("title"),
-            "test_hints": guide.get(item["customer_id"], {}).get("hints", []),
-        })
-        for item in load_table("customers.json")
-    ]
-
-
 @app.get("/products", response_model=list[ProductCard], tags=["storefront"])
 def list_products(
     category: str | None = None,
@@ -296,19 +295,8 @@ def _order_status(order: dict) -> str:
     return "PendingShipment"
 
 
-@app.get(
-    "/customers/{customer_id}/orders",
-    response_model=list[OrderSummary],
-    tags=["customers"],
-)
-def list_customer_orders(customer_id: str) -> list[OrderSummary]:
-    customer = get_customer(customer_id)
-    if customer is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="当前客户不存在。",
-        )
-
+@app.get("/me/orders", response_model=list[OrderSummary], tags=["me"])
+def list_my_orders(customer_id: str = Depends(current_customer_id)) -> list[OrderSummary]:
     result = []
     for order in get_orders_by_customer_id(customer_id):
         product = get_storefront_product_card(order.get("product_id"))
@@ -325,14 +313,8 @@ def list_customer_orders(customer_id: str) -> list[OrderSummary]:
     return result
 
 
-@app.get(
-    "/customers/{customer_id}/service-requests",
-    response_model=list[CustomerServiceRequestProgress],
-    tags=["customers"],
-)
-def list_customer_service_requests(customer_id: str) -> list[CustomerServiceRequestProgress]:
-    if get_customer(customer_id) is None:
-        raise HTTPException(status_code=404, detail="当前客户不存在。")
+@app.get("/me/service-requests", response_model=list[CustomerServiceRequestProgress], tags=["me"])
+def list_my_service_requests(customer_id: str = Depends(current_customer_id)) -> list[CustomerServiceRequestProgress]:
     result = []
     for request_record in get_service_requests_by_customer_id(customer_id):
         request_id = request_record["request_id"]
@@ -361,12 +343,8 @@ def list_customer_service_requests(customer_id: str) -> list[CustomerServiceRequ
     return result
 
 
-@app.get(
-    "/customers/{customer_id}/orders/{order_id}",
-    response_model=OrderDetail,
-    tags=["customers"],
-)
-def get_customer_order_detail(customer_id: str, order_id: str) -> OrderDetail:
+@app.get("/me/orders/{order_id}", response_model=OrderDetail, tags=["me"])
+def get_my_order_detail(order_id: str, customer_id: str = Depends(current_customer_id)) -> OrderDetail:
     order = get_order(order_id)
     if order is None:
         raise HTTPException(
@@ -414,7 +392,7 @@ def _owned_service_request(request_id: str, customer_id: str) -> dict:
 )
 def get_customer_service_request_status(
     request_id: str,
-    customer_id: str,
+    customer_id: str = Depends(current_customer_id),
 ) -> CustomerServiceRequestStatus:
     """Return a customer-owned request's latest human/automatic outcome."""
     service_request = _owned_service_request(request_id, customer_id)
@@ -445,10 +423,10 @@ def get_customer_service_request_status(
 @app.post("/service-requests/{request_id}/withdraw", tags=["service-requests"])
 def withdraw_customer_service_request(
     request_id: str,
-    payload: WithdrawServiceRequestPayload,
+    customer_id: str = Depends(current_customer_id),
 ) -> CustomerServiceRequestStatus:
-    _owned_service_request(request_id, payload.customer_id)
-    withdrawn = withdraw_service_request(request_id, payload.customer_id)
+    _owned_service_request(request_id, customer_id)
+    withdrawn = withdraw_service_request(request_id, customer_id)
     if withdrawn is None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -467,10 +445,14 @@ def withdraw_customer_service_request(
 
 
 @app.post("/service-requests/{request_id}/return-shipment", tags=["service-requests"])
-def submit_customer_return_shipment(request_id: str, payload: ReturnShipmentRequest) -> dict:
-    _owned_service_request(request_id, payload.customer_id)
+def submit_customer_return_shipment(
+    request_id: str,
+    payload: ReturnShipmentRequest,
+    customer_id: str = Depends(current_customer_id),
+) -> dict:
+    _owned_service_request(request_id, customer_id)
     try:
-        result = submit_return_shipment(request_id, payload.customer_id, payload.carrier, payload.tracking_number)
+        result = submit_return_shipment(request_id, customer_id, payload.carrier, payload.tracking_number)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail="退货服务暂时不可用，请稍后重试。") from exc
     if result is None:
@@ -486,9 +468,9 @@ def submit_customer_return_shipment(request_id: str, payload: ReturnShipmentRequ
 )
 def upload_service_request_evidence(
     request_id: str,
-    customer_id: str = Form(...),
     description: str = Form(...),
     file: UploadFile = File(...),
+    customer_id: str = Depends(current_customer_id),
 ) -> EvidenceSummary:
     service_request = _owned_service_request(request_id, customer_id)
     rejected_rounds = sum(
@@ -522,7 +504,7 @@ def upload_service_request_evidence(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="证据暂时未能保存，请稍后重试。",
         ) from exc
-    return EvidenceSummary.model_validate(record)
+    return _to_evidence_summary(record)
 
 
 @app.get(
@@ -532,7 +514,7 @@ def upload_service_request_evidence(
 )
 def list_service_request_evidence(
     request_id: str,
-    customer_id: str,
+    customer_id: str = Depends(current_customer_id),
 ) -> list[EvidenceSummary]:
     _owned_service_request(request_id, customer_id)
     return [
@@ -547,14 +529,11 @@ def list_service_request_evidence(
     status_code=status.HTTP_200_OK,
     tags=["chat"],
 )
-def chat(payload: ChatRequest, request: Request) -> ChatResponse:
-    customer = get_customer(payload.customer_id)
-    if customer is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="当前客户不存在。",
-        )
-
+def chat(
+    payload: ChatRequest,
+    request: Request,
+    customer_id: str = Depends(current_customer_id),
+) -> ChatResponse:
     if payload.order_id:
         order = get_order(payload.order_id)
         if order is None:
@@ -562,7 +541,7 @@ def chat(payload: ChatRequest, request: Request) -> ChatResponse:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="订单不存在。",
             )
-        if order.get("customer_id") != payload.customer_id:
+        if order.get("customer_id") != customer_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="该订单不属于当前客户。",
@@ -570,7 +549,7 @@ def chat(payload: ChatRequest, request: Request) -> ChatResponse:
 
     # A browser-generated conversation ID is not globally trusted. Namespacing
     # it by customer prevents two mock users from sharing the same checkpoint.
-    graph_thread_id = f"{payload.customer_id}:{payload.conversation_id}"
+    graph_thread_id = f"{customer_id}:{payload.conversation_id}"
     graph_config = {"configurable": {"thread_id": graph_thread_id}}
 
     try:
@@ -578,7 +557,7 @@ def chat(payload: ChatRequest, request: Request) -> ChatResponse:
         existing_context = dict(
             (snapshot.values or {}).get("conversation_context") or {}
         )
-        existing_context["authenticated_customer_id"] = payload.customer_id
+        existing_context["authenticated_customer_id"] = customer_id
         # A request can be withdrawn from the separate progress page, outside
         # the conversation graph. Do not let that closed request remain the
         # active chat request on the next turn.
@@ -587,7 +566,7 @@ def chat(payload: ChatRequest, request: Request) -> ChatResponse:
             active_request = get_service_request(active_request_id)
             if (
                 active_request is None
-                or active_request.get("customer_id") != payload.customer_id
+                or active_request.get("customer_id") != customer_id
                 or active_request.get("workflow_status") == "Closed"
             ):
                 existing_context.pop("active_request_id", None)

@@ -1,7 +1,7 @@
 import { AlertTriangle, CheckCircle2, Copy, LoaderCircle, MapPin, PackageOpen, Truck } from "lucide-react";
 import { FormEvent, useState } from "react";
 
-import { API_BASE, RETURN_CARRIERS, ReturnOrder, yuan } from "./api";
+import { apiFetch, RETURN_CARRIERS, ReturnOrder, yuan } from "./api";
 
 const STEPS = [
   { key: "AwaitingShipment", label: "寄回商品" },
@@ -17,7 +17,6 @@ function stepIndex(status: string) {
 
 type Props = {
   returnOrder: ReturnOrder;
-  customerId: string;
   refundSucceeded?: boolean;
   compact?: boolean;
   onSubmitted?: (returnOrder: ReturnOrder) => void;
@@ -27,7 +26,7 @@ type Props = {
  * form for the courier + tracking number, then progress through warehouse
  * inspection to the refund. Shared by the after-sales page, the order
  * detail page and the chat. */
-export function ReturnShipmentCard({ returnOrder, customerId, refundSucceeded, compact, onSubmitted }: Props) {
+export function ReturnShipmentCard({ returnOrder, refundSucceeded, compact, onSubmitted }: Props) {
   const [carrier, setCarrier] = useState(RETURN_CARRIERS[0]);
   const [otherCarrier, setOtherCarrier] = useState("");
   const [tracking, setTracking] = useState("");
@@ -49,10 +48,10 @@ export function ReturnShipmentCard({ returnOrder, customerId, refundSucceeded, c
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/service-requests/${returnOrder.request_id}/return-shipment`, {
+      const response = await apiFetch(`/service-requests/${returnOrder.request_id}/return-shipment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_id: customerId, carrier: carrierName, tracking_number: trackingNumber }),
+        body: JSON.stringify({ carrier: carrierName, tracking_number: trackingNumber }),
       });
       const body = await response.json().catch(() => null);
       if (!response.ok) throw new Error(typeof body?.detail === "string" ? body.detail : "提交失败，请稍后重试。");

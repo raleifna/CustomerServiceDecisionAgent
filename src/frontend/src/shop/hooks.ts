@@ -28,7 +28,7 @@ export function useFetch<T>(path: string | null, deps: DependencyList = [path]):
 // The whole catalog is small; load it once per page load and share it
 // between the home page, the cart and the header search suggestions.
 let catalogPromise: Promise<ProductCard[]> | null = null;
-let customersPromise: Promise<Customer[]> | null = null;
+let accountsPromise: Promise<Customer[]> | null = null;
 
 export function useCatalog(): ProductCard[] {
   const [products, setProducts] = useState<ProductCard[]>([]);
@@ -44,20 +44,27 @@ export function useCatalog(): ProductCard[] {
   return products;
 }
 
-export function useCustomers(): Customer[] {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+/** The demo-login account picker (empty when demo login is disabled). */
+export function useDemoAccounts(enabled = true): Customer[] {
+  const [accounts, setAccounts] = useState<Customer[]>([]);
   useEffect(() => {
+    if (!enabled) return;
     let alive = true;
-    customersPromise ??= fetchJson<Customer[]>("/customers").catch((error) => {
-      customersPromise = null;
+    accountsPromise ??= fetchJson<Customer[]>("/auth/demo-accounts").catch((error) => {
+      accountsPromise = null;
       throw error;
     });
-    customersPromise.then((data) => alive && setCustomers(data)).catch(() => undefined);
+    accountsPromise.then((data) => alive && setAccounts(data)).catch(() => undefined);
     return () => { alive = false; };
-  }, []);
-  return customers;
+  }, [enabled]);
+  return accounts;
+}
+
+/** The signed-in customer's own profile (re-fetched when the account changes). */
+export function useMyProfile(customerId: string | null): Customer | undefined {
+  return useFetch<Customer>(customerId ? "/auth/me" : null, [customerId]).data ?? undefined;
 }
 
 export function useCustomerOrders(customerId: string | null): AsyncState<CustomerOrder[]> {
-  return useFetch<CustomerOrder[]>(customerId ? `/customers/${customerId}/orders` : null);
+  return useFetch<CustomerOrder[]>(customerId ? "/me/orders" : null, [customerId]);
 }

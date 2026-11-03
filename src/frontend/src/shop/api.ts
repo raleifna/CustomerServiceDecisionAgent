@@ -1,14 +1,28 @@
 export const CATEGORIES = ["数码", "家电", "服饰", "鞋靴", "家居", "食品", "饰品", "奢侈品"];
 
+import { getAccessToken, setSession } from "./store";
+
 export const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+
+/** fetch against the API with the customer's bearer token. A 401 means the
+ * session expired or was never valid: drop it so the UI asks to log in. */
+export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const token = getAccessToken();
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init.headers },
+  });
+  if (response.status === 401 && token) setSession(null);
+  return response;
+}
 
 export type Customer = {
   customer_id: string;
   vip_level: string;
   register_date: string;
   refund_history_count: number;
-  test_scenario: string | null;
-  test_hints: string[];
+  test_scenario?: string | null;
+  test_hints?: string[];
 };
 
 export type ProductCard = {
@@ -148,7 +162,7 @@ export type CustomerServiceRequestProgress = {
 };
 
 export async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, { signal });
+  const response = await apiFetch(path, { signal });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(body?.detail || `请求失败 (${response.status})`);

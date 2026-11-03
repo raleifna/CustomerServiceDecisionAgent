@@ -917,3 +917,4 @@ dd.order-amounts__total { color: var(--price) !important; font-size: 20px; font-
   .chat-return-card { margin-left: 0; }
   .return-shipment__steps { grid-template-columns: repeat(2, 1fr); row-gap: 10px; }
 }
+.account-modal__error { margin: 0; padding: 0 22px 12px; color: #d93a42; font-size: 13px; }

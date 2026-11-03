@@ -15,9 +15,9 @@ const statusCopy = {
 };
 
 export default function OrderDetailPage({ customerId, customer, orderId }: { customerId: string; customer: Customer | undefined; orderId: string }) {
-  const { data: order, error, loading } = useFetch<OrderDetail>(`/customers/${customerId}/orders/${encodeURIComponent(orderId)}`);
+  const { data: order, error, loading } = useFetch<OrderDetail>(`/me/orders/${encodeURIComponent(orderId)}`, [customerId, orderId]);
   const [requestsVersion, setRequestsVersion] = useState(0);
-  const requests = useFetch<CustomerServiceRequestProgress[]>(`/customers/${customerId}/service-requests`, [customerId, requestsVersion]);
+  const requests = useFetch<CustomerServiceRequestProgress[]>("/me/service-requests", [customerId, requestsVersion]);
   const orderRequests = (requests.data ?? []).filter((request) => request.order_id === orderId);
   const awaitingReturn = orderRequests.find((request) => request.workflow_status === "ReturnAwaitingShipment");
 
@@ -93,7 +93,6 @@ export default function OrderDetailPage({ customerId, customer, orderId }: { cus
                 {request.return_order && (
                   <ReturnShipmentCard
                     returnOrder={request.return_order}
-                    customerId={customerId}
                     refundSucceeded={refunded}
                     compact
                     onSubmitted={() => setRequestsVersion((version) => version + 1)}
