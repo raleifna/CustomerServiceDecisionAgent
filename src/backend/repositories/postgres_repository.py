@@ -166,6 +166,10 @@ def setup_application_schema(database_url: str) -> None:
         )
         """,
         "CREATE INDEX IF NOT EXISTS ix_return_orders_status ON return_orders (workflow_status, created_at)",
+        # Shadow rule-engine suggestion for escalated / non-automatic requests
+        # (decision/engine.py shadow_recommendation), compared with the human
+        # outcome by services/ai_review_service.py.
+        "ALTER TABLE service_requests ADD COLUMN IF NOT EXISTS ai_recommendation JSONB",
         """
         CREATE INDEX IF NOT EXISTS ix_evidence_request_id
         ON service_request_evidence (request_id, created_at)

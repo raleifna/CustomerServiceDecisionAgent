@@ -16,7 +16,8 @@ SERVICE_REQUEST_FIELDS = """
     approved_quantity, approved_amount, decision_confidence,
     reasons, rule_hits, required_actions,
     resolved_by, resolution_notes, resolved_at,
-    assigned_to, lease_expires_at, row_version
+    assigned_to, lease_expires_at, row_version,
+    ai_recommendation
 """
 
 
@@ -466,8 +467,13 @@ def update_service_request_result(
     reasons: list[str],
     rule_hits: list[str],
     required_actions: list[str],
+    ai_recommendation: dict[str, Any] | None = None,
 ) -> None:
-    """Persist Finalization's outcome. No-ops without a database (local/eval)."""
+    """Persist Finalization's outcome. No-ops without a database (local/eval).
+
+    ai_recommendation is the shadow rule-engine suggestion for requests that
+    did not get an automatic decision; it is overwritten on every run so it
+    always reflects the latest evidence."""
     database_url = get_database_url()
     if not database_url:
         return
@@ -488,6 +494,7 @@ def update_service_request_result(
                     reasons = %s,
                     rule_hits = %s,
                     required_actions = %s,
+                    ai_recommendation = %s,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE request_id = %s
                 """,
@@ -500,6 +507,7 @@ def update_service_request_result(
                     Json(reasons),
                     Json(rule_hits),
                     Json(required_actions),
+                    Json(ai_recommendation) if ai_recommendation is not None else None,
                     request_id,
                 ),
             )

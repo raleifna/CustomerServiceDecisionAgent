@@ -15,6 +15,9 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { API_BASE, yuan } from "../shop/api";
 import { ProductImage } from "../shop/ProductImage";
 import {
+  agreementLabels,
+  aiAgreement,
+  AiRecommendation,
   actionStatusLabels,
   actionTypeLabels,
   decisionLabels,
@@ -87,7 +90,7 @@ export function RequestDetail({ requestId, token, identity, onChanged, onOpenReq
         </div>
       </header>
 
-      {(request.reasons.length > 0 || request.rule_hits.length > 0 || request.required_actions.length > 0) && (
+      {(request.reasons.length > 0 || request.rule_hits.length > 0 || request.required_actions.length > 0 || request.ai_recommendation) && (
         <section className="staff-section staff-section--ai">
           <h3><Bot size={16} />智能客服的判断</h3>
           {request.reasons.length > 0 && (
@@ -96,6 +99,7 @@ export function RequestDetail({ requestId, token, identity, onChanged, onOpenReq
           {request.required_actions.length > 0 && (
             <div className="ai-block"><b>{actionable ? "建议核查步骤" : "后续动作"}</b><ul>{request.required_actions.map((item) => <li key={item}>{actionTypeLabels[item] ?? item}</li>)}</ul></div>
           )}
+          {request.ai_recommendation && <AiSuggestion suggestion={request.ai_recommendation} />}
           <div className="ai-meta">
             {request.rule_hits.length > 0 && <span>命中规则 {request.rule_hits.map((rule) => <code key={rule}>{rule}</code>)}</span>}
             {request.decision_confidence != null && <span>置信度 <b>{Math.round(request.decision_confidence * 100)}%</b></span>}
@@ -110,6 +114,10 @@ export function RequestDetail({ requestId, token, identity, onChanged, onOpenReq
             <dt>结论</dt><dd>{request.decision ? decisionLabels[request.decision] ?? request.decision : "—"}</dd>
             <dt>批准</dt><dd>{request.approved_quantity ?? "—"} 件 · {request.approved_amount != null ? yuan(request.approved_amount) : "—"}</dd>
             <dt>处理人</dt><dd>{request.resolved_by ?? "智能客服自动裁决"}</dd>
+            {request.resolved_by && request.ai_recommendation?.decision && (() => {
+              const outcome = aiAgreement(request.ai_recommendation, request.decision, request.approved_amount);
+              return <><dt>对比 AI</dt><dd><span className={`pill pill--sm ${outcome === "agree" ? "pill--green" : "pill--orange"}`}>{agreementLabels[outcome]}</span></dd></>;
+            })()}
             {request.resolved_at && <><dt>时间</dt><dd>{formatDateTime(request.resolved_at)}</dd></>}
             {request.resolution_notes && <><dt>依据</dt><dd>{request.resolution_notes}</dd></>}
           </dl>
@@ -295,6 +303,14 @@ function ResolvePanel({ detail, token, identity, canWrite, onClaimed, onResolved
     }
   }
 
+  function adoptSuggestion(suggestion: AiRecommendation) {
+    if (!suggestion.decision) return;
+    setDecision(suggestion.decision);
+    setQuantity(suggestion.approved_quantity != null ? String(suggestion.approved_quantity) : "");
+    setAmount(suggestion.approved_amount != null ? Number(suggestion.approved_amount).toFixed(2) : "");
+    setNotes(`人工复核后采纳智能客服建议（规则 ${suggestion.matched_rule_id ?? "—"}）：${suggestion.reasons.join("；") || decisionLabels[suggestion.decision]}`);
+  }
+
   function onQuantityChange(value: string) {
     setQuantity(value);
     if (decision === "PartialApprove" && value) setAmount((unitPaid * Number(value)).toFixed(2));
@@ -361,6 +377,12 @@ function ResolvePanel({ detail, token, identity, canWrite, onClaimed, onResolved
       {canWrite && (
         <form className="resolve-form" onSubmit={submit}>
           <fieldset disabled={!mine || busy}>
+            {request.ai_recommendation?.decision && (
+              <button type="button" className="btn btn--outline btn--sm adopt-ai" onClick={() => adoptSuggestion(request.ai_recommendation!)}>
+                <Bot size={14} />采纳 AI 建议：{decisionLabels[request.ai_recommendation.decision] ?? request.ai_recommendation.decision}
+                {request.ai_recommendation.approved_amount != null ? ` ${yuan(Number(request.ai_recommendation.approved_amount))}` : ""}
+              </button>
+            )}
             <div className="decision-options">
               {Object.entries(decisionLabels).map(([key, label]) => (
                 <label key={key} className={`decision-option decision-option--${key} ${decision === key ? "active" : ""}`}>
@@ -407,4 +429,20 @@ function useNow(intervalMs = 1000) {
 function formatCountdown(seconds: number) {
   const safe = Math.max(0, seconds);
   return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, "0")}`;
+}
+
+function AiSuggestion({ suggestion }: { suggestion: AiRecommendation }) {
+  if (!suggestion.decision) return null;
+  return (
+    <div className="ai-suggestion">
+      <span className="ai-suggestion__label">AI 建议</span>
+      <b>{decisionLabels[suggestion.decision] ?? suggestion.decision}</b>
+      {suggestion.approved_quantity != null && <span>{suggestion.approved_quantity} 件</span>}
+      {suggestion.approved_amount != null && <span>{yuan(Number(suggestion.approved_amount))}</span>}
+      {suggestion.matched_rule_id && <code>{suggestion.matched_rule_id}</code>}
+      {suggestion.decision_confidence != null && <span className="muted">置信度 {Math.round(suggestion.decision_confidence * 100)}%</span>}
+      {suggestion.reasons.length > 0 && <p>{suggestion.reasons.join("；")}</p>}
+      <small>规则引擎在不考虑转人工条件时会给出的结论，仅供参考；你的最终结论会与它对比，用于评估 AI 质量。</small>
+    </div>
+  );
 }

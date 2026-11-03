@@ -1,5 +1,6 @@
 from typing import Any
 
+from src.backend.decision.engine import shadow_recommendation
 from src.backend.graph.state import CustomerServiceState
 from src.backend.repositories.service_request_repository import (
     update_service_request_result,
@@ -28,6 +29,7 @@ def _persist(final_result: dict[str, Any]) -> None:
         reasons=final_result["reasons"],
         rule_hits=final_result["rule_hits"],
         required_actions=final_result["required_actions"],
+        ai_recommendation=final_result.get("ai_recommendation"),
     )
 
 
@@ -130,6 +132,7 @@ def finalization_node(
                 "required_actions",
                 [],
             ),
+            "ai_recommendation": shadow_recommendation(state),
         }
         _persist(final_result)
         return {"final_result": final_result}
@@ -183,6 +186,7 @@ def finalization_node(
         "rule_hits": [],
         "reasons": gate_result.get("reasons", []),
         "required_actions": [],
+        "ai_recommendation": shadow_recommendation(state),
     }
     _persist(final_result)
     return {"final_result": final_result}

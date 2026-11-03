@@ -336,3 +336,30 @@ button.history-table__row.active { background: var(--brand-soft); }
   .kpi-grid, .kpi-grid--compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .daily-chart__col small { display: none; }
 }
+
+/* AI suggestion on escalated requests */
+.ai-suggestion { margin: 4px 0 12px; padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; border: 1px dashed rgba(242, 84, 27, .45); border-radius: 10px; background: var(--surface); font-size: 13px; }
+.ai-suggestion__label { padding: 2px 8px; border-radius: 999px; color: #fff; background: var(--brand); font-size: 11px; }
+.ai-suggestion b { font-size: 14px; }
+.ai-suggestion code { padding: 1px 6px; border-radius: 4px; color: var(--brand); background: var(--brand-soft); font: 500 11px "JetBrains Mono", monospace; }
+.ai-suggestion p { flex-basis: 100%; margin: 2px 0 0; color: var(--ink-2); font-size: 12px; line-height: 1.6; }
+.ai-suggestion small { flex-basis: 100%; color: var(--muted); font-size: 11px; }
+.adopt-ai { align-self: flex-start; }
+.ai-review__intro { margin: -4px 0 14px; font-size: 12px; line-height: 1.6; }
+.ai-review .kpi-grid { margin-bottom: 16px; }
+.kpi-tile--action .btn { align-self: flex-start; margin-top: 2px; }
+.matrix-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.matrix-table th, .matrix-table td { padding: 8px 10px; border-bottom: 1px solid var(--line-2); text-align: left; }
+.matrix-table th { color: var(--muted); font-size: 12px; font-weight: 500; }
+.matrix-table td:last-child, .matrix-table th:last-child { text-align: right; font-family: "Outfit", sans-serif; }
+.matrix-table tr.is-agree td:first-child { box-shadow: inset 3px 0 var(--green); }
+.matrix-table tr.is-disagree td:first-child { box-shadow: inset 3px 0 var(--orange); }
+.bar-list__label--mono { font: 12px "JetBrains Mono", monospace; }
+.disagreement-list { display: flex; flex-direction: column; gap: 8px; }
+.disagreement { width: 100%; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); text-align: left; font-size: 13px; }
+.disagreement:hover { border-color: var(--brand); }
+.disagreement__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.disagreement__head b { font: 600 13px "Outfit", sans-serif; }
+.disagreement__compare { display: flex; flex-wrap: wrap; gap: 4px 24px; color: var(--ink-2); }
+.disagreement small { color: var(--muted); font-size: 12px; }
+.bar-list li:has(.bar-list__label--mono) { grid-template-columns: 150px minmax(0, 1fr) 70px; }

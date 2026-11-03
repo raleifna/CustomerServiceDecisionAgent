@@ -219,7 +219,7 @@ function StaffConsole() {
           {section === "returns" && <ReturnsPage {...props} />}
           {section === "actions" && <ActionsPage {...props} />}
           {section === "history" && <HistoryPage {...props} />}
-          {section === "insights" && <DashboardPage token={token} />}
+          {section === "insights" && <DashboardPage token={token} canExport={identity.roles.some((role) => role === "reviewer" || role === "admin")} />}
         </main>
       </div>
 

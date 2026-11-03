@@ -262,6 +262,28 @@ class PostgresLifecycleIntegrationTests(unittest.TestCase):
         self.assertEqual(list_staff_service_requests(workflow_status="Closed"), [])
         self.assertIsInstance(list_staff_service_requests()[0]["created_at"], str)
 
+    def test_shadow_ai_recommendation_round_trips(self) -> None:
+        request = self._create_request()
+        from src.backend.repositories.service_request_repository import (
+            get_service_request, list_staff_service_requests, update_service_request_result,
+        )
+        suggestion = {"decision": "Approve", "approved_amount": 99.0, "matched_rule_id": "quality_evidence"}
+        update_service_request_result(
+            request["request_id"], workflow_status="EscalatedToHuman", decision=None,
+            approved_quantity=None, approved_amount=None, decision_confidence=None,
+            reasons=["命中高频退款客户复核规则"], rule_hits=[], required_actions=[],
+            ai_recommendation=suggestion,
+        )
+        self.assertEqual(get_service_request(request["request_id"])["ai_recommendation"], suggestion)
+        self.assertEqual(list_staff_service_requests()[0]["ai_recommendation"], suggestion)
+        # A later run without a suggestion clears it rather than keeping a stale one.
+        update_service_request_result(
+            request["request_id"], workflow_status="NeedsReflection", decision=None,
+            approved_quantity=None, approved_amount=None, decision_confidence=None,
+            reasons=[], rule_hits=[], required_actions=[],
+        )
+        self.assertIsNone(get_service_request(request["request_id"])["ai_recommendation"])
+
 
 if __name__ == "__main__":
     unittest.main()

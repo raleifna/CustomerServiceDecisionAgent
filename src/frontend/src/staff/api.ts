@@ -1,5 +1,15 @@
 import { API_BASE, OrderItem, OrderTracking, ProductCard } from "../shop/api";
 
+export type AiRecommendation = {
+  decision: string | null;
+  approved_quantity: number | null;
+  approved_amount: number | null;
+  decision_confidence: number | null;
+  matched_rule_id: string | null;
+  rule_hits: string[];
+  reasons: string[];
+};
+
 export type StaffRequest = {
   request_id: string;
   order_id: string;
@@ -27,6 +37,7 @@ export type StaffRequest = {
   updated_at: string | null;
   product: ProductCard | null;
   order_amount: number | null;
+  ai_recommendation: AiRecommendation | null;
 };
 
 export type StaffEvidence = {
@@ -236,3 +247,27 @@ export function ageHours(value: string | null | undefined): number {
   if (!value) return 0;
   return (Date.now() - new Date(value).getTime()) / 3600000;
 }
+
+const APPROVING = new Set(["Approve", "PartialApprove"]);
+
+/** Mirrors services/ai_review_service.classify on the backend. */
+export function aiAgreement(ai: AiRecommendation | null, human: string | null, humanAmount: number | null): string {
+  if (!ai?.decision) return "no_suggestion";
+  if (ai.decision === human) {
+    if (APPROVING.has(ai.decision) && ai.approved_amount != null && humanAmount != null && Math.abs(ai.approved_amount - humanAmount) > 0.01) return "amount_differs";
+    return "agree";
+  }
+  if (APPROVING.has(ai.decision) && human && APPROVING.has(human)) return "amount_differs";
+  if (APPROVING.has(ai.decision)) return "ai_more_lenient";
+  if (human && APPROVING.has(human)) return "ai_more_strict";
+  return "other";
+}
+
+export const agreementLabels: Record<string, string> = {
+  agree: "与 AI 建议一致",
+  amount_differs: "金额 / 数量与 AI 不同",
+  ai_more_lenient: "AI 更宽松（人工收紧）",
+  ai_more_strict: "AI 更严格（人工放宽）",
+  other: "结论不同",
+  no_suggestion: "AI 无建议",
+};

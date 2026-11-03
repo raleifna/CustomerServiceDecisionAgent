@@ -255,6 +255,8 @@ class StaffServiceRequestSummary(BaseModel):
     # Storefront display card for the order's product (presentation only).
     product: ProductCard | None = None
     order_amount: float | None = None
+    # Shadow rule-engine suggestion recorded when the request was escalated.
+    ai_recommendation: dict[str, Any] | None = None
 
 
 class StaffEvidenceSummary(BaseModel):

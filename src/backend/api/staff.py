@@ -8,6 +8,7 @@ one) gets written back.
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 
 from src.backend.api.schemas import (
     EvidenceReviewRequest,
@@ -51,6 +52,7 @@ from src.backend.repositories.decision_lifecycle_repository import (
 from src.backend.repositories.audit_repository import write_audit_log
 from src.backend.services.business_clock import get_business_clock
 from src.backend.services.staff_order_lookup import staff_customer, staff_order, staff_product_card
+from src.backend.services.ai_review_service import compute_ai_review, evaluation_candidates
 from src.backend.services.staff_stats_service import compute_staff_stats
 from src.backend.api.auth_tokens import signed_upload_url
 from src.backend.api.staff_auth import StaffPrincipal, require_roles
@@ -147,6 +149,7 @@ def _to_service_request_summary(
         updated_at=_iso(record.get("updated_at")),
         product=staff_product_card(record["order_id"], order),
         order_amount=float(order["amount"]) if order else None,
+        ai_recommendation=record.get("ai_recommendation"),
     )
 
 
@@ -180,6 +183,25 @@ def get_staff_stats(
     )
     stats["llm"] = telemetry.snapshot() if "admin" in principal.roles else None
     return stats
+
+
+@router.get("/ai-review")
+def get_ai_review(
+    _: StaffPrincipal = Depends(require_roles("viewer", "reviewer", "admin")),
+) -> dict:
+    """Agreement between the AI's shadow suggestion and the human outcome."""
+    return compute_ai_review(list_staff_service_requests(limit=5000))
+
+
+@router.get("/ai-review/export")
+def export_ai_review_cases(
+    _: StaffPrincipal = Depends(require_roles("reviewer", "admin")),
+) -> JSONResponse:
+    """Human overrides as candidate regression cases (JSON download)."""
+    return JSONResponse(
+        evaluation_candidates(list_staff_service_requests(limit=5000)),
+        headers={"Content-Disposition": 'attachment; filename="human_override_candidates.json"'},
+    )
 
 
 @router.get("/queue", response_model=StaffQueueResponse)

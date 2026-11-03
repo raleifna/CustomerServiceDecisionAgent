@@ -1,8 +1,9 @@
-import { Activity, AlertTriangle, BarChart3, Bot, Clock, Loader, Percent, ReceiptText, ShieldAlert, UserCheck } from "lucide-react";
+import { Activity, AlertTriangle, BarChart3, Bot, Clock, Download, GitCompare, Loader, Percent, ReceiptText, ShieldAlert, UserCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { yuan } from "../shop/api";
-import { actionStatusLabels, decisionLabels, requestStatusLabels, returnStatusLabels, staffFetch } from "./api";
+import { actionStatusLabels, agreementLabels, decisionLabels, requestStatusLabels, returnStatusLabels, staffFetch } from "./api";
+import { navigate } from "../shop/router";
 
 type Count<K extends string> = { [key in K]: string } & { count: number };
 
@@ -31,7 +32,21 @@ const SERIES = [
 
 const pct = (value: number | null) => (value == null ? "—" : `${Math.round(value * 100)}%`);
 
-export function DashboardPage({ token }: { token: string }) {
+type AiReview = {
+  totals: { human_resolved: number; with_suggestion: number; without_suggestion: number; agree: number; disagree: number };
+  agreement_rate: number | null;
+  outcomes: { outcome: string; count: number }[];
+  matrix: { ai: string; human: string; count: number }[];
+  by_reason: { reason: string; total: number; agree: number; agreement_rate: number }[];
+  by_rule: { rule: string; total: number; agree: number; agreement_rate: number }[];
+  disagreements: {
+    request_id: string; request_reason: string; outcome: string;
+    ai_decision: string; ai_amount: number | null; ai_rule: string | null;
+    human_decision: string; human_amount: number | null; resolved_by: string; resolved_at: string | null; resolution_notes: string | null;
+  }[];
+};
+
+export function DashboardPage({ token, canExport }: { token: string; canExport: boolean }) {
   const [days, setDays] = useState(14);
   const [stats, setStats] = useState<StaffStats | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +119,8 @@ export function DashboardPage({ token }: { token: string }) {
           <BarList rows={stats.actions.map((row) => ({ label: actionStatusLabels[row.status] ?? row.status, count: row.count }))} empty="暂无履约任务" />
         </section>
       </div>
+
+      <AiReviewSection token={token} canExport={canExport} />
 
       <section className="panel">
         <h2><Activity size={17} />大模型调用健康</h2>
@@ -201,4 +218,109 @@ function niceTicks(max: number): number[] {
   for (let value = 0; value <= max + step - 1; value += step) ticks.push(value);
   if (ticks[ticks.length - 1] < max) ticks.push(ticks[ticks.length - 1] + step);
   return ticks;
+}
+
+function AiReviewSection({ token, canExport }: { token: string; canExport: boolean }) {
+  const [review, setReview] = useState<AiReview | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    staffFetch<AiReview>(token, "/ai-review").then(setReview).catch((err) => setError(err instanceof Error ? err.message : "加载失败"));
+  }, [token]);
+
+  async function exportCases() {
+    const cases = await staffFetch<unknown[]>(token, "/ai-review/export");
+    const url = URL.createObjectURL(new Blob([JSON.stringify(cases, null, 2)], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "human_override_candidates.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <section className="panel ai-review">
+      <h2><GitCompare size={17} />AI 建议与人工结论一致性</h2>
+      <p className="muted ai-review__intro">
+        每张转人工的工单都会记录规则引擎「如果不转人工会怎么判」，人工给出结论后自动对比。不一致的案例说明某条规则过严 / 过松，或审核口径不统一，可导出为评测用例候选。
+      </p>
+      {error && <div className="staff-warning"><AlertTriangle size={14} />{error}</div>}
+      {!review && !error && <div className="staff-empty-state"><Loader size={16} className="spin" />加载中…</div>}
+      {review && (
+        <>
+          <div className="kpi-grid kpi-grid--compact">
+            <div className="kpi-tile"><span className="kpi-tile__label">一致率</span><b>{pct(review.agreement_rate)}</b><small>{review.totals.agree} / {review.totals.with_suggestion} 单与 AI 建议一致</small></div>
+            <div className="kpi-tile"><span className="kpi-tile__label">人工结案</span><b>{review.totals.human_resolved}</b><small>其中 {review.totals.without_suggestion} 单 AI 无建议</small></div>
+            <div className="kpi-tile"><span className="kpi-tile__label">人工推翻</span><b>{review.totals.disagree}</b><small>结论或金额与 AI 不同</small></div>
+            <div className="kpi-tile kpi-tile--action">
+              <span className="kpi-tile__label">评测用例候选</span>
+              <b>{review.totals.disagree}</b>
+              {canExport
+                ? <button className="btn btn--outline btn--sm" onClick={() => void exportCases()} disabled={review.totals.disagree === 0}><Download size={13} />导出 JSON</button>
+                : <small>审核员可导出</small>}
+            </div>
+          </div>
+
+          {review.totals.with_suggestion === 0 ? (
+            <p className="muted">还没有可对比的数据：转人工且 AI 有建议的工单被人工处理后，这里会显示对比结果。</p>
+          ) : (
+            <div className="dashboard__grid">
+              <div>
+                <h3 className="dashboard__sub">AI 建议 × 人工结论</h3>
+                <table className="matrix-table">
+                  <thead><tr><th>AI 建议</th><th>人工结论</th><th>单数</th></tr></thead>
+                  <tbody>
+                    {review.matrix.map((row) => (
+                      <tr key={`${row.ai}-${row.human}`} className={row.ai === row.human ? "is-agree" : "is-disagree"}>
+                        <td>{decisionLabels[row.ai] ?? row.ai}</td><td>{decisionLabels[row.human] ?? row.human}</td><td>{row.count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div>
+                <h3 className="dashboard__sub">按规则的一致率（低的在前）</h3>
+                <AgreementList rows={review.by_rule.map((row) => ({ label: row.rule, ...row }))} mono />
+                <h3 className="dashboard__sub">按售后原因的一致率</h3>
+                <AgreementList rows={review.by_reason.map((row) => ({ label: row.reason, ...row }))} />
+              </div>
+            </div>
+          )}
+
+          {review.disagreements.length > 0 && (
+            <>
+              <h3 className="dashboard__sub">最近的不一致案例</h3>
+              <div className="disagreement-list">
+                {review.disagreements.map((item) => (
+                  <button key={item.request_id} className="disagreement" onClick={() => navigate(`/staff/history?id=${encodeURIComponent(item.request_id)}`)}>
+                    <span className="disagreement__head"><b>{item.request_id}</b><span className="pill pill--orange pill--sm">{agreementLabels[item.outcome] ?? item.outcome}</span><span className="muted">{item.request_reason}</span></span>
+                    <span className="disagreement__compare">
+                      <span>AI：{decisionLabels[item.ai_decision] ?? item.ai_decision}{item.ai_amount != null ? ` ${yuan(item.ai_amount)}` : ""}{item.ai_rule ? `（${item.ai_rule}）` : ""}</span>
+                      <span>人工：{decisionLabels[item.human_decision] ?? item.human_decision}{item.human_amount != null ? ` ${yuan(item.human_amount)}` : ""} · {item.resolved_by}</span>
+                    </span>
+                    {item.resolution_notes && <small>依据：{item.resolution_notes}</small>}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+function AgreementList({ rows, mono }: { rows: { label: string; total: number; agree: number; agreement_rate: number }[]; mono?: boolean }) {
+  if (rows.length === 0) return <p className="muted bar-list__empty">暂无数据</p>;
+  return (
+    <ul className="bar-list">
+      {rows.map((row) => (
+        <li key={row.label} title={`${row.label}：${row.agree}/${row.total} 一致`}>
+          <span className={`bar-list__label ${mono ? "bar-list__label--mono" : ""}`}>{row.label}</span>
+          <span className="bar-list__track"><i style={{ width: `${row.agreement_rate * 100}%` }} /></span>
+          <span className="bar-list__value">{pct(row.agreement_rate)}<small>{row.agree}/{row.total}</small></span>
+        </li>
+      ))}
+    </ul>
+  );
 }
