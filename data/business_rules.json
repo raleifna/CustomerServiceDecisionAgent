@@ -18,5 +18,12 @@
   },
   "decision": {
     "default_evidence_confidence": 0.8
+  },
+  "automation": {
+    "return_shipment_days": 7,
+    "return_transit_alert_days": 10,
+    "human_review_sla_hours": 24,
+    "live_chat_idle_minutes": 30,
+    "live_chat_queue_timeout_hours": 24
   }
 }

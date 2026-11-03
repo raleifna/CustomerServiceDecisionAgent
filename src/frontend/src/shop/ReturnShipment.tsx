@@ -11,7 +11,7 @@ const STEPS = [
 ];
 
 function stepIndex(status: string) {
-  if (status === "InspectionAccepted" || status === "InspectionRejected") return 3;
+  if (status === "InspectionAccepted" || status === "InspectionRejected" || status === "Expired") return 3;
   return Math.max(0, STEPS.findIndex((step) => step.key === status));
 }
 
@@ -101,7 +101,10 @@ export function ReturnShipmentCard({ returnOrder, refundSucceeded, compact, onSu
               <button type="button" className="link-btn" onClick={() => void copyAddress()}><Copy size={12} />{copied ? "已复制" : "复制"}</button>
             </div>
           )}
-          <p className="return-shipment__tip">请保持商品完好、配件齐全并附原包装，寄出后在下方填写运单号，仓库收货验收后原路退款。</p>
+          <p className="return-shipment__tip">
+            请保持商品完好、配件齐全并附原包装，寄出后在下方填写运单号，仓库收货验收后原路退款。
+            {returnOrder.ship_by && <b className="return-shipment__deadline">请在 {formatTime(returnOrder.ship_by)} 前寄出并填写运单号，逾期退货申请将自动关闭。</b>}
+          </p>
           <form className="return-shipment__form" onSubmit={submit}>
             <label>
               快递公司
@@ -133,6 +136,9 @@ export function ReturnShipmentCard({ returnOrder, refundSucceeded, compact, onSu
           {returnOrder.inspected_at && <span>验收 {formatTime(returnOrder.inspected_at)}</span>}
         </div>
       )}
+      {status === "Expired" && (
+        <p className="return-shipment__error"><AlertTriangle size={13} />超过寄回期限未提交运单号，退货申请已自动关闭，未产生退款。如仍需退货，请重新申请售后。</p>
+      )}
       {status === "InspectionRejected" && (
         <p className="return-shipment__error"><AlertTriangle size={13} />验收未通过{returnOrder.inspection_notes ? `：${returnOrder.inspection_notes}` : ""}。如有疑问可联系客服。</p>
       )}
@@ -148,6 +154,7 @@ function headline(status: string, refundSucceeded?: boolean) {
     case "AwaitingInspection": return "仓库已签收，正在验收";
     case "InspectionAccepted": return "验收通过，退款处理中";
     case "InspectionRejected": return "退货验收未通过";
+    case "Expired": return "退货已超时关闭";
     default: return "退货处理中";
   }
 }

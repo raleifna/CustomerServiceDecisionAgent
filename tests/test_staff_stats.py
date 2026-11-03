@@ -65,6 +65,21 @@ class ComputeStaffStatsTests(unittest.TestCase):
         self.assertEqual(self.stats["returns"], [{"status": "AwaitingShipment", "count": 1}])
         self.assertEqual(self.stats["actions"], [{"status": "Failed", "count": 1}, {"status": "Succeeded", "count": 2}])
 
+    def test_sla_counts_overdue_human_cases_and_slow_returns(self) -> None:
+        from datetime import datetime, timezone
+        now = datetime(2026, 11, 3, 12, 0, tzinfo=timezone.utc)
+        stats = compute_staff_stats(
+            self.requests,
+            return_orders=[
+                {"workflow_status": "InTransit", "shipped_at": "2026-10-20T10:00:00+00:00"},
+                {"workflow_status": "InTransit", "shipped_at": "2026-11-01T10:00:00+00:00"},
+            ],
+            action_status_counts={}, today=TODAY, now=now, sla_hours=2, return_transit_alert_days=10,
+        )
+        # D was escalated at 09:00, three hours before `now`, with a 2h SLA.
+        self.assertEqual(stats["sla"]["overdue_human"], 1)
+        self.assertEqual(stats["sla"]["overdue_returns_in_transit"], 1)
+
     def test_empty_input_has_no_rates(self) -> None:
         stats = compute_staff_stats([], return_orders=[], action_status_counts={}, today=TODAY)
         self.assertIsNone(stats["rates"]["automation_rate"])

@@ -71,6 +71,8 @@ export type StaffQueue = {
   service_requests: StaffRequest[];
   evidence: StaffEvidence[];
   failed_actions: StaffAction[];
+  sla_hours: number;
+  return_transit_alert_days: number;
 };
 
 export type StaffReturnOrder = {
@@ -200,6 +202,7 @@ export const returnStatusLabels: Record<string, string> = {
   AwaitingInspection: "已收货待验收",
   InspectionAccepted: "验收通过",
   InspectionRejected: "验收不通过",
+  Expired: "超时未寄回（已关闭）",
 };
 
 export const actionTypeLabels: Record<string, string> = {

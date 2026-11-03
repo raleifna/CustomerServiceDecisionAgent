@@ -6,6 +6,7 @@ and they are the only place a human decision (as opposed to an algorithmic
 one) gets written back.
 """
 import logging
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import JSONResponse
@@ -50,6 +51,7 @@ from src.backend.repositories.decision_lifecycle_repository import (
     retry_failed_action,
 )
 from src.backend.repositories.audit_repository import write_audit_log
+from src.backend.config.business_rules import load_business_rules
 from src.backend.services.business_clock import get_business_clock
 from src.backend.services.staff_order_lookup import staff_customer, staff_order, staff_product_card
 from src.backend.services.ai_review_service import compute_ai_review, evaluation_candidates
@@ -174,12 +176,16 @@ def get_staff_stats(
 ) -> dict:
     """Dashboard aggregates; LLM call health is included for admins only,
     matching /staff/telemetry's permission."""
+    automation = load_business_rules()["automation"]
     stats = compute_staff_stats(
         list_staff_service_requests(limit=5000),
         return_orders=list_return_orders(None),
         action_status_counts=count_actions_by_status(),
         today=get_business_clock().today(),
         days=days,
+        now=datetime.now(timezone.utc),
+        sla_hours=automation["human_review_sla_hours"],
+        return_transit_alert_days=automation["return_transit_alert_days"],
     )
     stats["llm"] = telemetry.snapshot() if "admin" in principal.roles else None
     return stats
@@ -219,10 +225,13 @@ def get_staff_queue(
     failed_actions = [
         StaffActionSummary.model_validate(record) for record in list_failed_actions()
     ]
+    automation = load_business_rules()["automation"]
     return StaffQueueResponse(
         service_requests=service_requests,
         evidence=evidence,
         failed_actions=failed_actions,
+        sla_hours=automation["human_review_sla_hours"],
+        return_transit_alert_days=automation["return_transit_alert_days"],
     )
 
 

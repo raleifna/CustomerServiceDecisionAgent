@@ -20,6 +20,7 @@ export type StaffStats = {
   daily: { date: string; created: number; auto: number; human: number }[];
   returns: Count<"status">[];
   actions: Count<"status">[];
+  sla: { human_review_sla_hours: number; overdue_human: number; return_transit_alert_days: number; overdue_returns_in_transit: number };
   llm: { total_calls: number; success_rate: number | null; avg_latency_ms: number | null; failure_count: number; circuit_breaker_trips: number } | null;
 };
 
@@ -69,7 +70,7 @@ export function DashboardPage({ token, canExport }: { token: string; canExport: 
     { label: "批准率", value: pct(stats.rates.approval_rate), hint: "已裁决申请中批准 / 部分批准", icon: Percent },
     { label: "人工平均处理时长", value: stats.avg_human_handling_hours == null ? "—" : `${stats.avg_human_handling_hours} 小时`, hint: "从提交到人工给出结论", icon: Clock },
     { label: "批准退款金额", value: yuan(stats.approved_amount_total), hint: "已批准申请的金额合计", icon: ReceiptText },
-    { label: "未结工单", value: String(stats.totals.open), hint: `其中 ${stats.totals.awaiting_human} 单等待人工`, icon: UserCheck },
+    { label: "未结工单", value: String(stats.totals.open), hint: `其中 ${stats.totals.awaiting_human} 单等待人工，${stats.sla.overdue_human} 单超过 ${stats.sla.human_review_sla_hours} 小时时限`, icon: UserCheck },
   ];
 
   return (
@@ -113,7 +114,7 @@ export function DashboardPage({ token, canExport }: { token: string; canExport: 
         </section>
         <section className="panel">
           <h2>退货与履约</h2>
-          <h3 className="dashboard__sub">退货单</h3>
+          <h3 className="dashboard__sub">退货单{stats.sla.overdue_returns_in_transit > 0 ? `（${stats.sla.overdue_returns_in_transit} 单运输超过 ${stats.sla.return_transit_alert_days} 天）` : ""}</h3>
           <BarList rows={stats.returns.map((row) => ({ label: returnStatusLabels[row.status] ?? row.status, count: row.count }))} empty="暂无退货单" />
           <h3 className="dashboard__sub">履约任务</h3>
           <BarList rows={stats.actions.map((row) => ({ label: actionStatusLabels[row.status] ?? row.status, count: row.count }))} empty="暂无履约任务" />

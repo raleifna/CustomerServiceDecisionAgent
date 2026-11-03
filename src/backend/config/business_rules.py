@@ -41,6 +41,11 @@ def load_business_rules(path: str | None = None) -> dict[str, Any]:
         ("risk", "new_account_days"),
         ("risk", "max_after_sales_submissions_per_order_30_days"),
         ("decision", "default_evidence_confidence"),
+        ("automation", "return_shipment_days"),
+        ("automation", "return_transit_alert_days"),
+        ("automation", "human_review_sla_hours"),
+        ("automation", "live_chat_idle_minutes"),
+        ("automation", "live_chat_queue_timeout_hours"),
     ):
         _require_number(data, section, key)
     return data

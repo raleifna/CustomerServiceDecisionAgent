@@ -278,6 +278,8 @@ class StaffQueueResponse(BaseModel):
     service_requests: list[StaffServiceRequestSummary]
     evidence: list[StaffEvidenceSummary]
     failed_actions: list["StaffActionSummary"] = Field(default_factory=list)
+    sla_hours: float = 24
+    return_transit_alert_days: float = 10
 
 
 class StaffActionSummary(BaseModel):

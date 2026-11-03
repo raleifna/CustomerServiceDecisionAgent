@@ -33,6 +33,14 @@ def _parse(value: Any) -> datetime | None:
         return None
 
 
+def _hours_since(moment: datetime, now: datetime) -> float:
+    if moment.tzinfo is None and now.tzinfo is not None:
+        moment = moment.replace(tzinfo=now.tzinfo)
+    if now.tzinfo is None and moment.tzinfo is not None:
+        now = now.replace(tzinfo=moment.tzinfo)
+    return (now - moment).total_seconds() / 3600
+
+
 def compute_staff_stats(
     requests: list[dict[str, Any]],
     *,
@@ -40,6 +48,9 @@ def compute_staff_stats(
     action_status_counts: dict[str, int],
     today: date,
     days: int = 14,
+    now: datetime | None = None,
+    sla_hours: float = 24,
+    return_transit_alert_days: float = 10,
 ) -> dict[str, Any]:
     decided = [r for r in requests if r.get("decision")]
     by_human = [r for r in decided if r.get("resolved_by")]
@@ -63,6 +74,18 @@ def compute_staff_stats(
                 trend[day]["human" if record.get("resolved_by") else "auto"] += 1
 
     approved = [r for r in decided if r.get("decision") in APPROVED_DECISIONS]
+    moment = now or datetime.combine(today, datetime.max.time())
+    overdue_human = sum(
+        1 for r in requests
+        if r.get("workflow_status") in HUMAN_QUEUE_STATUSES
+        and (_parse(r.get("created_at")) or _parse(r.get("request_date")))
+        and _hours_since(_parse(r.get("created_at")) or _parse(r.get("request_date")), moment) > sla_hours
+    )
+    overdue_returns = sum(
+        1 for r in return_orders
+        if r.get("workflow_status") == "InTransit" and _parse(r.get("shipped_at"))
+        and _hours_since(_parse(r.get("shipped_at")), moment) > return_transit_alert_days * 24
+    )
     decision_counts = Counter(r["decision"] for r in decided)
     return {
         "as_of": today.isoformat(),
@@ -81,6 +104,12 @@ def compute_staff_stats(
             # Share of all requests that ended up with a human at some point.
             "escalation_rate": round(len(escalated) / len(requests), 4) if requests else None,
             "approval_rate": round(len(approved) / len(decided), 4) if decided else None,
+        },
+        "sla": {
+            "human_review_sla_hours": sla_hours,
+            "overdue_human": overdue_human,
+            "return_transit_alert_days": return_transit_alert_days,
+            "overdue_returns_in_transit": overdue_returns,
         },
         "approved_amount_total": round(sum(float(r.get("approved_amount") or 0) for r in approved), 2),
         "avg_human_handling_hours": round(sum(handling_hours) / len(handling_hours), 1) if handling_hours else None,

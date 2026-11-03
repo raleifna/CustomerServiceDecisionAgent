@@ -149,6 +149,8 @@ export type ReturnOrder = {
   inspection_result: string | null;
   inspection_notes: string | null;
   return_address?: { recipient: string; phone: string; address: string };
+  // Unshipped returns are closed automatically after this moment.
+  ship_by?: string | null;
 };
 
 export type CustomerServiceRequestProgress = {

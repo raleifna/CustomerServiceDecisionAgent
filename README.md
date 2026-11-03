@@ -56,7 +56,7 @@ Python 后端**时才需要手动打开：这时数据库监听在宿主机的 `
 docker compose --profile execution up --build -d
 ```
 
-这条命令会启动 PostgreSQL、后端 API、前端和履约 Worker 四个服务——**这是启动
+这条命令会启动 PostgreSQL、后端 API、前端、履约 Worker 和定时任务 Scheduler 五个服务——**这是启动
 本系统的标准方式，请始终带上 `--profile execution`，不要省略。**
 
 系统把"裁决"和"执行"拆成了两步——Decision Engine 批准退款后，
@@ -118,6 +118,20 @@ docker compose --profile execution up --build -d
 客服在工作台「在线会话」里看到排队列表、顾客此前与智能助手的完整对话、订单与售后上下文，接入后实时回复；
 任一方结束后自动回到智能助手。客服也可以在工单详情里「联系顾客」主动发起会话。消息通过 SSE
 （`/me/live/stream`、`/staff/live/stream`）实时推送，工作台的队列计数也改由推送触发刷新。在线会话需要 PostgreSQL。
+
+### 超时自动处理
+
+`scheduler` 服务（`scripts/workers/run_scheduler.py`，execution profile，每 60 秒一次）负责不需要人盯的时限规则，
+阈值都在 `business_rules.json` 的 `automation` 段：
+
+| 任务 | 规则 |
+|---|---|
+| 退货超时未寄回 | 无理由退货批准后 `return_shipment_days`（7）天未填运单号 → 退货单关闭、不退款，顾客端显示寄回截止时间 |
+| 释放过期领取 | 人工工单领取租约到期 → 回到待领取队列（版本号递增，过期表单无法提交） |
+| 人工会话超时 | 服务中 `live_chat_idle_minutes`（30）分钟无消息、或排队 `live_chat_queue_timeout_hours`（24）小时无人接入 → 自动结束并通知顾客 |
+| 时限提醒 | 等待超过 `human_review_sla_hours` 的人工工单、寄回运输超过 `return_transit_alert_days` 天的退货在工作台标红并计入看板 |
+
+所有任务都写审计日志（actor 为 `scheduler`），并用 PostgreSQL advisory lock 保证多副本不会重复处理。
 
 ### AI 与人工的一致性
 

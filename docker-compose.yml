@@ -111,5 +111,20 @@ services:
       backend:
         condition: service_healthy
 
+  scheduler:
+    profiles: ["execution"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "scripts/workers/run_scheduler.py", "--interval-seconds", "60"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://customer_service:${POSTGRES_PASSWORD:-customer_service_dev}@postgres:5432/customer_service
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+
 volumes:
   postgres_data:

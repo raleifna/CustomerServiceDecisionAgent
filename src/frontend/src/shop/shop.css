@@ -928,3 +928,4 @@ dd.order-amounts__total { color: var(--price) !important; font-size: 20px; font-
 .live-banner--active { color: #0b7a50; background: var(--green-soft); }
 .live-banner--waiting { color: #8a5300; background: var(--orange-soft); }
 .live-banner button { padding: 4px 10px; border: 1px solid currentColor; border-radius: 999px; color: inherit; background: var(--surface); font-size: 12px; }
+.return-shipment__deadline { display: block; margin-top: 4px; color: var(--orange); font-weight: 500; }

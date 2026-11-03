@@ -48,7 +48,9 @@ export type PageProps = {
 const canWrite = (identity: StaffIdentity | null) =>
   Boolean(identity?.roles.some((role) => role === "reviewer" || role === "admin"));
 
-// Escalations and anything waiting over a day float to the top.
+const DEFAULT_SLA_HOURS = 24;
+
+// Escalations and anything waiting longest float to the top.
 function priority(request: StaffRequest) {
   return (request.workflow_status === "EscalatedToHuman" ? 1000 : 0) + ageHours(request.created_at ?? request.request_date);
 }
@@ -72,7 +74,7 @@ export function OverviewPage({ queue, returns, go, identity }: PageProps) {
   const requests = queue?.service_requests ?? [];
   const pendingReturns = (returns ?? []).filter((item) => item.workflow_status !== "AwaitingShipment");
   const stats = [
-    { section: "queue", label: "待人工裁决", value: requests.length, icon: ClipboardList, tone: "brand", hint: `${requests.filter((item) => item.workflow_status === "EscalatedToHuman").length} 单为强制转人工` },
+    { section: "queue", label: "待人工裁决", value: requests.length, icon: ClipboardList, tone: "brand", hint: `${requests.filter((item) => ageHours(item.created_at ?? item.request_date) > (queue?.sla_hours ?? DEFAULT_SLA_HOURS)).length} 单超过 ${queue?.sla_hours ?? DEFAULT_SLA_HOURS} 小时处理时限` },
     { section: "evidence", label: "待审核证据", value: queue?.evidence.length ?? 0, icon: FileImage, tone: "violet", hint: "审核后系统自动重新裁决" },
     { section: "returns", label: "退货待处理", value: pendingReturns.length, icon: PackageCheck, tone: "blue", hint: `另有 ${(returns ?? []).length - pendingReturns.length} 单等待客户寄回` },
     { section: "actions", label: "履约异常", value: queue?.failed_actions.length ?? 0, icon: Wrench, tone: "red", hint: "退款 / 取消等执行失败" },
@@ -103,7 +105,7 @@ export function OverviewPage({ queue, returns, go, identity }: PageProps) {
               <span className="staff-table__main"><b>{request.product?.title ?? request.order_id}</b><small>{request.request_id} · {request.customer_id} · {request.request_reason}</small></span>
               <StatusPill status={request.workflow_status} small />
               <span className="staff-table__amount">{request.order_amount != null ? yuan(request.order_amount) : "—"}</span>
-              <span className={`staff-age ${ageHours(request.created_at ?? request.request_date) > 24 ? "staff-age--late" : ""}`}>等待 {ageText(request.created_at ?? request.request_date)}</span>
+              <span className={`staff-age ${ageHours(request.created_at ?? request.request_date) > (queue?.sla_hours ?? DEFAULT_SLA_HOURS) ? "staff-age--late" : ""}`}>等待 {ageText(request.created_at ?? request.request_date)}{ageHours(request.created_at ?? request.request_date) > (queue?.sla_hours ?? DEFAULT_SLA_HOURS) ? " · 已超时" : ""}</span>
             </button>
           ))}
         </div>
@@ -134,7 +136,7 @@ export function QueuePage(props: PageProps) {
           </div>
           {queue && requests.length === 0 && <Empty icon={<Inbox size={22} />} title="暂无待人工处理的工单" />}
           {requests.map((request) => (
-            <RequestCard key={request.request_id} request={request} active={selectedId === request.request_id} onClick={() => select(request.request_id)} staffId={identity?.staff_id} />
+            <RequestCard key={request.request_id} request={request} active={selectedId === request.request_id} onClick={() => select(request.request_id)} staffId={identity?.staff_id} slaHours={queue?.sla_hours ?? DEFAULT_SLA_HOURS} />
           ))}
         </>
       )}
@@ -145,7 +147,7 @@ export function QueuePage(props: PageProps) {
   );
 }
 
-function RequestCard({ request, active, onClick, staffId }: { request: StaffRequest; active: boolean; onClick: () => void; staffId?: string }) {
+function RequestCard({ request, active, onClick, staffId, slaHours }: { request: StaffRequest; active: boolean; onClick: () => void; staffId?: string; slaHours: number }) {
   const age = request.created_at ?? request.request_date;
   const leased = request.assigned_to && request.lease_expires_at && new Date(request.lease_expires_at).getTime() > Date.now();
   return (
@@ -156,7 +158,7 @@ function RequestCard({ request, active, onClick, staffId }: { request: StaffRequ
         <span className="queue-card__title">{request.product?.title ?? request.order_id}</span>
         <small>{request.request_id} · {request.customer_id}{request.order_amount != null ? ` · ${yuan(request.order_amount)}` : ""}</small>
         <span className="queue-card__foot">
-          <span className={`staff-age ${ageHours(age) > 24 ? "staff-age--late" : ""}`}>等待 {ageText(age)}</span>
+          <span className={`staff-age ${ageHours(age) > slaHours ? "staff-age--late" : ""}`}>等待 {ageText(age)}{ageHours(age) > slaHours ? " · 超时" : ""}</span>
           {leased && <em className={request.assigned_to === staffId ? "queue-card__lease queue-card__lease--mine" : "queue-card__lease"}>{request.assigned_to === staffId ? "我处理中" : `${request.assigned_to} 处理中`}</em>}
         </span>
       </span>
@@ -294,7 +296,8 @@ function EvidenceReview({ evidence, token, canWrite: writable, onDone }: {
 
 const RETURN_STEPS = ["AwaitingShipment", "InTransit", "AwaitingInspection", "Done"];
 
-export function ReturnsPage({ returns, token, identity, done }: PageProps) {
+export function ReturnsPage({ returns, token, identity, done, queue }: PageProps) {
+  const transitAlertDays = queue?.return_transit_alert_days ?? 10;
   const [scope, setScope] = useState<"open" | "all">("open");
   const [all, setAll] = useState<StaffReturnOrder[] | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -349,7 +352,10 @@ export function ReturnsPage({ returns, token, identity, done }: PageProps) {
                   <small>退货单 {item.return_order_id} · 售后单 {item.request_id} · 客户 {item.customer_id}</small>
                   <small>{item.request_reason ?? "售后"} · 退回 {item.quantity} 件 · 验收通过后退款 <b className="text-brand">{yuan(item.refundable_amount)}</b></small>
                 </div>
-                <span className={`pill ${item.workflow_status === "InspectionAccepted" ? "pill--green" : item.workflow_status === "InspectionRejected" ? "pill--gray" : "pill--orange"}`}>{returnStatusLabels[item.workflow_status] ?? item.workflow_status}</span>
+                <span className={`pill ${item.workflow_status === "InspectionAccepted" ? "pill--green" : item.workflow_status === "InspectionRejected" || item.workflow_status === "Expired" ? "pill--gray" : "pill--orange"}`}>{returnStatusLabels[item.workflow_status] ?? item.workflow_status}</span>
+                {item.workflow_status === "InTransit" && item.shipped_at && ageHours(item.shipped_at) > transitAlertDays * 24 && (
+                  <span className="pill pill--red" title="寄出后长时间未签收，建议联系承运商核查">运输超时</span>
+                )}
               </header>
               <ol className="return-steps">
                 {["客户寄回", "运输中", "仓库收货", "验收完成"].map((label, index) => (

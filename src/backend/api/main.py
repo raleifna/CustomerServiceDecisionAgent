@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from datetime import timedelta
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile, status
@@ -287,7 +288,11 @@ def _customer_return_order(request_id: str) -> dict | None:
     return_order = get_return_order_for_request(request_id)
     if return_order is None:
         return None
-    return {**return_order, "return_address": RETURN_WAREHOUSE}
+    # The scheduler closes returns not shipped within this many days.
+    days = load_business_rules()["automation"]["return_shipment_days"]
+    created = return_order.get("created_at")
+    ship_by = (created + timedelta(days=days)).isoformat() if hasattr(created, "isoformat") else None
+    return {**return_order, "return_address": RETURN_WAREHOUSE, "ship_by": ship_by}
 
 
 def _order_status(order: dict) -> str:
