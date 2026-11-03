@@ -19,7 +19,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 from src.backend.api.auth_tokens import CUSTOMER_TOKEN_TTL_SECONDS, issue_token, verify_token
-from src.backend.repositories.mock_db_repository import get_customer, load_table, load_test_account_guide
+from src.backend.services import commerce_data
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 _bearer = HTTPBearer(auto_error=False)
@@ -48,7 +48,7 @@ def current_customer_id(
             headers={"WWW-Authenticate": "Bearer"},
         )
     customer_id = payload["sub"]
-    if get_customer(customer_id) is None:
+    if commerce_data.get_demo_account(customer_id) is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="账号不存在，请重新登录。")
     return customer_id
 
@@ -73,9 +73,8 @@ class LoginResponse(BaseModel):
     customer: CustomerProfile
 
 
-def _profile(record: dict) -> CustomerProfile:
-    guide = load_test_account_guide().get(record["customer_id"], {})
-    return CustomerProfile(**record, test_scenario=guide.get("title"), test_hints=guide.get("hints", []))
+def _profile(account: dict) -> CustomerProfile:
+    return CustomerProfile.model_validate(account)
 
 
 def _require_demo_login() -> None:
@@ -87,13 +86,13 @@ def _require_demo_login() -> None:
 def list_demo_accounts() -> list[CustomerProfile]:
     """The account picker for demo login (only while demo login is enabled)."""
     _require_demo_login()
-    return [_profile(record) for record in load_table("customers.json")]
+    return [_profile(account) for account in commerce_data.list_demo_accounts()]
 
 
 @router.post("/demo-login", response_model=LoginResponse)
 def demo_login(payload: DemoLoginRequest) -> LoginResponse:
     _require_demo_login()
-    record = get_customer(payload.customer_id)
+    record = commerce_data.get_demo_account(payload.customer_id)
     if record is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="账号不存在。")
     token, expires = issue_token("customer", record["customer_id"], ttl_seconds=CUSTOMER_TOKEN_TTL_SECONDS)
@@ -106,5 +105,5 @@ def demo_login(payload: DemoLoginRequest) -> LoginResponse:
 
 @router.get("/me", response_model=CustomerProfile)
 def get_me(customer_id: str = Depends(current_customer_id)) -> CustomerProfile:
-    return _profile(get_customer(customer_id))
+    return _profile(commerce_data.get_demo_account(customer_id))
 

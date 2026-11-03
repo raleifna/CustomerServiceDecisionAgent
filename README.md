@@ -133,6 +133,16 @@ docker compose --profile execution up --build -d
 
 所有任务都写审计日志（actor 为 `scheduler`），并用 PostgreSQL advisory lock 保证多副本不会重复处理。
 
+### 数据来源
+
+项目里有两套业务数据，**这是有意的设计**：`data/mock_db` 是确定性评测的固定基线（含承诺发货日、历史退款
+快照、连续物流轨迹等旧口径字段）；PostgreSQL 中的 V2 数据来自 Olist + Amazon 导入，表结构刻意采用不同口径
+（如 `canceled_order_count`、只有物流事件没有连续轨迹，见 `db/migrations/001`）。
+
+- **Agent 图**：通过 `APP_DATA_BACKEND`（`fixture` / `postgres`）整体选择一套数据源，互不混用。
+- **HTTP API**：所有接口只通过 `src/backend/services/commerce_data.py` 读取订单/客户/商品/物流，由它统一判断某个
+  ID 属于哪一套数据；`tests/test_api_data_access_boundary.py` 静态检查 API 层不能绕过它直接读 JSON 或业务仓储。
+
 ### AI 与人工的一致性
 
 转人工（或缺证据、需复核）的申请在 Finalization 时会额外运行一次规则引擎的「影子裁决」——即不考虑转人工条件时

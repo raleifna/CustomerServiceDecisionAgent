@@ -31,11 +31,7 @@ from src.backend.repositories.evidence_repository import (
     list_pending_evidence_for_staff_queue,
     review_evidence,
 )
-from src.backend.repositories.mock_db_repository import (
-    get_logistics,
-    get_logistics_tracking,
-    get_product,
-)
+
 from src.backend.repositories.service_request_repository import (
     get_service_request,
     get_service_requests_by_customer_id,
@@ -53,15 +49,11 @@ from src.backend.repositories.decision_lifecycle_repository import (
 from src.backend.repositories.audit_repository import write_audit_log
 from src.backend.config.business_rules import load_business_rules
 from src.backend.services.business_clock import get_business_clock
-from src.backend.services.staff_order_lookup import staff_customer, staff_order, staff_product_card
+from src.backend.services import commerce_data
 from src.backend.services.ai_review_service import compute_ai_review, evaluation_candidates
 from src.backend.services.staff_stats_service import compute_staff_stats
 from src.backend.api.auth_tokens import signed_upload_url
 from src.backend.api.staff_auth import StaffPrincipal, require_roles
-from src.backend.repositories.order_item_repository import (
-    get_order_items,
-    get_service_request_items,
-)
 from src.backend.repositories.return_order_repository import (
     get_return_order_for_request,
     inspect_return,
@@ -123,7 +115,7 @@ def _to_evidence_summary(record: dict) -> StaffEvidenceSummary:
 def _to_service_request_summary(
     record: dict,
 ) -> StaffServiceRequestSummary:
-    order = staff_order(record["order_id"])
+    order = commerce_data.get_order(record["order_id"])
     return StaffServiceRequestSummary(
         request_id=record["request_id"],
         order_id=record["order_id"],
@@ -149,7 +141,7 @@ def _to_service_request_summary(
         resolved_at=_iso(record.get("resolved_at")),
         created_at=_iso(record.get("created_at")),
         updated_at=_iso(record.get("updated_at")),
-        product=staff_product_card(record["order_id"], order),
+        product=commerce_data.product_card_for_order(record["order_id"], order, include_v2=True),
         order_amount=float(order["amount"]) if order else None,
         ai_recommendation=record.get("ai_recommendation"),
     )
@@ -285,7 +277,7 @@ def list_staff_return_orders(
         result.append(StaffReturnOrder(
             **record,
             request_reason=request.get("request_reason"),
-            product=staff_product_card(record["order_id"], staff_order(record["order_id"])),
+            product=commerce_data.product_card_for_order(record["order_id"], commerce_data.get_order(record["order_id"]), include_v2=True),
         ))
     return result
 
@@ -305,18 +297,18 @@ def get_staff_service_request_detail(
             detail="售后申请不存在。",
         )
 
-    order = staff_order(service_request.get("order_id"))
-    customer = staff_customer(service_request.get("customer_id"))
-    request_items = get_service_request_items(request_id)
-    order_items = get_order_items(service_request.get("order_id"))
+    order = commerce_data.get_order(service_request.get("order_id"))
+    customer = commerce_data.get_customer(service_request.get("customer_id"))
+    request_items = commerce_data.get_service_request_items(request_id)
+    order_items = commerce_data.get_order_items(service_request.get("order_id"))
     target_item_id = request_items[0].get("order_item_id") if len(request_items) == 1 else None
     target_item = next(
         (item for item in order_items if item.get("order_item_id") == target_item_id),
         None,
     )
-    product = get_product(target_item.get("product_id")) if target_item else None
+    product = commerce_data.get_product_facts(target_item.get("product_id")) if target_item else None
     logistics = (
-        get_logistics(service_request.get("order_id")) if order else []
+        commerce_data.get_logistics_events(service_request.get("order_id")) if order else []
     )
     evidence = [
         _to_evidence_summary(record)
@@ -339,7 +331,7 @@ def get_staff_service_request_detail(
         evidence=evidence,
         order_items=order_items,
         request_items=request_items,
-        tracking=get_logistics_tracking(service_request["order_id"]) if order else None,
+        tracking=commerce_data.get_tracking(service_request["order_id"]) if order else None,
         return_order={key: _iso(value) if hasattr(value, "isoformat") else (float(value) if key == "refundable_amount" else value)
                       for key, value in return_order.items()} if return_order else None,
         actions=list_actions_for_request(request_id),

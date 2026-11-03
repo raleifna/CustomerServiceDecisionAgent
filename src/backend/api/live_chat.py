@@ -25,7 +25,7 @@ from src.backend.repositories import live_chat_repository as live
 from src.backend.repositories.audit_repository import write_audit_log
 from src.backend.repositories.evidence_repository import list_pending_evidence_for_staff_queue
 from src.backend.repositories.service_request_repository import get_service_request, list_staff_service_request_queue
-from src.backend.services.staff_order_lookup import staff_order, staff_product_card
+from src.backend.services import commerce_data
 
 logger = logging.getLogger(__name__)
 
@@ -150,8 +150,8 @@ def stream_my_live_session(request: Request, after: int = 0, customer_id: str = 
 # ---------- staff ----------
 
 def _with_context(handoff: dict[str, Any]) -> dict[str, Any]:
-    order = staff_order(handoff["order_id"]) if handoff.get("order_id") else None
-    return {**handoff, "product": staff_product_card(handoff["order_id"], order) if order else None}
+    order = commerce_data.get_order(handoff["order_id"]) if handoff.get("order_id") else None
+    return {**handoff, "product": commerce_data.product_card_for_order(handoff["order_id"], order, include_v2=True) if order else None}
 
 
 @staff_router.get("")

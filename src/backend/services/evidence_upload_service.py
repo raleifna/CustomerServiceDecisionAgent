@@ -8,6 +8,7 @@ from src.backend.repositories.evidence_repository import create_evidence_record
 from src.backend.repositories.mock_db_repository import PROJECT_ROOT
 
 
+UPLOADS_DIR = PROJECT_ROOT / "data" / "uploads"
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 UPLOAD_CHUNK_BYTES = 1024 * 1024
 
@@ -34,7 +35,7 @@ def store_customer_evidence(
         raise ValueError("请至少用 5 个字描述图片中的问题")
     if len(customer_description) > 1000:
         raise ValueError("问题描述不能超过 1000 个字")
-    target_dir = PROJECT_ROOT / "data" / "uploads" / customer_id / request_id
+    target_dir = UPLOADS_DIR / customer_id / request_id
     target_dir.mkdir(parents=True, exist_ok=True)
     temp_path: Path | None = None
     final_path: Path | None = None

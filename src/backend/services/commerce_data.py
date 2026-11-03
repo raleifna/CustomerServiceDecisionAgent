@@ -1,23 +1,36 @@
-"""Order / customer / product display context for the STAFF workbench.
+"""The one place the HTTP API reads order / customer / product / logistics data.
 
-Fixture orders (data/mock_db, ORD\\d{10}) resolve from the JSON fixtures and
-the storefront catalog, exactly as before. V2 orders imported from the
-Olist + Amazon batch (ORD-RW-xxxxx) exist only in PostgreSQL, so they fall
-back to the Postgres repositories here; without that, the workbench showed a
-bare order id, a 0 amount and no customer for every V2 case.
+Two backends hold business data in this project, on purpose:
 
-The V2 product name comes from data_provenance.metadata.amazon_title -- the
-Amazon listing title the import pipeline assigned to the product. Provenance
-is admin/debug material (see product_repository.ProductProvenance), which is
-why this module lives behind the staff API only and is never used by the
-customer-facing storefront.
+- the hand-built fixtures (data/mock_db, ids like ORD2026080001 / CUS0001,
+  plus the generated demo accounts) -- the deterministic evaluation baseline,
+  with legacy semantics such as promised_ship_date, refund_history_count and
+  continuous carrier tracking;
+- the V2 Olist + Amazon import in PostgreSQL (ORD-RW-xxxxx / CUS-RW-xxxxx),
+  whose schema deliberately models different facts (canceled_order_count,
+  shipment events but no tracking feed -- see db/migrations/001 and
+  services/query_tool_provider.py).
+
+API modules used to read the fixture JSON directly and patch in Postgres
+lookups ad hoc. Now every endpoint asks this facade, which resolves an id
+against the fixtures first and falls back to the Postgres repositories, so
+"which backend owns this order" is decided here and nowhere else
+(enforced by tests/test_api_data_access_boundary.py). The agent graph keeps
+its own explicit APP_DATA_BACKEND selection; this module does not change it.
+
+V2 product names come from data_provenance.metadata.amazon_title. Provenance
+is admin/debug material (product_repository.ProductProvenance), so
+`product_card_for_order` only resolves V2 products for staff-facing callers
+(`include_v2=True`); V2 customers cannot use the storefront anyway.
 """
 
 import logging
 from functools import lru_cache
 from typing import Any
 
-from src.backend.repositories.mock_db_repository import get_customer, get_order
+from src.backend.repositories import mock_db_repository
+from src.backend.repositories.mock_db_repository import get_customer as _fixture_customer
+from src.backend.repositories.mock_db_repository import get_order as _fixture_order
 from src.backend.repositories.postgres_repository import get_database_url
 from src.backend.repositories.product_catalog_repository import get_storefront_product_card
 
@@ -84,9 +97,9 @@ def _v2_product_card(database_url: str, product_id: str) -> dict[str, Any] | Non
     }
 
 
-def staff_order(order_id: str) -> dict[str, Any] | None:
+def get_order(order_id: str) -> dict[str, Any] | None:
     """The order row as a plain dict (fixture JSON shape), from either backend."""
-    order = get_order(order_id)
+    order = _fixture_order(order_id)
     if order is not None:
         return order
     database_url = get_database_url()
@@ -117,12 +130,19 @@ def staff_order(order_id: str) -> dict[str, Any] | None:
     }
 
 
-def staff_product_card(order_id: str, order: dict[str, Any] | None, order_items: list[dict[str, Any]] | None = None) -> dict[str, Any] | None:
-    """Display card for the order's (primary) product."""
+def product_card_for_order(
+    order_id: str,
+    order: dict[str, Any] | None,
+    order_items: list[dict[str, Any]] | None = None,
+    *,
+    include_v2: bool = False,
+) -> dict[str, Any] | None:
+    """Display card for the order's (primary) product. V2 products only with
+    include_v2=True (staff-facing callers; see the module docstring)."""
     if order is not None and order.get("product_id"):
         return get_storefront_product_card(order["product_id"])
     database_url = get_database_url()
-    if order is None or not database_url:
+    if order is None or not database_url or not include_v2:
         return None
     if order_items is None:
         from src.backend.repositories.order_item_repository import get_order_items
@@ -137,8 +157,8 @@ def staff_product_card(order_id: str, order: dict[str, Any] | None, order_items:
         return None
 
 
-def staff_customer(customer_id: str) -> dict[str, Any] | None:
-    customer = get_customer(customer_id)
+def get_customer(customer_id: str) -> dict[str, Any] | None:
+    customer = _fixture_customer(customer_id)
     if customer is not None:
         return customer
     database_url = get_database_url()
@@ -163,3 +183,68 @@ def staff_customer(customer_id: str) -> dict[str, Any] | None:
         "canceled_order_count": record.canceled_order_count,
         "source": "v2",
     }
+
+
+# ---------- storefront / customer-facing reads ----------
+
+def list_customer_orders(customer_id: str) -> list[dict[str, Any]]:
+    """A customer's orders, newest first (fixture customers only have
+    storefront accounts; V2 customers resolve from Postgres for staff use)."""
+    orders = mock_db_repository.get_orders_by_customer_id(customer_id)
+    if not orders and get_database_url() and _fixture_customer(customer_id) is None:
+        from src.backend.repositories.order_repository import PostgresOrderRepository
+        try:
+            orders = [
+                get_order(order.order_id)
+                for order in PostgresOrderRepository(get_database_url()).list_by_customer_id(customer_id)
+            ]
+        except Exception:
+            logger.exception("Failed to list V2 orders for %s", customer_id)
+            orders = []
+    return sorted((order for order in orders if order), key=lambda order: order["order_date"], reverse=True)
+
+
+def get_order_items(order_id: str) -> list[dict[str, Any]]:
+    from src.backend.repositories.order_item_repository import get_order_items as _items
+    return _items(order_id)
+
+
+def get_logistics_events(order_id: str) -> list[dict[str, Any]]:
+    """Carrier exception events (fixture logistics.json). V2 orders have no
+    such feed in the API layer yet -- the same documented gap as the agents'
+    PostgresQueryToolProvider."""
+    return mock_db_repository.get_logistics(order_id)
+
+
+def get_tracking(order_id: str) -> dict[str, Any] | None:
+    """Routine carrier checkpoints (fixture only, see get_logistics_events)."""
+    return mock_db_repository.get_logistics_tracking(order_id)
+
+
+def list_demo_accounts() -> list[dict[str, Any]]:
+    """Accounts offered by demo login: the fixture customers plus the
+    generated test accounts, each with its scenario guide when it has one."""
+    guide = mock_db_repository.load_test_account_guide()
+    return [
+        {**record, "test_scenario": guide.get(record["customer_id"], {}).get("title"),
+         "test_hints": guide.get(record["customer_id"], {}).get("hints", [])}
+        for record in mock_db_repository.load_table("customers.json")
+    ]
+
+
+def get_demo_account(customer_id: str) -> dict[str, Any] | None:
+    return next((account for account in list_demo_accounts() if account["customer_id"] == customer_id), None)
+
+
+def fixture_data_available() -> bool:
+    return all((mock_db_repository.MOCK_DB_DIR / name).is_file() for name in ("orders.json", "service_requests.json"))
+
+
+def get_product_facts(product_id: str | None) -> dict[str, Any] | None:
+    """Raw catalog facts (category, price, fragile, customized) of a fixture product."""
+    return mock_db_repository.get_product(product_id) if product_id else None
+
+
+def get_service_request_items(request_id: str) -> list[dict[str, Any]]:
+    from src.backend.repositories.order_item_repository import get_service_request_items as _items
+    return _items(request_id)

@@ -14,7 +14,7 @@ SAFE_TEST_DATABASE = bool(TEST_DATABASE_URL and "test" in database_name.lower())
     SAFE_TEST_DATABASE,
     "Set TEST_DATABASE_URL to a dedicated database whose name contains 'test'",
 )
-class StaffOrderLookupIntegrationTests(unittest.TestCase):
+class CommerceDataIntegrationTests(unittest.TestCase):
     """V2 (Postgres-only) orders get a real product name, amount and customer
     in the staff workbench; fixture orders keep resolving from the JSON."""
 
@@ -41,9 +41,9 @@ class StaffOrderLookupIntegrationTests(unittest.TestCase):
         import psycopg
         from psycopg.types.json import Json
 
-        from src.backend.services import staff_order_lookup
+        from src.backend.services import commerce_data
 
-        staff_order_lookup._v2_product_card.cache_clear()
+        commerce_data._v2_product_card.cache_clear()
         with psycopg.connect(TEST_DATABASE_URL) as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -86,44 +86,54 @@ class StaffOrderLookupIntegrationTests(unittest.TestCase):
             connection.commit()
 
     def test_v2_order_customer_and_product_resolve_from_postgres(self) -> None:
-        from src.backend.services.staff_order_lookup import staff_customer, staff_order, staff_product_card
+        from src.backend.services.commerce_data import get_customer, get_order, product_card_for_order
 
-        order = staff_order("ORD-IT-001")
+        order = get_order("ORD-IT-001")
         self.assertEqual(order["amount"], 99.5)
         self.assertEqual(order["delivered_date"], "2026-03-14")
-        card = staff_product_card("ORD-IT-001", order)
+        card = product_card_for_order("ORD-IT-001", order, include_v2=True)
         self.assertEqual(card["title"], "Clear Phone Case for Galaxy Z Flip")
         self.assertEqual(card["category"], "手机通讯")
         self.assertIn("V2 导入", card["tags"])
 
-        customer = staff_customer("CUS-IT-001")
+        customer = get_customer("CUS-IT-001")
         self.assertEqual(customer["vip_level"], "Bronze")
         self.assertIsNone(customer["register_date"])
         self.assertEqual(customer["refund_history_count"], 0)
         self.assertEqual(customer["canceled_order_count"], 2)
 
-    def test_untitled_unknown_category_falls_back_to_a_generic_name(self) -> None:
-        from src.backend.services.staff_order_lookup import staff_order, staff_product_card
+    def test_v2_products_need_the_staff_flag(self) -> None:
+        from src.backend.services.commerce_data import get_order, product_card_for_order
 
-        card = staff_product_card("ORD-IT-002", staff_order("ORD-IT-002"))
+        self.assertIsNone(product_card_for_order("ORD-IT-001", get_order("ORD-IT-001")))
+
+    def test_v2_customer_orders_list_from_postgres(self) -> None:
+        from src.backend.services.commerce_data import list_customer_orders
+
+        self.assertEqual([o["order_id"] for o in list_customer_orders("CUS-IT-001")], ["ORD-IT-001", "ORD-IT-002"])
+
+    def test_untitled_unknown_category_falls_back_to_a_generic_name(self) -> None:
+        from src.backend.services.commerce_data import get_order, product_card_for_order
+
+        card = product_card_for_order("ORD-IT-002", get_order("ORD-IT-002"), include_v2=True)
         self.assertEqual(card["title"], "mystery_category商品 PRO-IT-002")
         self.assertEqual(card["icon"], "package")
 
     def test_unknown_ids_return_none(self) -> None:
-        from src.backend.services.staff_order_lookup import staff_customer, staff_order, staff_product_card
+        from src.backend.services.commerce_data import get_customer, get_order, product_card_for_order
 
-        self.assertIsNone(staff_order("ORD-IT-404"))
-        self.assertIsNone(staff_product_card("ORD-IT-404", None))
-        self.assertIsNone(staff_customer("CUS-IT-404"))
+        self.assertIsNone(get_order("ORD-IT-404"))
+        self.assertIsNone(product_card_for_order("ORD-IT-404", None, include_v2=True))
+        self.assertIsNone(get_customer("CUS-IT-404"))
 
     def test_fixture_orders_still_use_the_storefront_catalog(self) -> None:
         from src.backend.repositories.mock_db_repository import load_table
-        from src.backend.services.staff_order_lookup import staff_order, staff_product_card
+        from src.backend.services.commerce_data import get_order, product_card_for_order
 
         fixture = load_table("orders.json")[0]
-        order = staff_order(fixture["order_id"])
+        order = get_order(fixture["order_id"])
         self.assertEqual(order, fixture)
-        self.assertEqual(staff_product_card(fixture["order_id"], order)["product_id"], fixture["product_id"])
+        self.assertEqual(product_card_for_order(fixture["order_id"], order, include_v2=True)["product_id"], fixture["product_id"])
 
 
 if __name__ == "__main__":

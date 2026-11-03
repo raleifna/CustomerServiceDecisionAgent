@@ -11,6 +11,20 @@ def get_database_url() -> str | None:
     return value or None
 
 
+def open_checkpointer_pool(database_url: str):
+    """Connection pool for LangGraph's PostgresSaver (autocommit, dict rows)."""
+    from psycopg.rows import dict_row
+    from psycopg_pool import ConnectionPool
+
+    return ConnectionPool(
+        conninfo=database_url,
+        min_size=1,
+        max_size=10,
+        kwargs={"autocommit": True, "row_factory": dict_row},
+        open=True,
+    )
+
+
 def setup_application_schema(database_url: str) -> None:
     """Create the small runtime schema owned by this application."""
     import psycopg

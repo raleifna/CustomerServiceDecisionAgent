@@ -29,16 +29,7 @@ from src.backend.graph.workflow import (
     compile_conversation_graph,
     customer_service_conversation_graph,
 )
-from src.backend.repositories.mock_db_repository import (
-    MOCK_DB_DIR,
-    PROJECT_ROOT,
-    get_customer,
-    get_order,
-    get_orders_by_customer_id,
-    get_logistics,
-    get_logistics_tracking,
-    load_table,
-)
+from src.backend.services import commerce_data
 from src.backend.repositories.product_catalog_repository import (
     get_storefront_product_card,
     get_storefront_product_detail,
@@ -48,6 +39,7 @@ from src.backend.repositories.product_catalog_repository import (
 from src.backend.repositories.postgres_repository import (
     database_is_available,
     get_database_url,
+    open_checkpointer_pool,
     setup_application_schema,
 )
 from src.backend.repositories.evidence_repository import list_evidence_records
@@ -58,8 +50,7 @@ from src.backend.repositories.service_request_repository import (
     withdraw_service_request,
 )
 from src.backend.repositories.decision_lifecycle_repository import list_actions_for_request
-from src.backend.services.evidence_upload_service import store_customer_evidence
-from src.backend.repositories.order_item_repository import get_order_items
+from src.backend.services.evidence_upload_service import UPLOADS_DIR, store_customer_evidence
 from src.backend.repositories.return_order_repository import (
     get_return_order_for_request, submit_return_shipment,
 )
@@ -78,17 +69,9 @@ async def lifespan(app: FastAPI):
 
     if database_url:
         from langgraph.checkpoint.postgres import PostgresSaver
-        from psycopg.rows import dict_row
-        from psycopg_pool import ConnectionPool
 
         setup_application_schema(database_url)
-        pool = ConnectionPool(
-            conninfo=database_url,
-            min_size=1,
-            max_size=10,
-            kwargs={"autocommit": True, "row_factory": dict_row},
-            open=True,
-        )
+        pool = open_checkpointer_pool(database_url)
         checkpointer = PostgresSaver(pool)
         checkpointer.setup()
         app.state.conversation_graph = compile_conversation_graph(checkpointer)
@@ -133,7 +116,7 @@ app.include_router(live_chat.customer_router)
 app.include_router(live_chat.staff_router)
 app.include_router(staff.router)
 
-_UPLOADS_DIR = (PROJECT_ROOT / "data" / "uploads").resolve()
+_UPLOADS_DIR = UPLOADS_DIR.resolve()
 _UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -215,11 +198,7 @@ def _safe_chat_response(
 
 @app.get("/health", response_model=HealthResponse, tags=["system"])
 def health() -> HealthResponse:
-    required_files = (
-        "orders.json",
-        "service_requests.json",
-    )
-    files_available = all((MOCK_DB_DIR / filename).is_file() for filename in required_files)
+    files_available = commerce_data.fixture_data_available()
     database_url = get_database_url()
     database_available = database_is_available(database_url)
     persistent_runtime = database_available if database_url else True
@@ -306,7 +285,7 @@ def _order_status(order: dict) -> str:
 @app.get("/me/orders", response_model=list[OrderSummary], tags=["me"])
 def list_my_orders(customer_id: str = Depends(current_customer_id)) -> list[OrderSummary]:
     result = []
-    for order in get_orders_by_customer_id(customer_id):
+    for order in commerce_data.list_customer_orders(customer_id):
         product = get_storefront_product_card(order.get("product_id"))
         result.append(
             OrderSummary(
@@ -316,8 +295,6 @@ def list_my_orders(customer_id: str = Depends(current_customer_id)) -> list[Orde
                 product=product,
             )
         )
-    # Newest first, like any shop's "我的订单" list.
-    result.sort(key=lambda order: order.order_date, reverse=True)
     return result
 
 
@@ -353,7 +330,7 @@ def list_my_service_requests(customer_id: str = Depends(current_customer_id)) ->
 
 @app.get("/me/orders/{order_id}", response_model=OrderDetail, tags=["me"])
 def get_my_order_detail(order_id: str, customer_id: str = Depends(current_customer_id)) -> OrderDetail:
-    order = get_order(order_id)
+    order = commerce_data.get_order(order_id)
     if order is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -371,10 +348,10 @@ def get_my_order_detail(order_id: str, customer_id: str = Depends(current_custom
         product_category=product["category"] if product else None,
         order_status=_order_status(order),
         product=product,
-        logistics=get_logistics(order_id),
-        order_items=get_order_items(order_id),
+        logistics=commerce_data.get_logistics_events(order_id),
+        order_items=commerce_data.get_order_items(order_id),
         refunded_amount=get_completed_refund_amount(order_id),
-        tracking=get_logistics_tracking(order_id),
+        tracking=commerce_data.get_tracking(order_id),
     )
 
 
@@ -543,7 +520,7 @@ def chat(
     customer_id: str = Depends(current_customer_id),
 ) -> ChatResponse:
     if payload.order_id:
-        order = get_order(payload.order_id)
+        order = commerce_data.get_order(payload.order_id)
         if order is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
