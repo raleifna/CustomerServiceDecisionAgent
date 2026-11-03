@@ -231,6 +231,10 @@ CustomerServiceDecisionAgent/
 
 ## 开发与测试
 
+- 持续集成：`.github/workflows/ci.yml` 在每次 push 到 main 和每个 PR 上运行三个任务——后端单元测试 +
+  确定性评测（不调用真实 LLM）、PostgreSQL 集成测试、前端类型检查与构建；本地安装测试依赖用
+  `pip install -r requirements-dev.txt`；
+
 - 本地开发（不使用 Docker）、API 接口地址、请求示例、证据上传约束：见
   [docs/06_LowLevelDesign.md](./docs/06_LowLevelDesign.md) 第 6 章；
 - 确定性回归套件、情景推演与压力测试（PostgreSQL 并发正确性）、LLM-as-Judge
