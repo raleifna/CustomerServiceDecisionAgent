@@ -7,7 +7,7 @@ one) gets written back.
 """
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from src.backend.api.schemas import (
     EvidenceReviewRequest,
@@ -19,6 +19,7 @@ from src.backend.api.schemas import (
     StaffServiceRequestDetail,
     StaffServiceRequestSummary,
     StaffActionSummary,
+    StaffReturnOrder,
     ReturnInspectionRequest,
 )
 from src.backend.graph.workflow import customer_service_graph
@@ -29,28 +30,39 @@ from src.backend.repositories.evidence_repository import (
     review_evidence,
 )
 from src.backend.repositories.mock_db_repository import (
-    get_customer,
     get_logistics,
-    get_order,
+    get_logistics_tracking,
     get_product,
 )
 from src.backend.repositories.service_request_repository import (
     get_service_request,
+    get_service_requests_by_customer_id,
     list_staff_service_request_queue,
+    list_staff_service_requests,
     claim_service_request,
 )
 from src.backend.repositories.decision_lifecycle_repository import (
+    count_actions_by_status,
+    list_actions_for_request,
     list_failed_actions,
     resolve_human_decision,
     retry_failed_action,
 )
 from src.backend.repositories.audit_repository import write_audit_log
+from src.backend.services.business_clock import get_business_clock
+from src.backend.services.staff_order_lookup import staff_customer, staff_order, staff_product_card
+from src.backend.services.staff_stats_service import compute_staff_stats
 from src.backend.api.staff_auth import StaffPrincipal, require_roles
 from src.backend.repositories.order_item_repository import (
     get_order_items,
     get_service_request_items,
 )
-from src.backend.repositories.return_order_repository import receive_return, inspect_return
+from src.backend.repositories.return_order_repository import (
+    get_return_order_for_request,
+    inspect_return,
+    list_return_orders,
+    receive_return,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -106,6 +118,7 @@ def _to_evidence_summary(record: dict) -> StaffEvidenceSummary:
 def _to_service_request_summary(
     record: dict,
 ) -> StaffServiceRequestSummary:
+    order = staff_order(record["order_id"])
     return StaffServiceRequestSummary(
         request_id=record["request_id"],
         order_id=record["order_id"],
@@ -123,7 +136,23 @@ def _to_service_request_summary(
         assigned_to=record.get("assigned_to"),
         lease_expires_at=record.get("lease_expires_at"),
         row_version=record.get("row_version", 0),
+        approved_quantity=record.get("approved_quantity"),
+        approved_amount=record.get("approved_amount"),
+        decision_confidence=record.get("decision_confidence"),
+        resolved_by=record.get("resolved_by"),
+        resolution_notes=record.get("resolution_notes"),
+        resolved_at=_iso(record.get("resolved_at")),
+        created_at=_iso(record.get("created_at")),
+        updated_at=_iso(record.get("updated_at")),
+        product=staff_product_card(record["order_id"], order),
+        order_amount=float(order["amount"]) if order else None,
     )
+
+
+def _iso(value) -> str | None:
+    if value is None or isinstance(value, str):
+        return value
+    return value.isoformat()
 
 
 @router.get("/telemetry")
@@ -132,6 +161,24 @@ def get_staff_telemetry(
 ) -> dict:
     """LLM call health — in-process counters, see llm/telemetry.py."""
     return telemetry.snapshot()
+
+
+@router.get("/stats")
+def get_staff_stats(
+    days: int = Query(default=14, ge=7, le=60),
+    principal: StaffPrincipal = Depends(require_roles("viewer", "reviewer", "admin")),
+) -> dict:
+    """Dashboard aggregates; LLM call health is included for admins only,
+    matching /staff/telemetry's permission."""
+    stats = compute_staff_stats(
+        list_staff_service_requests(limit=5000),
+        return_orders=list_return_orders(None),
+        action_status_counts=count_actions_by_status(),
+        today=get_business_clock().today(),
+        days=days,
+    )
+    stats["llm"] = telemetry.snapshot() if "admin" in principal.roles else None
+    return stats
 
 
 @router.get("/queue", response_model=StaffQueueResponse)
@@ -177,6 +224,40 @@ def retry_staff_action(
     return StaffActionSummary.model_validate(action)
 
 
+@router.get("/service-requests", response_model=list[StaffServiceRequestSummary])
+def list_staff_case_history(
+    workflow_status: str | None = Query(default=None, max_length=64),
+    q: str | None = Query(default=None, max_length=64),
+    limit: int = Query(default=200, ge=1, le=500),
+    _: StaffPrincipal = Depends(require_roles("viewer", "reviewer", "admin")),
+) -> list[StaffServiceRequestSummary]:
+    """All service requests (not just the human queue) for search/history."""
+    return [
+        _to_service_request_summary(record)
+        for record in list_staff_service_requests(workflow_status=workflow_status, query=q, limit=limit)
+    ]
+
+
+RETURN_QUEUE_STATUSES = ["AwaitingShipment", "InTransit", "AwaitingInspection"]
+
+
+@router.get("/return-orders", response_model=list[StaffReturnOrder])
+def list_staff_return_orders(
+    scope: str = Query(default="open", pattern="^(open|all)$"),
+    _: StaffPrincipal = Depends(require_roles("viewer", "reviewer", "admin")),
+) -> list[StaffReturnOrder]:
+    """Return orders awaiting the warehouse (scope=open) or all of them."""
+    result = []
+    for record in list_return_orders(RETURN_QUEUE_STATUSES if scope == "open" else None):
+        request = get_service_request(record["request_id"]) or {}
+        result.append(StaffReturnOrder(
+            **record,
+            request_reason=request.get("request_reason"),
+            product=staff_product_card(record["order_id"], staff_order(record["order_id"])),
+        ))
+    return result
+
+
 @router.get(
     "/service-requests/{request_id}",
     response_model=StaffServiceRequestDetail,
@@ -192,8 +273,8 @@ def get_staff_service_request_detail(
             detail="售后申请不存在。",
         )
 
-    order = get_order(service_request.get("order_id"))
-    customer = get_customer(service_request.get("customer_id"))
+    order = staff_order(service_request.get("order_id"))
+    customer = staff_customer(service_request.get("customer_id"))
     request_items = get_service_request_items(request_id)
     order_items = get_order_items(service_request.get("order_id"))
     target_item_id = request_items[0].get("order_item_id") if len(request_items) == 1 else None
@@ -210,6 +291,13 @@ def get_staff_service_request_detail(
         for record in list_evidence_records(request_id)
     ]
 
+    return_order = get_return_order_for_request(request_id)
+    customer_requests = [
+        _to_service_request_summary(record)
+        for record in get_service_requests_by_customer_id(service_request["customer_id"])
+        if record["request_id"] != request_id
+    ]
+
     return StaffServiceRequestDetail(
         service_request=_to_service_request_summary(service_request),
         order=order,
@@ -219,6 +307,11 @@ def get_staff_service_request_detail(
         evidence=evidence,
         order_items=order_items,
         request_items=request_items,
+        tracking=get_logistics_tracking(service_request["order_id"]) if order else None,
+        return_order={key: _iso(value) if hasattr(value, "isoformat") else (float(value) if key == "refundable_amount" else value)
+                      for key, value in return_order.items()} if return_order else None,
+        actions=list_actions_for_request(request_id),
+        customer_requests=customer_requests[:10],
     )
 
 

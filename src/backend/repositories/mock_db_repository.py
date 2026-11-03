@@ -4,17 +4,37 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 MOCK_DB_DIR = PROJECT_ROOT / "data" / "mock_db"
+# Generated demo test accounts (scripts/demo/seed_test_accounts.py). Kept in
+# their own overlay files -- appended after the hand-built fixture rows, in
+# a disjoint id namespace (CUS01xx / ORD99...) -- so regenerating them with
+# fresh dates never rewrites the evaluation fixtures themselves.
+TEST_ACCOUNTS_DIR = MOCK_DB_DIR / "test_accounts"
 
-def load_table(filename: str) -> list[dict[str, Any]]:
-    file_path = MOCK_DB_DIR / filename
 
+def _read_table(file_path: Path, filename: str) -> list[dict[str, Any]]:
     with file_path.open("r", encoding="utf-8") as file:
         data = json.load(file)
-    
+
     if not isinstance(data, list):
         raise ValueError(f"{filename} 的顶层结构必须是 JSON 数组")
-    
+
     return data
+
+
+def load_table(filename: str) -> list[dict[str, Any]]:
+    data = _read_table(MOCK_DB_DIR / filename, filename)
+    overlay = TEST_ACCOUNTS_DIR / filename
+    if overlay.is_file():
+        data = data + _read_table(overlay, filename)
+    return data
+
+def load_test_account_guide() -> dict[str, dict[str, Any]]:
+    """customer_id -> {title, hints} for the generated demo test accounts;
+    empty when they haven't been generated."""
+    guide_file = TEST_ACCOUNTS_DIR / "accounts_guide.json"
+    if not guide_file.is_file():
+        return {}
+    return {row["customer_id"]: row for row in _read_table(guide_file, guide_file.name)}
 
 def get_service_request(request_id: str) -> dict[str, Any] | None:
     service_requests = load_table("service_requests.json")

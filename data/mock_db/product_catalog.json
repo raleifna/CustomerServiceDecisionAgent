@@ -1,0 +1,1440 @@
+[
+  {
+    "product_id": "PRO0001",
+    "title": "声澜 AirBeat Pro 主动降噪真无线耳机",
+    "brand": "声澜 SOUNDWAVE",
+    "subtitle": "-45dB 深度降噪 · 40 小时续航 · 双设备连接",
+    "icon": "headphones",
+    "palette": "indigo",
+    "original_price": 899,
+    "rating": 4.8,
+    "review_count": 12860,
+    "monthly_sales": 5200,
+    "tags": [
+      "自营",
+      "新品",
+      "以旧换新"
+    ],
+    "highlights": [
+      "自适应主动降噪，最高 -45dB",
+      "单次 8h / 配合充电盒 40h 续航",
+      "蓝牙 5.3 双设备无缝切换",
+      "IP54 防尘防水"
+    ],
+    "description": "AirBeat Pro 采用双馈降噪麦克风与 11mm 动圈单元，通勤、办公与运动场景均可一键切换降噪模式。入耳检测、触控操作与低延迟游戏模式让日常使用更顺手。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "声澜"
+      },
+      {
+        "label": "型号",
+        "value": "AirBeat Pro"
+      },
+      {
+        "label": "连接方式",
+        "value": "蓝牙 5.3"
+      },
+      {
+        "label": "续航",
+        "value": "单次 8 小时 / 总计 40 小时"
+      },
+      {
+        "label": "防护等级",
+        "value": "IP54"
+      },
+      {
+        "label": "重量",
+        "value": "单耳 4.9g"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0001-BLACK",
+        "sku_name": "曜石黑 / 标准版"
+      },
+      {
+        "sku_id": "PRO0001-WHITE",
+        "sku_name": "月光白 / 标准版"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 l***9",
+        "rating": 5,
+        "date": "2026-08-06",
+        "sku_name": "曜石黑 / 标准版",
+        "content": "降噪效果明显，地铁上基本听不到报站声，佩戴也舒服。"
+      },
+      {
+        "user": "用户 C***n",
+        "rating": 4,
+        "date": "2026-07-28",
+        "sku_name": "月光白 / 标准版",
+        "content": "音质不错，充电盒稍微有点大，整体满意。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0002",
+    "title": "光合 Barista 意式半自动咖啡机 玻璃视窗款",
+    "brand": "光合 LUMINA",
+    "subtitle": "20Bar 意式萃取 · 可视玻璃水箱 · 蒸汽打奶",
+    "icon": "coffee",
+    "palette": "amber",
+    "original_price": 1599,
+    "rating": 4.7,
+    "review_count": 3420,
+    "monthly_sales": 860,
+    "tags": [
+      "自营"
+    ],
+    "highlights": [
+      "20Bar 高压泵，萃取油脂丰富",
+      "1.5L 可视玻璃水箱",
+      "独立蒸汽棒，可打绵密奶泡",
+      "PID 精准控温 ±1℃"
+    ],
+    "description": "为家庭咖啡爱好者设计的半自动咖啡机，玻璃视窗水箱方便观察水位。整机含玻璃部件，属于易碎商品，签收时请当面检查外包装与机身。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "光合"
+      },
+      {
+        "label": "型号",
+        "value": "Barista G2"
+      },
+      {
+        "label": "额定功率",
+        "value": "1350W"
+      },
+      {
+        "label": "水箱容量",
+        "value": "1.5L（玻璃）"
+      },
+      {
+        "label": "泵压",
+        "value": "20Bar"
+      },
+      {
+        "label": "尺寸",
+        "value": "28 × 22 × 32 cm"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0002-DEFAULT",
+        "sku_name": "标准款 / 银色"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 z***a",
+        "rating": 5,
+        "date": "2026-07-30",
+        "sku_name": "标准款 / 银色",
+        "content": "出品稳定，奶泡很细，外观也好看。"
+      },
+      {
+        "user": "用户 M***o",
+        "rating": 4,
+        "date": "2026-07-11",
+        "sku_name": "标准款 / 银色",
+        "content": "包装很严实，上手需要一点练习。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0003",
+    "title": "城迹 男女同款 防泼水轻量连帽夹克",
+    "brand": "城迹 URBANTRACE",
+    "subtitle": "防泼水面料 · 可收纳帽 · 春秋通勤",
+    "icon": "shirt",
+    "palette": "teal",
+    "original_price": 459,
+    "rating": 4.6,
+    "review_count": 8940,
+    "monthly_sales": 3100,
+    "tags": [
+      "自营"
+    ],
+    "highlights": [
+      "DWR 防泼水涂层，小雨无忧",
+      "可拆卸收纳帽",
+      "多口袋设计，通勤实用",
+      "男女同款宽松版型"
+    ],
+    "description": "轻量化面料兼顾防风与透气，适合春秋通勤和户外散步。宽松版型可叠穿卫衣或针织衫。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "城迹"
+      },
+      {
+        "label": "面料",
+        "value": "聚酯纤维 100%"
+      },
+      {
+        "label": "版型",
+        "value": "宽松"
+      },
+      {
+        "label": "厚度",
+        "value": "常规"
+      },
+      {
+        "label": "适用季节",
+        "value": "春秋"
+      },
+      {
+        "label": "洗涤",
+        "value": "可机洗，勿漂白"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0003-DEFAULT",
+        "sku_name": "雾灰 / L"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 x***u",
+        "rating": 5,
+        "date": "2026-06-21",
+        "sku_name": "雾灰 / L",
+        "content": "面料挺括，下小雨真的不湿。"
+      },
+      {
+        "user": "用户 小***鹿",
+        "rating": 4,
+        "date": "2026-06-15",
+        "sku_name": "雾灰 / L",
+        "content": "版型偏大，建议拍小一码。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0004",
+    "title": "极光 Watch S3 智能手表 血氧心率监测",
+    "brand": "极光 AURORA",
+    "subtitle": "1.43 英寸 AMOLED · 14 天续航 · 100+ 运动模式",
+    "icon": "watch",
+    "palette": "violet",
+    "original_price": 1099,
+    "rating": 4.7,
+    "review_count": 6510,
+    "monthly_sales": 2400,
+    "tags": [
+      "自营",
+      "分期免息"
+    ],
+    "highlights": [
+      "1.43 英寸 AMOLED 高清屏",
+      "全天候心率与血氧监测",
+      "典型使用 14 天续航",
+      "5ATM 防水，支持游泳"
+    ],
+    "description": "Watch S3 支持睡眠分析、压力监测与 100 多种运动模式，内置 NFC 可刷公交门禁，消息提醒与来电显示同步手机。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "极光"
+      },
+      {
+        "label": "型号",
+        "value": "Watch S3"
+      },
+      {
+        "label": "屏幕",
+        "value": "1.43 英寸 AMOLED"
+      },
+      {
+        "label": "续航",
+        "value": "典型 14 天"
+      },
+      {
+        "label": "防水",
+        "value": "5ATM"
+      },
+      {
+        "label": "连接",
+        "value": "蓝牙 5.2 / NFC"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0004-DEFAULT",
+        "sku_name": "星空黑 / 氟橡胶表带"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 W***i",
+        "rating": 5,
+        "date": "2026-06-18",
+        "sku_name": "星空黑 / 氟橡胶表带",
+        "content": "续航很顶，一周一充，睡眠监测准。"
+      },
+      {
+        "user": "用户 a***7",
+        "rating": 4,
+        "date": "2026-06-09",
+        "sku_name": "星空黑 / 氟橡胶表带",
+        "content": "表盘好看，第三方应用少一点。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0005",
+    "title": "风语 无叶静音空气循环扇 遥控款",
+    "brand": "风语 BREEZE",
+    "subtitle": "无叶安全设计 · 22dB 睡眠模式 · 9 档风速",
+    "icon": "fan",
+    "palette": "sky",
+    "original_price": 599,
+    "rating": 4.5,
+    "review_count": 4120,
+    "monthly_sales": 1500,
+    "tags": [
+      "自营",
+      "以旧换新"
+    ],
+    "highlights": [
+      "无叶设计，儿童更安全",
+      "睡眠模式低至 22dB",
+      "9 档风速 + 自然风",
+      "90° 自动摇头"
+    ],
+    "description": "风语循环扇采用直流无刷电机，配合空调使用可快速均匀室温。遥控器与机身触控双重操作，支持 8 小时定时。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "风语"
+      },
+      {
+        "label": "型号",
+        "value": "BF-30"
+      },
+      {
+        "label": "额定功率",
+        "value": "28W"
+      },
+      {
+        "label": "风速档位",
+        "value": "9 档"
+      },
+      {
+        "label": "噪音",
+        "value": "22 ~ 48dB"
+      },
+      {
+        "label": "高度",
+        "value": "约 95cm"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0005-DEFAULT",
+        "sku_name": "标准款 / 雪白"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 h***e",
+        "rating": 4,
+        "date": "2026-08-08",
+        "sku_name": "标准款 / 雪白",
+        "content": "睡眠模式很安静，风力够用。"
+      },
+      {
+        "user": "用户 S***n",
+        "rating": 5,
+        "date": "2026-07-22",
+        "sku_name": "标准款 / 雪白",
+        "content": "颜值高，和家里风格很搭。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0006",
+    "title": "步云 CloudRun 轻弹缓震跑步鞋",
+    "brand": "步云 STRIDE",
+    "subtitle": "超临界发泡中底 · 透气工程网面 · 轻至 238g",
+    "icon": "footprints",
+    "palette": "rose",
+    "original_price": 499,
+    "rating": 4.7,
+    "review_count": 15230,
+    "monthly_sales": 6800,
+    "tags": [
+      "自营",
+      "运费险"
+    ],
+    "highlights": [
+      "超临界发泡中底，回弹出色",
+      "工程网面透气不闷脚",
+      "单只约 238g（42码）",
+      "耐磨橡胶外底"
+    ],
+    "description": "CloudRun 适合日常慢跑与城市通勤，柔软脚感兼顾支撑性。鞋码偏标准，宽脚建议选大半码。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "步云"
+      },
+      {
+        "label": "鞋面材质",
+        "value": "工程网布"
+      },
+      {
+        "label": "中底",
+        "value": "超临界 EVA 发泡"
+      },
+      {
+        "label": "外底",
+        "value": "耐磨橡胶"
+      },
+      {
+        "label": "重量",
+        "value": "约 238g / 只（42码）"
+      },
+      {
+        "label": "适用场景",
+        "value": "慢跑 / 通勤"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0006-WHITE-42",
+        "sku_name": "云朵白 / 42码"
+      },
+      {
+        "sku_id": "PRO0006-DEFAULT",
+        "sku_name": "曜夜黑 / 41码"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 跑***人",
+        "rating": 5,
+        "date": "2026-08-05",
+        "sku_name": "云朵白 / 42码",
+        "content": "脚感软弹，10 公里下来不累。"
+      },
+      {
+        "user": "用户 r***2",
+        "rating": 4,
+        "date": "2026-07-26",
+        "sku_name": "曜夜黑 / 41码",
+        "content": "颜值在线，鞋面稍薄冬天会冷。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0007",
+    "title": "山野记 每日坚果混合礼盒 30 袋装",
+    "brand": "山野记 WILDNUT",
+    "subtitle": "6 种坚果果干 · 独立小包 · 0 添加蔗糖",
+    "icon": "bean",
+    "palette": "orange",
+    "original_price": 129,
+    "rating": 4.8,
+    "review_count": 22410,
+    "monthly_sales": 9800,
+    "tags": [
+      "自营"
+    ],
+    "highlights": [
+      "每袋 25g，30 天份",
+      "腰果、巴旦木、核桃等 6 种搭配",
+      "独立充氮小包装，锁鲜不受潮",
+      "无添加蔗糖"
+    ],
+    "description": "早餐或下午茶随手一袋，科学配比坚果与果干。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "山野记"
+      },
+      {
+        "label": "净含量",
+        "value": "750g（25g × 30 袋）"
+      },
+      {
+        "label": "保质期",
+        "value": "180 天"
+      },
+      {
+        "label": "储存方式",
+        "value": "阴凉干燥处"
+      },
+      {
+        "label": "产地",
+        "value": "中国"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0007-DEFAULT",
+        "sku_name": "30 袋礼盒装"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 豆***子",
+        "rating": 5,
+        "date": "2026-08-03",
+        "sku_name": "30 袋礼盒装",
+        "content": "很新鲜，送人也体面。"
+      },
+      {
+        "user": "用户 L***y",
+        "rating": 5,
+        "date": "2026-07-19",
+        "sku_name": "30 袋礼盒装",
+        "content": "每天一袋刚好，孩子也爱吃。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0008",
+    "title": "釉见 手作窑变陶瓷餐具 4 人套装",
+    "brand": "釉见 GLAZE",
+    "subtitle": "高温窑变釉 · 可微波洗碗机 · 16 件套",
+    "icon": "cooking-pot",
+    "palette": "amber",
+    "original_price": 269,
+    "rating": 4.6,
+    "review_count": 2860,
+    "monthly_sales": 920,
+    "tags": [
+      "运费险"
+    ],
+    "highlights": [
+      "1280℃ 高温烧制，窑变釉色每件不同",
+      "可进微波炉与洗碗机",
+      "16 件套含碗、盘、汤勺",
+      "防撞蜂窝纸包装"
+    ],
+    "description": "釉见餐具每一件都带有独特的窑变纹理。陶瓷属于易碎商品，签收时请当面开箱检查，如有破损请拍照并联系客服。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "釉见"
+      },
+      {
+        "label": "材质",
+        "value": "高温陶瓷"
+      },
+      {
+        "label": "件数",
+        "value": "16 件"
+      },
+      {
+        "label": "适用",
+        "value": "微波炉 / 洗碗机 / 消毒柜"
+      },
+      {
+        "label": "产地",
+        "value": "景德镇"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0008-DEFAULT",
+        "sku_name": "雾蓝 / 4 人份"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 青***禾",
+        "rating": 5,
+        "date": "2026-08-09",
+        "sku_name": "雾蓝 / 4 人份",
+        "content": "釉色很美，包装非常厚。"
+      },
+      {
+        "user": "用户 k***e",
+        "rating": 4,
+        "date": "2026-07-27",
+        "sku_name": "雾蓝 / 4 人份",
+        "content": "有一只碗的釉面略有不均，属于手作正常现象。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0009",
+    "title": "墨刻 K87 三模无线机械键盘 热插拔",
+    "brand": "墨刻 INKCRAFT",
+    "subtitle": "蓝牙 / 2.4G / 有线三模 · Gasket 结构 · RGB 背光",
+    "icon": "keyboard",
+    "palette": "slate",
+    "original_price": 999,
+    "rating": 4.7,
+    "review_count": 5320,
+    "monthly_sales": 1800,
+    "tags": [
+      "自营",
+      "分期免息"
+    ],
+    "highlights": [
+      "三模连接，最多连接 5 台设备",
+      "Gasket 结构，手感柔和",
+      "全键热插拔，支持自定义轴体",
+      "4000mAh 大电池"
+    ],
+    "description": "87 键紧凑配列，兼顾桌面空间与功能键。出厂预润线性轴，声音清脆不吵人，适合办公与游戏。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "墨刻"
+      },
+      {
+        "label": "型号",
+        "value": "K87"
+      },
+      {
+        "label": "配列",
+        "value": "87 键"
+      },
+      {
+        "label": "连接",
+        "value": "蓝牙 5.1 / 2.4G / USB-C"
+      },
+      {
+        "label": "电池",
+        "value": "4000mAh"
+      },
+      {
+        "label": "轴体",
+        "value": "线性奶茶轴（热插拔）"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0009-DEFAULT",
+        "sku_name": "石墨灰 / 奶茶轴"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 码***农",
+        "rating": 5,
+        "date": "2026-08-04",
+        "sku_name": "石墨灰 / 奶茶轴",
+        "content": "打字手感很舒服，三模切换方便。"
+      },
+      {
+        "user": "用户 j***t",
+        "rating": 4,
+        "date": "2026-07-18",
+        "sku_name": "石墨灰 / 奶茶轴",
+        "content": "灯效不错，驱动软件还能再优化。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0010",
+    "title": "LUMIÈRE 经典菱格羊皮链条单肩包",
+    "brand": "LUMIÈRE",
+    "subtitle": "意大利羊皮 · 手工车线 · 附防尘袋与鉴定卡",
+    "icon": "gem",
+    "palette": "rose",
+    "original_price": 14999,
+    "rating": 4.9,
+    "review_count": 386,
+    "monthly_sales": 42,
+    "tags": [
+      "官方授权",
+      "正品鉴定",
+      "顺丰包邮"
+    ],
+    "highlights": [
+      "精选意大利小羊皮",
+      "经典菱格车线工艺",
+      "金属链条可单肩 / 斜挎",
+      "附原厂防尘袋、鉴定卡"
+    ],
+    "description": "LUMIÈRE 经典款链条包，柔软羊皮与金属链条形成层次对比。商品出库前经过正品鉴定，签收时请保持吊牌与封签完整。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "LUMIÈRE"
+      },
+      {
+        "label": "材质",
+        "value": "羊皮"
+      },
+      {
+        "label": "尺寸",
+        "value": "25 × 16 × 7 cm"
+      },
+      {
+        "label": "开合方式",
+        "value": "翻盖磁扣"
+      },
+      {
+        "label": "配件",
+        "value": "防尘袋 / 鉴定卡 / 礼盒"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0010-DEFAULT",
+        "sku_name": "经典黑 / 金扣"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 V***a",
+        "rating": 5,
+        "date": "2026-07-29",
+        "sku_name": "经典黑 / 金扣",
+        "content": "做工精致，包装很有仪式感。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0011",
+    "title": "织暖 羊毛混纺圆领针织衫",
+    "brand": "织暖 WOOLIN",
+    "subtitle": "30% 绵羊毛 · 亲肤不扎 · 多色可选",
+    "icon": "shirt",
+    "palette": "orange",
+    "original_price": 529,
+    "rating": 4.6,
+    "review_count": 4380,
+    "monthly_sales": 1600,
+    "tags": [
+      "运费险"
+    ],
+    "highlights": [
+      "30% 绵羊毛混纺，保暖亲肤",
+      "圆领基础款，百搭不挑人",
+      "罗纹收边，不易变形",
+      "可手洗"
+    ],
+    "description": "基础款针织衫，单穿或内搭都合适。建议手洗或使用洗衣机羊毛程序，平铺晾干。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "织暖"
+      },
+      {
+        "label": "成分",
+        "value": "羊毛 30% / 腈纶 70%"
+      },
+      {
+        "label": "版型",
+        "value": "常规"
+      },
+      {
+        "label": "领型",
+        "value": "圆领"
+      },
+      {
+        "label": "洗涤",
+        "value": "手洗 / 羊毛程序"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0011-DEFAULT",
+        "sku_name": "燕麦色 / M"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 o***i",
+        "rating": 5,
+        "date": "2026-07-14",
+        "sku_name": "燕麦色 / M",
+        "content": "很软不扎，颜色很温柔。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0012",
+    "title": "澜音 Pebble 便携蓝牙音箱 IPX7 防水",
+    "brand": "澜音 TIDE",
+    "subtitle": "360° 环绕音效 · IPX7 防水 · 24 小时续航",
+    "icon": "speaker",
+    "palette": "teal",
+    "original_price": 699,
+    "rating": 4.6,
+    "review_count": 7210,
+    "monthly_sales": 2900,
+    "tags": [
+      "自营",
+      "新品"
+    ],
+    "highlights": [
+      "360° 全向发声",
+      "IPX7 防水，可漂浮",
+      "24 小时长续航",
+      "TWS 双箱立体声互联"
+    ],
+    "description": "小巧机身适合露营、浴室与桌面使用，被动低音振膜让低频更饱满。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "澜音"
+      },
+      {
+        "label": "型号",
+        "value": "Pebble 2"
+      },
+      {
+        "label": "防水",
+        "value": "IPX7"
+      },
+      {
+        "label": "续航",
+        "value": "约 24 小时"
+      },
+      {
+        "label": "连接",
+        "value": "蓝牙 5.3"
+      },
+      {
+        "label": "重量",
+        "value": "约 540g"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0012-DEFAULT",
+        "sku_name": "海盐蓝"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 野***营",
+        "rating": 5,
+        "date": "2026-08-01",
+        "sku_name": "海盐蓝",
+        "content": "露营带出去声音很足，掉水里也没事。"
+      },
+      {
+        "user": "用户 p***9",
+        "rating": 4,
+        "date": "2026-07-21",
+        "sku_name": "海盐蓝",
+        "content": "音质不错，低音再多一点就好了。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0013",
+    "title": "素线 高腰直筒弹力牛仔裤",
+    "brand": "素线 PLAINLINE",
+    "subtitle": "高腰显瘦 · 微弹面料 · 九分直筒",
+    "icon": "shirt",
+    "palette": "indigo",
+    "original_price": 399,
+    "rating": 4.5,
+    "review_count": 6020,
+    "monthly_sales": 2300,
+    "tags": [
+      "运费险"
+    ],
+    "highlights": [
+      "高腰设计，修饰腿型",
+      "微弹棉质面料，活动自如",
+      "九分直筒，百搭显高",
+      "石洗工艺，不易褪色"
+    ],
+    "description": "日常百搭直筒牛仔裤，适合搭配卫衣、衬衫与针织衫。首次洗涤建议冷水反面单独洗。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "素线"
+      },
+      {
+        "label": "成分",
+        "value": "棉 98% / 氨纶 2%"
+      },
+      {
+        "label": "裤长",
+        "value": "九分"
+      },
+      {
+        "label": "腰型",
+        "value": "高腰"
+      },
+      {
+        "label": "弹力",
+        "value": "微弹"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0013-DEFAULT",
+        "sku_name": "浅蓝 / 27"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 m***e",
+        "rating": 4,
+        "date": "2026-08-02",
+        "sku_name": "浅蓝 / 27",
+        "content": "版型好，腰稍微有点紧。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0014",
+    "title": "云岭 高山古树红茶 礼罐 250g",
+    "brand": "云岭 CLOUDRIDGE",
+    "subtitle": "滇红古树 · 蜜香回甘 · 铁罐密封",
+    "icon": "leaf",
+    "palette": "amber",
+    "original_price": 119,
+    "rating": 4.7,
+    "review_count": 3980,
+    "monthly_sales": 1700,
+    "tags": [
+      "自营"
+    ],
+    "highlights": [
+      "云南临沧古树茶原料",
+      "蜜香浓郁，汤色红亮",
+      "铁罐密封防潮",
+      "适合自饮与送礼"
+    ],
+    "description": "精选海拔 1800 米以上古树茶鲜叶，传统工艺发酵。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "云岭"
+      },
+      {
+        "label": "净含量",
+        "value": "250g"
+      },
+      {
+        "label": "产地",
+        "value": "云南临沧"
+      },
+      {
+        "label": "保质期",
+        "value": "36 个月"
+      },
+      {
+        "label": "储存",
+        "value": "密封、避光、防潮"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0014-DEFAULT",
+        "sku_name": "250g 铁罐"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 茶***客",
+        "rating": 5,
+        "date": "2026-07-31",
+        "sku_name": "250g 铁罐",
+        "content": "香气足，耐泡，回甘明显。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0015",
+    "title": "净朗 Pure5 智能空气净化器 除醛款",
+    "brand": "净朗 PURELY",
+    "subtitle": "CADR 450m³/h · 除甲醛 · APP 远程控制",
+    "icon": "wind",
+    "palette": "sky",
+    "original_price": 999,
+    "rating": 4.7,
+    "review_count": 5630,
+    "monthly_sales": 1900,
+    "tags": [
+      "自营",
+      "以旧换新",
+      "分期免息"
+    ],
+    "highlights": [
+      "颗粒物 CADR 450m³/h",
+      "三层复合滤网，高效除醛",
+      "激光 PM2.5 传感器实时显示",
+      "APP 远程控制与滤网提醒"
+    ],
+    "description": "适用 30 ~ 54㎡ 空间，睡眠模式下安静运行，适合新装修与有宠物家庭。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "净朗"
+      },
+      {
+        "label": "型号",
+        "value": "Pure5"
+      },
+      {
+        "label": "CADR",
+        "value": "450m³/h"
+      },
+      {
+        "label": "适用面积",
+        "value": "30 ~ 54㎡"
+      },
+      {
+        "label": "噪音",
+        "value": "≤ 33dB（睡眠）"
+      },
+      {
+        "label": "滤网寿命",
+        "value": "约 6 ~ 12 个月"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0015-DEFAULT",
+        "sku_name": "标准款 / 白"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 新***家",
+        "rating": 5,
+        "date": "2026-08-07",
+        "sku_name": "标准款 / 白",
+        "content": "数值降得很快，APP 用着方便。"
+      },
+      {
+        "user": "用户 d***o",
+        "rating": 4,
+        "date": "2026-07-25",
+        "sku_name": "标准款 / 白",
+        "content": "最高档有点吵，平时自动档就够了。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0016",
+    "title": "墨读 Note 7 英寸墨水屏电子阅读器",
+    "brand": "墨读 INKREAD",
+    "subtitle": "300PPI 墨水屏 · 冷暖阅读灯 · 32GB",
+    "icon": "book-open",
+    "palette": "slate",
+    "original_price": 1299,
+    "rating": 4.8,
+    "review_count": 4210,
+    "monthly_sales": 1300,
+    "tags": [
+      "自营",
+      "分期免息"
+    ],
+    "highlights": [
+      "7 英寸 300PPI 电子墨水屏",
+      "冷暖双色阅读灯，夜读不刺眼",
+      "32GB 存储，可存数千本书",
+      "IPX8 防水，泡澡也能看"
+    ],
+    "description": "墨读 Note 支持 EPUB / PDF / MOBI 等主流格式，翻页键设计单手阅读更方便，一次充电可读数周。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "墨读"
+      },
+      {
+        "label": "屏幕",
+        "value": "7 英寸 E Ink 300PPI"
+      },
+      {
+        "label": "存储",
+        "value": "32GB"
+      },
+      {
+        "label": "防水",
+        "value": "IPX8"
+      },
+      {
+        "label": "续航",
+        "value": "约 4 周"
+      },
+      {
+        "label": "重量",
+        "value": "约 210g"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0016-DEFAULT",
+        "sku_name": "雅黑 / 32GB"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 书***虫",
+        "rating": 5,
+        "date": "2026-08-06",
+        "sku_name": "雅黑 / 32GB",
+        "content": "屏幕很清晰，翻页键太好用了。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0017",
+    "title": "棉柔 新疆长绒棉四件套 1.8m 床",
+    "brand": "棉柔 SOFTCOT",
+    "subtitle": "100% 长绒棉 · 60 支高支高密 · A 类标准",
+    "icon": "bed-double",
+    "palette": "teal",
+    "original_price": 359,
+    "rating": 4.7,
+    "review_count": 9120,
+    "monthly_sales": 3600,
+    "tags": [
+      "自营"
+    ],
+    "highlights": [
+      "100% 新疆长绒棉",
+      "60 支高支高密，亲肤顺滑",
+      "A 类婴幼儿标准",
+      "活性印染，不易褪色"
+    ],
+    "description": "四件套含被套、床单与两只枕套，适用 1.8m 床。首次使用前建议清洗一遍，口感更柔软。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "棉柔"
+      },
+      {
+        "label": "材质",
+        "value": "长绒棉 100%"
+      },
+      {
+        "label": "支数",
+        "value": "60 支"
+      },
+      {
+        "label": "规格",
+        "value": "被套 200×230cm / 床单 245×250cm"
+      },
+      {
+        "label": "安全类别",
+        "value": "A 类"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0017-DEFAULT",
+        "sku_name": "云雾灰 / 1.8m"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 a***n",
+        "rating": 5,
+        "date": "2026-07-20",
+        "sku_name": "云雾灰 / 1.8m",
+        "content": "很软很舒服，洗了几次也没起球。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0018",
+    "title": "拾光 定制刻字 925 银项链",
+    "brand": "拾光 MOMENTS",
+    "subtitle": "925 纯银 · 免费刻字 · 精美礼盒",
+    "icon": "gem",
+    "palette": "violet",
+    "original_price": 599,
+    "rating": 4.8,
+    "review_count": 2140,
+    "monthly_sales": 760,
+    "tags": [],
+    "highlights": [
+      "S925 纯银，抗过敏",
+      "支持 1 ~ 10 字定制刻字",
+      "可调节链长 40 ~ 45cm",
+      "附送礼盒与贺卡"
+    ],
+    "description": "拾光项链支持个性化刻字，记录纪念日或名字缩写。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "拾光"
+      },
+      {
+        "label": "材质",
+        "value": "S925 银"
+      },
+      {
+        "label": "链长",
+        "value": "40 ~ 45cm 可调"
+      },
+      {
+        "label": "吊坠尺寸",
+        "value": "约 12mm"
+      },
+      {
+        "label": "定制",
+        "value": "支持刻字"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0018-DEFAULT",
+        "sku_name": "刻字款 / 银色"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 七***夕",
+        "rating": 5,
+        "date": "2026-07-16",
+        "sku_name": "刻字款 / 银色",
+        "content": "刻字很精致，女朋友超喜欢。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0019",
+    "title": "琉影 手工吹制玻璃花瓶 3 件套",
+    "brand": "琉影 GLASSHUE",
+    "subtitle": "手工吹制 · 渐变彩色玻璃 · 北欧风",
+    "icon": "flower-2",
+    "palette": "sky",
+    "original_price": 399,
+    "rating": 4.6,
+    "review_count": 1860,
+    "monthly_sales": 640,
+    "tags": [],
+    "highlights": [
+      "匠人手工吹制，每件形态略有差异",
+      "渐变色透明玻璃",
+      "高中低三件组合",
+      "加厚防撞包装"
+    ],
+    "description": "琉影花瓶适合插放鲜切花或干花，组合摆放更有层次。玻璃制品属于易碎商品，签收时请当面开箱验货。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "琉影"
+      },
+      {
+        "label": "材质",
+        "value": "高硼硅玻璃"
+      },
+      {
+        "label": "件数",
+        "value": "3 件"
+      },
+      {
+        "label": "高度",
+        "value": "15 / 20 / 25 cm"
+      },
+      {
+        "label": "工艺",
+        "value": "手工吹制"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0019-DEFAULT",
+        "sku_name": "雾霭渐变 / 3 件套"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 花***事",
+        "rating": 5,
+        "date": "2026-07-24",
+        "sku_name": "雾霭渐变 / 3 件套",
+        "content": "比图片还好看，包装非常严实。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0020",
+    "title": "醒山 冻干咖啡粉 超即溶 24 颗",
+    "brand": "醒山 AWAKE",
+    "subtitle": "3 秒冷水速溶 · 0 糖 0 脂 · 中深烘焙",
+    "icon": "cup-soda",
+    "palette": "orange",
+    "original_price": 99,
+    "rating": 4.7,
+    "review_count": 18640,
+    "monthly_sales": 8200,
+    "tags": [
+      "自营"
+    ],
+    "highlights": [
+      "冷水、牛奶 3 秒速溶",
+      "中深烘焙，坚果可可风味",
+      "0 蔗糖 0 脂肪",
+      "独立小罐，便携锁鲜"
+    ],
+    "description": "精选阿拉比卡咖啡豆，低温冻干保留风味。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "醒山"
+      },
+      {
+        "label": "净含量",
+        "value": "2g × 24 颗"
+      },
+      {
+        "label": "烘焙度",
+        "value": "中深烘"
+      },
+      {
+        "label": "保质期",
+        "value": "24 个月"
+      },
+      {
+        "label": "产地",
+        "value": "云南"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0020-DEFAULT",
+        "sku_name": "经典风味 / 24 颗"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 打***人",
+        "rating": 5,
+        "date": "2026-08-08",
+        "sku_name": "经典风味 / 24 颗",
+        "content": "溶得真快，加燕麦奶很好喝。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0021",
+    "title": "墨刻 G1 无线游戏手柄 霍尔摇杆",
+    "brand": "墨刻 INKCRAFT",
+    "subtitle": "霍尔摇杆不漂移 · 三模连接 · 体感陀螺仪",
+    "icon": "gamepad-2",
+    "palette": "violet",
+    "original_price": 799,
+    "rating": 4.6,
+    "review_count": 3760,
+    "monthly_sales": 1400,
+    "tags": [
+      "自营"
+    ],
+    "highlights": [
+      "霍尔电磁摇杆，告别漂移",
+      "蓝牙 / 2.4G / 有线三模",
+      "六轴体感陀螺仪",
+      "可编程背键"
+    ],
+    "description": "G1 手柄兼容主流主机与 PC 平台，线性扳机与双马达震动带来细腻反馈。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "墨刻"
+      },
+      {
+        "label": "型号",
+        "value": "G1"
+      },
+      {
+        "label": "连接",
+        "value": "蓝牙 / 2.4G / USB-C"
+      },
+      {
+        "label": "续航",
+        "value": "约 20 小时"
+      },
+      {
+        "label": "兼容",
+        "value": "PC / 主机 / 手机"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0021-DEFAULT",
+        "sku_name": "暗影黑"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 g***r",
+        "rating": 5,
+        "date": "2026-07-30",
+        "sku_name": "暗影黑",
+        "content": "摇杆精准，手感扎实。"
+      },
+      {
+        "user": "用户 Z***z",
+        "rating": 4,
+        "date": "2026-07-12",
+        "sku_name": "暗影黑",
+        "content": "背键很实用，就是有点重。"
+      }
+    ]
+  },
+  {
+    "product_id": "PRO0022",
+    "title": "眠匠 记忆棉护颈枕 2 只装",
+    "brand": "眠匠 SLEEPCRAFT",
+    "subtitle": "慢回弹记忆棉 · 人体工学曲线 · 可拆洗枕套",
+    "icon": "sofa",
+    "palette": "indigo",
+    "original_price": 459,
+    "rating": 4.6,
+    "review_count": 6350,
+    "monthly_sales": 2100,
+    "tags": [
+      "自营"
+    ],
+    "highlights": [
+      "慢回弹记忆棉，贴合颈椎",
+      "高低双曲线，侧睡仰睡都合适",
+      "透气蜂窝孔设计",
+      "枕套可拆洗"
+    ],
+    "description": "眠匠护颈枕采用人体工学曲线，帮助颈椎保持自然弧度，改善睡眠质量。",
+    "specs": [
+      {
+        "label": "品牌",
+        "value": "眠匠"
+      },
+      {
+        "label": "材质",
+        "value": "记忆棉"
+      },
+      {
+        "label": "尺寸",
+        "value": "60 × 35 × 10/8 cm"
+      },
+      {
+        "label": "数量",
+        "value": "2 只"
+      },
+      {
+        "label": "枕套",
+        "value": "针织面料，可拆洗"
+      }
+    ],
+    "skus": [
+      {
+        "sku_id": "PRO0022-DEFAULT",
+        "sku_name": "标准款 / 2 只装"
+      }
+    ],
+    "reviews": [
+      {
+        "user": "用户 失***者",
+        "rating": 4,
+        "date": "2026-07-23",
+        "sku_name": "标准款 / 2 只装",
+        "content": "睡了一周颈椎舒服多了，初期有点味道。"
+      }
+    ]
+  }
+]

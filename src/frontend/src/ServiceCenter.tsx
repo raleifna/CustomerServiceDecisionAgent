@@ -1,29 +1,44 @@
 import {
-  Activity,
-  ArrowLeft,
   Bot,
   Box,
   CheckCircle2,
+  ChevronRight,
   CircleDot,
   FileText,
-  HelpCircle,
+  Headset,
   ImageUp,
   LoaderCircle,
-  MessageSquare,
   Package,
   Plus,
   RotateCcw,
-  Search,
   Send,
-  Settings,
   ShieldCheck,
-  ShoppingBag,
   Sparkles,
   Truck,
   UserRound,
   Zap,
 } from "lucide-react";
 import { Fragment, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+
+import {
+  API_BASE,
+  CustomerOrder,
+  CustomerServiceRequestProgress,
+  EvidenceRecord,
+  evidenceStatusLabels,
+  OrderDetail,
+  orderStatusLabels,
+  ProductDetail,
+  requestWorkflowStatusLabels,
+  ReturnOrder,
+  vipLabels,
+  yuan,
+} from "./shop/api";
+import { Breadcrumbs, Link, UserCenterLayout } from "./shop/components";
+import { useCustomers, useFetch } from "./shop/hooks";
+import { ProductImage } from "./shop/ProductImage";
+import { ReturnShipmentCard } from "./shop/ReturnShipment";
+import { navigate } from "./shop/router";
 
 type MessageRole = "agent" | "customer" | "system";
 
@@ -47,69 +62,6 @@ type ChatResponse = {
   action_id: string | null;
 };
 
-type Customer = {
-  customer_id: string;
-  vip_level: string;
-  register_date: string;
-  refund_history_count: number;
-};
-
-type CustomerOrder = {
-  order_id: string;
-  customer_id: string;
-  product_id: string;
-  product_category: string | null;
-  quantity: number;
-  order_date: string;
-  shipped_date: string | null;
-  promised_ship_date: string | null;
-  estimated_delivery_date: string | null;
-  delivered_date: string | null;
-  amount: number;
-  payment_status: string;
-  order_status: "PendingShipment" | "Shipped" | "Delivered";
-};
-
-type LogisticsEvent = {
-  carrier: string;
-  exception_type: string;
-  exception_recorded_date: string;
-  resolved: boolean;
-};
-
-type OrderItem = {
-  order_item_id: string;
-  order_id: string;
-  product_id: string;
-  sku_id: string;
-  sku_name: string;
-  unit_price: number;
-  quantity: number;
-  discount_amount: number;
-  paid_amount: number;
-  shipped_product_id: string | null;
-  shipped_quantity: number | null;
-};
-
-type OrderDetail = CustomerOrder & {
-  logistics: LogisticsEvent[];
-  order_items: OrderItem[];
-  refunded_amount: number;
-};
-
-type EvidenceRecord = {
-  evidence_id: string;
-  request_id: string;
-  original_filename: string;
-  media_type: string;
-  file_size_bytes: number;
-  verification_status: string;
-  customer_description: string | null;
-  submitted_date?: string;
-  file_url?: string;
-  review_notes?: string | null;
-};
-
 type ServiceRequestStatus = {
   request_id: string;
   workflow_status: string;
@@ -118,40 +70,9 @@ type ServiceRequestStatus = {
   resolution_notes: string | null;
   resolved_at: string | null;
   return_order: ReturnOrder | null;
-  evidence_reviews: CustomerEvidenceReview[];
-  actions: CustomerRequestAction[];
+  evidence_reviews: CustomerServiceRequestProgress["evidence_reviews"];
+  actions: CustomerServiceRequestProgress["actions"];
 };
-
-type CustomerEvidenceReview = {
-  evidence_id: string;
-  verification_status: "Verified" | "Rejected";
-  review_notes: string | null;
-  reviewed_at: string | null;
-};
-
-type CustomerRequestAction = {
-  action_id: string; action_type: string; workflow_status: string;
-  external_transaction_id: string | null; created_at: string | null; updated_at: string | null;
-};
-
-type CustomerServiceRequestProgress = {
-  request_id: string; order_id: string; request_type: string; request_reason: string;
-  requested_quantity: number; request_date: string; workflow_status: string;
-  decision: string | null; approved_quantity: number | null; approved_amount: number | null;
-  resolution_notes: string | null; resolved_at: string | null;
-  evidence_reviews: CustomerEvidenceReview[]; actions: CustomerRequestAction[];
-  evidence: EvidenceRecord[];
-};
-
-type ReturnOrder = {
-  return_order_id: string;
-  workflow_status: string;
-  return_carrier: string | null;
-  return_tracking_number: string | null;
-  inspection_notes: string | null;
-};
-
-const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 const quickPrompts = [
   "那这个订单的物流呢？",
@@ -174,22 +95,25 @@ const decisionLabels: Record<string, string> = {
   Approve: "批准",
   PartialApprove: "部分批准",
   Reject: "拒绝",
+  NoActionRequired: "无需处理",
 };
 
-const requestWorkflowStatusLabels: Record<string, string> = {
-  Pending: "待处理",
-  InReview: "审核中",
+const handlingStatusLabels: Record<string, string> = {
+  DecisionCompleted: "已完成",
+  AwaitingEvidenceReview: "等待证据审核",
+  AwaitingExternalVerification: "等待外部核实",
+  NeedsMoreEvidence: "需要补充证据",
   NeedsReflection: "复核中",
-  EscalatedToHuman: "已转人工",
-  Closed: "已关闭",
+  HumanEscalation: "已转人工",
+  SystemError: "系统繁忙",
 };
 
-const evidenceStatusLabels: Record<string, string> = {
-  Pending: "待审核",
-  MachineReviewed: "机审通过",
-  NeedsHumanReview: "待人工复核",
-  Verified: "已通过",
-  Rejected: "未通过",
+const actionLabels: Record<string, string> = {
+  CreateServiceRequest: "已创建售后申请",
+  CreateHumanHandoff: "已转接人工客服",
+  ExpediteShipment: "已催促发货",
+  LogisticsChase: "已发起物流催查",
+  WithdrawServiceRequest: "已撤销售后申请",
 };
 
 function now() {
@@ -317,15 +241,28 @@ function savePersistedThreads(
   }
 }
 
-function App() {
+type ServiceCenterProps = {
+  customerId: string;
+  workspace: "chat" | "requests";
+  // Deep links from the shop: /service?order=…&product=…&ask=…
+  routeOrderId: string | null;
+  routeProductId: string | null;
+  routePrefill: string | null;
+  // /after-sales?focus=<request_id>: scroll to and highlight that request.
+  routeFocus?: string | null;
+};
+
+function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, routePrefill, routeFocus }: ServiceCenterProps) {
+  const activeCustomerId = customerId;
+  const activeWorkspace = workspace;
+  const customers = useCustomers();
+  const productContext = useFetch<ProductDetail>(routeProductId ? `/products/${encodeURIComponent(routeProductId)}` : null);
   const [conversationId, setConversationId] = useState(() => createConversationId());
   const [messages, setMessages] = useState<Message[]>(() => initialMessages());
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [lastResult, setLastResult] = useState<ChatResponse | null>(null);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
-  const [activeCustomerId, setActiveCustomerId] = useState("CUS0021");
   const [hasSelectedCustomer, setHasSelectedCustomer] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [orderDetail, setOrderDetail] = useState<OrderDetail | null>(null);
@@ -333,7 +270,6 @@ function App() {
   const [evidenceCardDescriptions, setEvidenceCardDescriptions] = useState<Record<string, string>>({});
   const [uploadingCardId, setUploadingCardId] = useState<string | null>(null);
   const [returnOrder, setReturnOrder] = useState<ReturnOrder | null>(null);
-  const [activeWorkspace, setActiveWorkspace] = useState<"chat" | "requests">("chat");
   const [customerRequests, setCustomerRequests] = useState<CustomerServiceRequestProgress[]>([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
   const [withdrawingRequestId, setWithdrawingRequestId] = useState<string | null>(null);
@@ -342,11 +278,10 @@ function App() {
   const [requestPageDescriptions, setRequestPageDescriptions] = useState<Record<string, string>>({});
   const [requestPageUploadedEvidence, setRequestPageUploadedEvidence] = useState<Record<string, EvidenceRecord>>({});
   const [requestPageUploadErrors, setRequestPageUploadErrors] = useState<Record<string, string>>({});
-  const bottomRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const threadsRef = useRef<Map<string, ThreadState>>(new Map());
   const requestPollingAbortRef = useRef<AbortController | null>(null);
-  const resumeAttemptedRef = useRef(false);
+  const routeKeyRef = useRef<string | null>(null);
   // The status-polling effect below only re-runs when a handful of coarse
   // deps change, so its closure over `messages` goes stale between runs.
   // This ref always reflects the latest committed messages so the polling
@@ -540,27 +475,22 @@ function App() {
     };
   }, [activeCustomerId, activeOrderId, hasSelectedCustomer, lastResult?.decision, lastResult?.request_id]);
 
+  // Enter the signed-in customer's service center once on mount, then
+  // follow later deep links (e.g. "联系客服" on another order) in place.
+  const routeKey = `${routeOrderId ?? ""}|${routePrefill ?? ""}`;
   useEffect(() => {
-    const controller = new AbortController();
-    fetch(`${API_BASE}/customers`, { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error("客户列表加载失败");
-        return response.json() as Promise<Customer[]>;
-      })
-      .then(setCustomers)
-      .catch(() => setConnectionState("offline"));
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
-    if (resumeAttemptedRef.current || customers.length === 0) return;
-    resumeAttemptedRef.current = true;
-    const resumeCustomerId = new URLSearchParams(window.location.search).get("resumeCustomer");
-    if (resumeCustomerId && customers.some((customer) => customer.customer_id === resumeCustomerId)) {
-      selectCustomer(resumeCustomerId);
-      window.history.replaceState({}, "", "/");
+    if (routeKeyRef.current === null) {
+      routeKeyRef.current = routeKey;
+      selectCustomer(customerId, routeOrderId ?? undefined);
+      if (routePrefill) setInput(routePrefill);
+      return;
     }
-  }, [customers]);
+    if (routeKeyRef.current === routeKey) return;
+    routeKeyRef.current = routeKey;
+    if (routeOrderId && routeOrderId !== activeOrderId) selectOrder(routeOrderId);
+    if (routePrefill) setInput(routePrefill);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeKey]);
 
   useEffect(() => {
     if (!hasSelectedCustomer) return;
@@ -624,7 +554,15 @@ function App() {
   }, [messages]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (activeWorkspace !== "requests" || !routeFocus || isLoadingRequests) return;
+    document.getElementById(`request-${routeFocus}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [activeWorkspace, routeFocus, isLoadingRequests, customerRequests.length]);
+
+  useEffect(() => {
+    // Scroll only the message list: scrollIntoView would also scroll the
+    // whole shop page now that the service center sits inside it.
+    const container = messagesContainerRef.current;
+    container?.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
   }, [messages, isSending]);
 
   // Runs after the bottom-scroll effect above, so switching context (which also
@@ -638,12 +576,12 @@ function App() {
   const activeCustomer = customers.find((item) => item.customer_id === activeCustomerId);
   const metadata = useMemo(
     () => [
-      ["意图", lastResult?.intent ? intentLabels[lastResult.intent] || lastResult.intent : "等待消息"],
-      ["订单", lastResult?.order_id || "—"],
+      ["问题类型", lastResult?.intent ? intentLabels[lastResult.intent] || lastResult.intent : "等待提问"],
+      ["关联订单", lastResult?.order_id || "—"],
       ["售后申请", lastResult?.request_id || "—"],
-      ["处理状态", lastResult?.handling_status || "—"],
-      ["决策", lastResult?.decision ? decisionLabels[lastResult.decision] || lastResult.decision : "—"],
-      ["业务动作", lastResult?.action || "—"],
+      ["处理状态", lastResult?.handling_status ? handlingStatusLabels[lastResult.handling_status] || "处理中" : "—"],
+      ["处理结果", lastResult?.decision ? decisionLabels[lastResult.decision] || lastResult.decision : "—"],
+      ["执行动作", lastResult?.action ? actionLabels[lastResult.action] || lastResult.action : "—"],
     ],
     [lastResult],
   );
@@ -782,47 +720,20 @@ function App() {
     setInput("");
   }
 
-  function returnToCustomerSelection() {
-    saveCurrentThread();
-    savePersistedThreads(activeCustomerId, threadsRef.current, currentThreadKey());
-    setHasSelectedCustomer(false);
-    setOrders([]);
-    setOrderDetail(null);
-    setReturnOrder(null);
-    setActiveWorkspace("chat");
-    setInput("");
-  }
-
-  function preserveThreadBeforeStaffNavigation() {
-    saveCurrentThread();
-    savePersistedThreads(activeCustomerId, threadsRef.current, currentThreadKey());
-  }
-
-  function selectCustomer(customerId: string) {
+  // `orderId` undefined -> resume whichever thread was active last time;
+  // a string/null -> open that order's thread (or the unassigned one).
+  function selectCustomer(customerId: string, orderId?: string | null) {
     setHasSelectedCustomer(true);
-    setActiveCustomerId(customerId);
     setOrders([]);
     setInput("");
 
     const persisted = loadPersistedThreads(customerId);
-    if (persisted) {
-      threadsRef.current = persisted.threads;
-      const thread = persisted.threads.get(persisted.activeKey);
-      if (thread) {
-        setConversationId(thread.conversationId);
-        setMessages(thread.messages);
-        setLastResult(thread.lastResult);
-        setEvidenceCards(thread.evidenceCards);
-        setActiveOrderId(
-          persisted.activeKey === UNASSIGNED_THREAD_KEY ? null : persisted.activeKey,
-        );
-        return;
-      }
-    }
-
-    setActiveOrderId(null);
-    threadsRef.current = new Map();
-    loadThread(UNASSIGNED_THREAD_KEY);
+    threadsRef.current = persisted?.threads ?? new Map();
+    const key = orderId !== undefined && orderId !== null
+      ? orderId
+      : persisted?.activeKey ?? UNASSIGNED_THREAD_KEY;
+    setActiveOrderId(key === UNASSIGNED_THREAD_KEY ? null : key);
+    loadThread(key);
   }
 
   function selectUnassigned() {
@@ -832,20 +743,10 @@ function App() {
     setInput("我的订单现在是什么状态？");
   }
 
-  function selectOrder(order: CustomerOrder) {
+  function selectOrder(orderId: string) {
     saveCurrentThread();
-    setActiveOrderId(order.order_id);
-    const existing = threadsRef.current.get(order.order_id);
-    if (existing) {
-      loadThread(order.order_id);
-    } else {
-      const fresh = createThreadState();
-      threadsRef.current.set(order.order_id, fresh);
-      setConversationId(fresh.conversationId);
-      setMessages(fresh.messages);
-      setLastResult(null);
-      setEvidenceCards(fresh.evidenceCards);
-    }
+    setActiveOrderId(orderId);
+    loadThread(orderId);
     setInput("");
   }
 
@@ -925,25 +826,20 @@ function App() {
     }
   }
 
-  async function submitReturnShipment() {
-    const requestId = lastResult?.request_id;
-    if (!requestId || !returnOrder) return;
-    const carrier = window.prompt("请输入寄回承运商：", "顺丰速运")?.trim();
-    if (!carrier) return;
-    const trackingNumber = window.prompt("请输入寄回运单号：")?.trim();
-    if (!trackingNumber) return;
-    const response = await fetch(`${API_BASE}/service-requests/${requestId}/return-shipment`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customer_id: activeCustomerId, carrier, tracking_number: trackingNumber }),
-    });
-    const body = await response.json().catch(() => null);
-    if (!response.ok) {
-      setMessages((current) => [...current, { id: `return-error-${Date.now()}`, role: "system", content: body?.detail || "寄回信息提交失败。", time: now() }]);
-      return;
-    }
-    setReturnOrder(body as ReturnOrder);
-    setMessages((current) => [...current, { id: `return-shipped-${Date.now()}`, role: "system", content: `退货运单 ${trackingNumber} 已提交，仓库收货后将进行验收。`, time: now() }]);
+  function handleChatReturnSubmitted(next: ReturnOrder) {
+    setReturnOrder(next);
+    setMessages((current) => [...current, {
+      id: `return-shipped-${Date.now()}`,
+      role: "system",
+      content: `退货运单 ${next.return_carrier} ${next.return_tracking_number} 已提交，仓库签收并验收通过后将原路退款。`,
+      time: now(),
+    }]);
+  }
+
+  function handleRequestPageReturnSubmitted(requestId: string, next: ReturnOrder) {
+    setCustomerRequests((current) => current.map((item) => item.request_id === requestId
+      ? { ...item, workflow_status: "ReturnInTransit", return_order: next }
+      : item));
   }
 
   async function withdrawCustomerRequest(request: CustomerServiceRequestProgress) {
@@ -979,92 +875,17 @@ function App() {
     }
   }
 
-  if (!hasSelectedCustomer) {
+  const orderById = new Map(orders.map((order) => [order.order_id, order]));
+  const productPurchases = routeProductId ? orders.filter((order) => order.product_id === routeProductId) : [];
+
+  if (activeWorkspace === "requests") {
     return (
-      <div className="customer-entry">
-        <div className="customer-entry__brand">
-          <span className="brand-mark"><ShoppingBag size={18} /></span>
-          <span><b>SHOPCARE</b><small>智能电商客服演示</small></span>
-        </div>
-        <section className="customer-entry__panel">
-          <span className="eyebrow">SELECT CUSTOMER</span>
-          <h1>请选择要进入的客户</h1>
-          <p>选择后会加载该客户的订单、历史会话和售后申请。每次刷新都会回到这里。</p>
-          <div className="customer-entry__grid">
-            {customers.map((customer) => (
-              <button key={customer.customer_id} onClick={() => selectCustomer(customer.customer_id)}>
-                <span className="customer-entry__avatar"><UserRound size={18} /></span>
-                <span>
-                  <b>{customer.customer_id}</b>
-                  <small>{customer.vip_level} 会员 · 历史退款 {customer.refund_history_count} 次</small>
-                </span>
-                <CircleDot size={13} />
-              </button>
-            ))}
-          </div>
-          {customers.length === 0 && (
-            <div className="customer-entry__loading">
-              <LoaderCircle size={16} className="spin" /> 正在加载客户列表…
-            </div>
-          )}
-        </section>
-      </div>
-    );
-  }
-
-  return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-mark"><ShoppingBag size={15} /></span>
-          <span className="brand-name">SHOPCARE</span>
-          <span className="brand-subtitle">AGENT CONSOLE</span>
-        </div>
-
-        <div className="global-search">
-          <Search size={14} />
-          <span>搜索订单、申请或会话…</span>
-          <kbd>⌘ K</kbd>
-        </div>
-
-        <div className="topbar-actions">
-          <button
-            className="topbar-customer-return"
-            onClick={returnToCustomerSelection}
-            title="返回客户选择页"
-          >
-            <ArrowLeft size={13} /><span>选择客户</span>
-          </button>
-          <span className={`connection connection--${connectionState}`}>
-            <i />
-            {connectionState === "online" ? "服务在线" : connectionState === "checking" ? "连接中" : "连接异常"}
-          </span>
-          <a className="icon-button" aria-label="人工客服工作台" href={`/staff?returnCustomer=${encodeURIComponent(activeCustomerId)}`} onClick={preserveThreadBeforeStaffNavigation} title="人工客服工作台"><ShieldCheck size={16} /></a>
-          <button className="icon-button" aria-label="设置"><Settings size={16} /></button>
-          <div className="operator">
-            <span className="operator-avatar">AI</span>
-            <span><b>Decision Agent</b><small>多智能体客服</small></span>
-          </div>
-        </div>
-      </header>
-
-      <main className="workspace">
-        <nav className="rail" aria-label="主导航">
-          <button className={`rail-button ${activeWorkspace === "chat" ? "rail-button--active" : ""}`} aria-label="会话" onClick={() => setActiveWorkspace("chat")}><MessageSquare size={19} /><em>1</em></button>
-          <button className="rail-button" aria-label="订单"><Package size={19} /></button>
-          <button className={`rail-button ${activeWorkspace === "requests" ? "rail-button--active" : ""}`} aria-label="我的售后" title="我的售后" onClick={() => setActiveWorkspace("requests")}><FileText size={19} /></button>
-          <button className="rail-button" aria-label="知识库"><HelpCircle size={19} /></button>
-          <span className="rail-spacer" />
-          <button className="rail-button" aria-label="系统状态"><Activity size={19} /></button>
-        </nav>
-
-        {activeWorkspace === "requests" ? (
-          <section className="customer-requests-page">
-            <header className="customer-requests-page__header">
-              <button onClick={() => setActiveWorkspace("chat")}><ArrowLeft size={15} /> 返回客服会话</button>
-              <div><span className="eyebrow">AFTER-SALES PROGRESS</span><h1>我的售后</h1><p>共 {customerRequests.length} 条申请，覆盖该客户的全部订单；可查看证据审核、人工结论和退款结果。</p></div>
-              <span className="customer-requests-page__customer">{activeCustomerId}</span>
-            </header>
+      <UserCenterLayout customer={activeCustomer}>
+        <section className="panel customer-requests-page">
+          <header className="customer-requests-page__header">
+            <div><h1>退款/售后</h1><p>共 {customerRequests.length} 条申请，覆盖您的全部订单；可查看证据审核、人工结论和退款结果。</p></div>
+            <Link to="/service" className="btn btn--outline btn--sm"><Headset size={14} />联系客服</Link>
+          </header>
             <div className="customer-requests-list">
               {isLoadingRequests && <div className="customer-requests-empty"><LoaderCircle className="spin" size={17} /> 正在加载申请进度…</div>}
               {!isLoadingRequests && customerRequests.length === 0 && <div className="customer-requests-empty">当前客户还没有售后申请。</div>}
@@ -1090,8 +911,19 @@ function App() {
                 const requestUploadError = requestPageUploadErrors[request.request_id];
                 const isUploadingThisRequest = requestPageUploadingId === request.request_id;
                 return (
-                  <article className="customer-request-card" key={request.request_id}>
-                    <div className="customer-request-card__title"><div><b>{request.request_id}</b><span>订单 {request.order_id} · {request.request_reason} · {request.requested_quantity} 件</span></div><em>{requestWorkflowStatusLabels[request.workflow_status] || request.workflow_status}</em></div>
+                  <article
+                    className={`customer-request-card ${routeFocus === request.request_id ? "customer-request-card--focus" : ""}`}
+                    key={request.request_id}
+                    id={`request-${request.request_id}`}
+                  >
+                    <div className="customer-request-card__title">
+                      <ProductImage product={orderById.get(request.order_id)?.product} size="sm" />
+                      <div>
+                        <b>{orderById.get(request.order_id)?.product?.title ?? `订单 ${request.order_id}`}</b>
+                        <span>售后单 {request.request_id} · <Link to={`/orders/${request.order_id}`}>订单 {request.order_id}</Link> · {request.request_reason} · {request.requested_quantity} 件</span>
+                      </div>
+                      <em className={request.decision === "Reject" || request.workflow_status === "Closed" ? "is-closed" : request.decision ? "is-done" : ""}>{requestWorkflowStatusLabels[request.workflow_status] || request.workflow_status}</em>
+                    </div>
                     <div className="request-timeline">
                       <div><i /><span><b>申请已提交</b><small>{request.request_date}</small></span></div>
                       {request.evidence_reviews.map((review, index) => (
@@ -1167,6 +999,14 @@ function App() {
                         )}
                       </div>
                     )}
+                    {request.return_order && (
+                      <ReturnShipmentCard
+                        returnOrder={request.return_order}
+                        customerId={activeCustomerId}
+                        refundSucceeded={refund?.workflow_status === "Succeeded"}
+                        onSubmitted={(next) => handleRequestPageReturnSubmitted(request.request_id, next)}
+                      />
+                    )}
                     {refund?.workflow_status === "Succeeded" && <div className="refund-receipt"><CheckCircle2 size={18} /><div><b>退款成功凭证</b><span>退款金额 ¥{request.approved_amount?.toFixed(2) || "0.00"}</span><code>退款流水号 {refund.external_transaction_id}</code><small>完成时间 {refund.updated_at ? new Date(refund.updated_at).toLocaleString("zh-CN") : "—"}</small></div></div>}
                     {refund && refund.workflow_status !== "Succeeded" && <div className="refund-pending"><LoaderCircle size={14} /> 退款任务状态：{refund.workflow_status}</div>}
                     {isOpenRequest && (
@@ -1176,65 +1016,53 @@ function App() {
                 );
               })}
             </div>
-          </section>
-        ) : (<>
+        </section>
+      </UserCenterLayout>
+    );
+  }
 
+  const currentOrder = activeOrderId ? orderById.get(activeOrderId) : undefined;
+
+  return (
+    <div className="page-container service-page">
+      <div className="service-page__head">
+        <Breadcrumbs items={[{ label: "首页", to: "/" }, { label: "客服中心" }]} />
+        <span className="service-page__hours"><Headset size={14} />智能客服 7×24 小时在线 · 复杂问题自动转人工</span>
+      </div>
+    <div className="service-center">
         <aside className="scenario-panel">
           <div className="panel-heading">
-            <div><span className="eyebrow">MOCK CUSTOMER</span><h2>客户与订单</h2></div>
-            <div className="panel-heading__actions">
-              <button className="mini-button" onClick={resetConversation} title="新建会话"><Plus size={14} /></button>
-            </div>
+            <div><h2>选择咨询的订单</h2><small>{activeCustomerId} · {vipLabels[activeCustomer?.vip_level ?? ""] ?? activeCustomer?.vip_level ?? "—"} · 历史退款 {activeCustomer?.refund_history_count ?? "—"} 次</small></div>
+            <button className="mini-button" onClick={resetConversation} title="新建会话"><Plus size={14} /></button>
           </div>
-          <div className="customer-picker">
-            <UserRound size={14} />
-            <select
-              aria-label="切换模拟客户"
-              value={activeCustomerId}
-              onChange={(event) => selectCustomer(event.target.value)}
-            >
-              {customers.map((customer) => (
-                <option key={customer.customer_id} value={customer.customer_id}>
-                  {customer.customer_id} · {customer.vip_level}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="customer-summary">
-            <span>{activeCustomer?.vip_level || "—"} 会员</span>
-            <span>历史退款 {activeCustomer?.refund_history_count ?? "—"} 次</span>
-          </div>
-          <div className="scenario-filter"><Search size={13} /><span>该客户的订单</span></div>
           <div className="scenario-list">
             <button
               className={`scenario-card scenario-card--smart ${activeOrderId === null ? "scenario-card--active" : ""}`}
               onClick={selectUnassigned}
             >
-              <span className="scenario-icon scenario-icon--purple"><Sparkles size={15} /></span>
-              <span className="scenario-copy"><b>不指定订单</b><small>让 Agent 自动关联或请您选择</small><code>{activeCustomerId}</code></span>
+              <span className="scenario-icon"><Sparkles size={18} /></span>
+              <span className="scenario-copy"><b>不指定订单</b><small>让客服自动关联或请您选择</small></span>
               <CircleDot size={11} className="scenario-dot" />
             </button>
             {orders.map((order) => (
               <button
                 key={order.order_id}
                 className={`scenario-card ${activeOrderId === order.order_id ? "scenario-card--active" : ""}`}
-                onClick={() => selectOrder(order)}
+                onClick={() => selectOrder(order.order_id)}
               >
-                <span className={`scenario-icon scenario-icon--${order.order_status === "PendingShipment" ? "orange" : order.order_status === "Shipped" ? "blue" : "green"}`}>
-                  {order.order_status === "Shipped" ? <Truck size={15} /> : <Package size={15} />}
-                </span>
+                <ProductImage product={order.product} size="xs" />
                 <span className="scenario-copy">
-                  <b>{order.product_category || order.product_id} · ¥{order.amount.toFixed(2)}</b>
-                  <small>{order.order_status === "PendingShipment" ? "待发货" : order.order_status === "Shipped" ? "运输中" : "已签收"} · {order.payment_status}</small>
+                  <b>{order.product?.title ?? order.product_category ?? order.product_id}</b>
+                  <small><em className={`status-text status-text--${order.order_status.toLowerCase()}`}>{orderStatusLabels[order.order_status]}</em> · {yuan(order.amount)}</small>
                   <code>{order.order_id}</code>
                 </span>
                 <CircleDot size={11} className="scenario-dot" />
               </button>
             ))}
-            {!orders.length && <div className="empty-orders">该客户暂无订单</div>}
+            {!orders.length && <div className="empty-orders">暂无订单</div>}
           </div>
           <div className="session-card">
-            <span className="eyebrow">THREAD ID</span>
+            <span className="eyebrow">当前会话</span>
             <code>{conversationId}</code>
             <button onClick={resetConversation}><RotateCcw size={12} /> 新建独立会话</button>
           </div>
@@ -1243,17 +1071,26 @@ function App() {
         <section className="chat-panel">
           <div className="chat-header">
             <div className="agent-avatar"><Bot size={19} /></div>
-            <div><h1>智能售后助手</h1><p><code>{activeOrder || "等待订单号"}</code><span>·</span> Evidence-first workflow</p></div>
-            <div className="chat-header-status"><ShieldCheck size={14} /><span>安全决策模式</span></div>
+            <div>
+              <h1>ShopCare 智能售后助手</h1>
+              <p>
+                <span className={`connection connection--${connectionState}`}><i />{connectionState === "online" ? "在线" : connectionState === "checking" ? "连接中" : "连接异常"}</span>
+                <span>·</span>
+                {activeOrder ? <>正在咨询订单 <code>{activeOrder}</code></> : "未指定订单"}
+              </p>
+            </div>
+            <div className="chat-header-status"><ShieldCheck size={14} /><span>证据优先 · 安全决策</span></div>
           </div>
 
           <div className="messages" aria-live="polite" ref={messagesContainerRef}>
             {orderDetail && (
               <section className="order-overview" aria-label="订单与物流详情">
                 <div className="order-overview__header">
+                  <ProductImage product={orderDetail.product} size="sm" />
                   <div>
-                    <span className="eyebrow">MY ORDER</span>
-                    <h2>{orderDetail.product_category || "商品订单"}<code>{orderDetail.order_id}</code></h2>
+                    <span className="eyebrow">正在咨询的订单</span>
+                    <h2>{orderDetail.product?.title || orderDetail.product_category || "商品订单"}</h2>
+                    <p><code>{orderDetail.order_id}</code><Link to={`/orders/${orderDetail.order_id}`}>订单详情 <ChevronRight size={11} /></Link></p>
                   </div>
                   <span className={`order-status order-status--${orderDetail.order_status.toLowerCase()}`}>
                     {orderDetail.order_status === "PendingShipment" ? "待发货" : orderDetail.order_status === "Shipped" ? "运输中" : "已签收"}
@@ -1278,7 +1115,7 @@ function App() {
                 </div>
 
                 <div className="order-items-panel">
-                  <span className="eyebrow">ORDER ITEMS</span>
+                  <span className="eyebrow">订单商品</span>
                   {orderDetail.order_items.map((item) => (
                     <div className="order-item-row" key={item.order_item_id}>
                       <div>
@@ -1299,7 +1136,27 @@ function App() {
                   ) : (
                     <div><b>{orderDetail.shipped_date ? "暂未记录物流异常" : "商品尚未发货"}</b><small>{orderDetail.shipped_date ? "如状态长时间未更新，可咨询智能客服" : `承诺发货：${orderDetail.promised_ship_date || "待确认"}`}</small></div>
                   )}
-                  <button onClick={() => setInput(`请帮我查一下订单${orderDetail.order_id}`)}>咨询客服</button>
+                  <button onClick={() => setInput(orderDetail.shipped_date ? "我的快递到哪了？" : "这个订单什么时候发货？")}>{orderDetail.shipped_date ? "问物流" : "问发货"}</button>
+                </div>
+              </section>
+            )}
+            {routeProductId && productContext.data && activeOrderId === null && (
+              <section className="product-context">
+                <ProductImage product={productContext.data} size="sm" />
+                <div>
+                  <span className="eyebrow">正在咨询的商品</span>
+                  <Link to={`/product/${productContext.data.product_id}`}><b>{productContext.data.title}</b></Link>
+                  <small>{yuan(productContext.data.price)} · {productContext.data.service_promises.map((promise) => promise.title).join(" · ")}</small>
+                  {productPurchases.length > 0 ? (
+                    <div className="product-context__orders">
+                      <span>您购买过此商品，选择订单可直接办理售后：</span>
+                      {productPurchases.map((order) => (
+                        <button key={order.order_id} onClick={() => selectOrder(order.order_id)}>{order.order_id} · {orderStatusLabels[order.order_status]}</button>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="product-context__hint">售前问题可直接提问；智能客服主要处理订单、物流与售后，复杂问题会为您转接人工。</span>
+                  )}
                 </div>
               </section>
             )}
@@ -1366,20 +1223,12 @@ function App() {
             {lastResult?.request_id && (
               <div className="request-progress-card">
                 <div><FileText size={17} /><span><b>售后申请 {lastResult.request_id}</b><small>申请进度、证据审核和退款结果会持续更新。</small></span></div>
-                <button onClick={() => setActiveWorkspace("requests")}>查看申请进度 <ArrowLeft size={12} /></button>
+                <button onClick={() => navigate("/after-sales")}>查看申请进度 <ChevronRight size={12} /></button>
               </div>
             )}
             {returnOrder && (
-              <div className="evidence-upload-card">
-                <span className="evidence-upload-card__icon"><Package size={19} /></span>
-                <div>
-                  <b>退货单 {returnOrder.return_order_id}</b>
-                  <p>当前状态：{returnOrder.workflow_status}</p>
-                  <small>商品验收入库通过后才会发起原路退款。</small>
-                </div>
-                {returnOrder.workflow_status === "AwaitingShipment" && (
-                  <button className="staff-btn staff-btn--approve" onClick={() => void submitReturnShipment()}>填写寄回物流</button>
-                )}
+              <div className="chat-return-card">
+                <ReturnShipmentCard returnOrder={returnOrder} customerId={activeCustomerId} compact onSubmitted={handleChatReturnSubmitted} />
               </div>
             )}
             {isSending && (
@@ -1388,7 +1237,6 @@ function App() {
                 <div className="typing"><i /><i /><i /><span>Agent 正在编排工作流</span></div>
               </div>
             )}
-            <div ref={bottomRef} />
           </div>
 
           <div className="composer-area">
@@ -1414,48 +1262,81 @@ function App() {
         </section>
 
         <aside className="context-panel">
-          <div className="context-section context-hero">
-            <span className="eyebrow">LIVE TRACE</span>
-            <div className="context-title"><span className="context-agent-icon"><Bot size={18} /></span><div><h3>Agent 运行状态</h3><p>LangGraph · Multi-agent</p></div></div>
-            <div className="pipeline">
-              {["Conversation Router", "Evidence Agents", "Policy & Gate", "Decision / Action"].map((step, index) => (
-                <div className="pipeline-step" key={step}>
-                  <span className={lastResult && index <= 3 ? "done" : index === 0 ? "active" : ""}>
-                    {lastResult && index <= 3 ? <CheckCircle2 size={11} /> : index + 1}
+          {activeCustomer?.test_scenario && (
+            <section className="context-section context-guide">
+              <h3>测试指引</h3>
+              <b>{activeCustomer.test_scenario}</b>
+              <ul>{activeCustomer.test_hints.map((hint) => <li key={hint}>{hint}</li>)}</ul>
+            </section>
+          )}
+          <section className="context-section">
+            <h3>当前咨询</h3>
+            {currentOrder ? (
+              <div className="context-order">
+                <ProductImage product={currentOrder.product} size="sm" />
+                <div>
+                  <b>{currentOrder.product?.title ?? currentOrder.order_id}</b>
+                  <small><em className={`status-text status-text--${currentOrder.order_status.toLowerCase()}`}>{orderStatusLabels[currentOrder.order_status]}</em> · {yuan(currentOrder.amount)}</small>
+                  <span className="context-order__links">
+                    <Link to={`/orders/${currentOrder.order_id}`}>订单详情</Link>
+                    {currentOrder.order_status !== "PendingShipment" && <Link to={`/orders/${currentOrder.order_id}#tracking`}>查看物流</Link>}
+                    <Link to={`/product/${currentOrder.product_id}`}>商品页</Link>
                   </span>
-                  <b>{step}</b>
+                </div>
+              </div>
+            ) : (
+              <p className="context-empty">未指定订单。您可以在左侧选择订单，或直接描述问题，客服会帮您关联。</p>
+            )}
+          </section>
+
+          <section className="context-section">
+            <h3>本次处理进度</h3>
+            <div className="metadata-list">
+              {metadata.map(([label, value]) => (
+                <div className="metadata-row" key={label}><span>{label}</span><code className={value !== "—" && value !== "等待提问" ? "has-value" : ""}>{value}</code></div>
+              ))}
+            </div>
+            {lastResult?.request_id && (
+              <button className="btn btn--outline btn--sm btn--block context-section__action" onClick={() => navigate("/after-sales")}>查看售后进度</button>
+            )}
+          </section>
+
+          <section className="context-section">
+            <h3>智能客服如何处理</h3>
+            <div className="pipeline">
+              {[
+                ["理解问题", "识别您的诉求并关联订单"],
+                ["核查事实", "订单、物流与证据交叉核验"],
+                ["政策校验", "按平台规则与风险策略审核"],
+                ["给出结论", "自动处理或转人工复核"],
+              ].map(([step, hint], index) => (
+                <div className="pipeline-step" key={step}>
+                  <span className={lastResult ? "done" : index === 0 ? "active" : ""}>
+                    {lastResult ? <CheckCircle2 size={11} /> : index + 1}
+                  </span>
+                  <div><b>{step}</b><small>{hint}</small></div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div className="context-section">
-            <span className="eyebrow">STRUCTURED RESULT</span>
-            <div className="metadata-list">
-              {metadata.map(([label, value]) => (
-                <div className="metadata-row" key={label}><span>{label}</span><code className={value !== "—" && value !== "等待消息" ? "has-value" : ""}>{value}</code></div>
-              ))}
-            </div>
-          </div>
-
-          <div className="context-section">
-            <span className="eyebrow">CAPABILITIES</span>
+          <section className="context-section">
+            <h3>服务保障</h3>
             <div className="capability-grid">
-              <div><Package size={14} /><span>订单事实</span></div>
-              <div><Truck size={14} /><span>物流核查</span></div>
-              <div><ShieldCheck size={14} /><span>证据门控</span></div>
-              <div><Box size={14} /><span>履约动作</span></div>
+              <div><Package size={14} /><span>订单核查</span></div>
+              <div><Truck size={14} /><span>物流追踪</span></div>
+              <div><ShieldCheck size={14} /><span>证据审核</span></div>
+              <div><Box size={14} /><span>极速退款</span></div>
             </div>
-          </div>
+          </section>
 
           {lastResult?.action_id && (
-            <div className="action-receipt"><CheckCircle2 size={18} /><div><span>业务动作已记录</span><code>{lastResult.action_id}</code></div></div>
+            <div className="action-receipt"><CheckCircle2 size={18} /><div><span>处理动作已记录</span><code>{lastResult.action_id}</code></div></div>
           )}
         </aside>
-        </>)}
-      </main>
+    </div>
     </div>
   );
 }
 
-export default App;
+export default ServiceCenter;

@@ -51,14 +51,14 @@ class PostgresLifecycleIntegrationTests(unittest.TestCase):
                                  'SKU-TEST-1', '测试规格', 99, 2, 198)"""
                 )
 
-    def _create_request(self) -> dict:
+    def _create_request(self, request_reason: str = "质量问题") -> dict:
         self._seed_order_item()
         from src.backend.repositories.service_request_repository import create_service_request
         record, created = create_service_request(
             order_id="ORD-TEST-1",
             customer_id="CUS-TEST-1",
             request_type="Refund",
-            request_reason="质量问题",
+            request_reason=request_reason,
             requested_quantity=1,
             order_item={
                 "order_item_id": "OI-TEST-1", "order_id": "ORD-TEST-1",
@@ -176,6 +176,91 @@ class PostgresLifecycleIntegrationTests(unittest.TestCase):
         for thread in threads:
             thread.join()
         self.assertEqual(sum(item is not None for item in claimed), 1)
+
+    def _escalate_and_claim(self, request_id: str, staff_id: str = "agent-a") -> dict:
+        import psycopg
+        with psycopg.connect(TEST_DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE service_requests SET workflow_status = 'EscalatedToHuman' WHERE request_id = %s",
+                    (request_id,),
+                )
+        from src.backend.repositories.service_request_repository import claim_service_request
+        claimed = claim_service_request(request_id, staff_id=staff_id)
+        self.assertIsNotNone(claimed)
+        return claimed
+
+    def _count(self, sql: str, *params) -> int:
+        import psycopg
+        with psycopg.connect(TEST_DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(sql, params)
+                return cursor.fetchone()[0]
+
+    def test_human_approved_no_reason_refund_waits_for_the_return(self) -> None:
+        request = self._create_request("不想要了")
+        claimed = self._escalate_and_claim(request["request_id"])
+        from src.backend.repositories.decision_lifecycle_repository import resolve_human_decision
+        from src.backend.repositories.return_order_repository import get_return_order_for_request
+        from src.backend.repositories.service_request_repository import get_service_request
+
+        resolve_human_decision(
+            request["request_id"], decision="Approve", approved_quantity=1,
+            approved_amount=99.0, staff_id="agent-a", staff_role="reviewer",
+            expected_version=claimed["row_version"], resolution_notes="人工核实同意退货",
+        )
+
+        self.assertEqual(get_service_request(request["request_id"])["workflow_status"], "ReturnAwaitingShipment")
+        return_order = get_return_order_for_request(request["request_id"])
+        self.assertIsNotNone(return_order)
+        self.assertEqual(return_order["workflow_status"], "AwaitingShipment")
+        self.assertEqual(float(return_order["refundable_amount"]), 99.0)
+        # No money moves before the goods are back and inspected.
+        self.assertEqual(self._count("SELECT count(*) FROM action_tasks WHERE request_id = %s", request["request_id"]), 0)
+
+    def test_return_flow_creates_the_refund_only_after_inspection(self) -> None:
+        request = self._create_request("不想要了")
+        claimed = self._escalate_and_claim(request["request_id"])
+        from src.backend.repositories.decision_lifecycle_repository import resolve_human_decision
+        from src.backend.repositories.return_order_repository import (
+            get_return_order_for_request, inspect_return, list_return_orders,
+            receive_return, submit_return_shipment,
+        )
+        from src.backend.repositories.service_request_repository import get_service_request
+
+        resolve_human_decision(
+            request["request_id"], decision="Approve", approved_quantity=1,
+            approved_amount=99.0, staff_id="agent-a", staff_role="reviewer",
+            expected_version=claimed["row_version"], resolution_notes=None,
+        )
+        return_id = get_return_order_for_request(request["request_id"])["return_order_id"]
+
+        # Another customer cannot submit the shipment for this return.
+        self.assertIsNone(submit_return_shipment(request["request_id"], "CUS-OTHER", "顺丰速运", "SF123"))
+        shipped = submit_return_shipment(request["request_id"], "CUS-TEST-1", "顺丰速运", "SF1234567890")
+        self.assertEqual(shipped["workflow_status"], "InTransit")
+        self.assertEqual(get_service_request(request["request_id"])["workflow_status"], "ReturnInTransit")
+        self.assertEqual([item["return_order_id"] for item in list_return_orders(["InTransit"])], [return_id])
+        # Inspection is only possible once the warehouse has received it.
+        self.assertIsNone(inspect_return(return_id, True, None))
+
+        self.assertEqual(receive_return(return_id)["workflow_status"], "AwaitingInspection")
+        self.assertEqual(get_service_request(request["request_id"])["workflow_status"], "ReturnAwaitingInspection")
+        inspected = inspect_return(return_id, True, "包装完好")
+        self.assertEqual(inspected["workflow_status"], "InspectionAccepted")
+        self.assertEqual(get_service_request(request["request_id"])["workflow_status"], "ExecutionPending")
+        self.assertEqual(self._count(
+            "SELECT count(*) FROM action_tasks WHERE request_id = %s AND action_type = 'RefundPayment'",
+            request["request_id"],
+        ), 1)
+
+    def test_staff_history_filters_live_requests(self) -> None:
+        request = self._create_request()
+        from src.backend.repositories.service_request_repository import list_staff_service_requests
+        self.assertEqual([item["request_id"] for item in list_staff_service_requests()], [request["request_id"]])
+        self.assertEqual(len(list_staff_service_requests(query="cus-test")), 1)
+        self.assertEqual(list_staff_service_requests(workflow_status="Closed"), [])
+        self.assertIsInstance(list_staff_service_requests()[0]["created_at"], str)
 
 
 if __name__ == "__main__":

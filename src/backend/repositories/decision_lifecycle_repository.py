@@ -38,6 +38,32 @@ def _action_type(final_result: dict[str, Any]) -> str | None:
     return None
 
 
+def requires_return_shipment(final_result: dict[str, Any]) -> bool:
+    """A no-reason ("不想要了") refund is only paid once the goods come back:
+    approving it opens a return order instead of an immediate refund task
+    (the RefundPayment task is created at warehouse inspection, see
+    return_order_repository.inspect_return). Applies to automatic and human
+    approvals alike."""
+    return (
+        final_result.get("decision") in {"Approve", "PartialApprove"}
+        and final_result.get("request_reason") == "不想要了"
+    )
+
+
+def _insert_return_order(cursor, final_result: dict[str, Any]) -> None:
+    cursor.execute(
+        """INSERT INTO return_orders (
+               return_order_id, request_id, order_id, customer_id,
+               order_item_id, quantity, refundable_amount, workflow_status
+           ) VALUES (%s, %s, %s, %s, %s, %s, %s, 'AwaitingShipment')
+           ON CONFLICT (request_id) DO NOTHING""",
+        (f"RET-{uuid4().hex}", final_result["request_id"],
+         final_result.get("order_id"), final_result.get("customer_id"),
+         final_result.get("order_item_id"), final_result.get("approved_quantity"),
+         final_result.get("approved_amount")),
+    )
+
+
 def build_execution_plan(final_result: dict[str, Any]) -> dict[str, Any] | None:
     action_type = _action_type(final_result)
     if action_type is None:
@@ -69,10 +95,7 @@ def persist_decision_lifecycle(
     """
     decision_id = f"DEC-{uuid4().hex}"
     snapshot_hash = _stable_hash(input_snapshot)
-    return_eligibility = (
-        final_result.get("decision") == "Approve"
-        and final_result.get("request_reason") == "不想要了"
-    )
+    return_eligibility = requires_return_shipment(final_result)
     execution_plan = build_execution_plan(final_result)
     action_id = f"ACT-{uuid4().hex}" if execution_plan else None
     event_id = f"EVT-{uuid4().hex}" if execution_plan else None
@@ -196,17 +219,7 @@ def persist_decision_lifecycle(
                     )
 
             if return_eligibility:
-                cursor.execute(
-                    """INSERT INTO return_orders (
-                           return_order_id, request_id, order_id, customer_id,
-                           order_item_id, quantity, refundable_amount, workflow_status
-                       ) VALUES (%s, %s, %s, %s, %s, %s, %s, 'AwaitingShipment')
-                       ON CONFLICT (request_id) DO NOTHING""",
-                    (f"RET-{uuid4().hex}", final_result["request_id"],
-                     final_result.get("order_id"), final_result.get("customer_id"),
-                     final_result.get("order_item_id"), final_result.get("approved_quantity"),
-                     final_result.get("approved_amount")),
-                )
+                _insert_return_order(cursor, final_result)
 
             cursor.execute(
                 """
@@ -429,7 +442,11 @@ def resolve_human_decision(
                 "approved_amount": approved_amount,
             }
             execution_plan = build_execution_plan(final_result)
-            workflow_status = "ExecutionPending" if execution_plan else "Closed"
+            return_eligibility = requires_return_shipment(final_result)
+            workflow_status = (
+                "ReturnAwaitingShipment" if return_eligibility
+                else "ExecutionPending" if execution_plan else "Closed"
+            )
             snapshot_hash = _stable_hash({
                 "request_id": request_id,
                 "row_version": expected_version,
@@ -486,6 +503,9 @@ def resolve_human_decision(
                             **execution_plan["payload"],
                         })),
                     )
+
+            if return_eligibility:
+                _insert_return_order(cursor, final_result)
 
             cursor.execute(
                 """
@@ -566,6 +586,18 @@ def list_failed_actions() -> list[dict[str, Any]]:
                    ORDER BY updated_at"""
             )
             return [dict(record) for record in cursor.fetchall()]
+
+
+def count_actions_by_status() -> dict[str, int]:
+    """workflow_status -> number of action tasks, for the staff dashboard."""
+    database_url = get_database_url()
+    if not database_url:
+        return {}
+    import psycopg
+    with psycopg.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT workflow_status, count(*) FROM action_tasks GROUP BY workflow_status")
+            return {status: count for status, count in cursor.fetchall()}
 
 
 def list_actions_for_request(request_id: str) -> list[dict[str, Any]]:

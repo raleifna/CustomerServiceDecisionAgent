@@ -1,0 +1,9 @@
+[
+  {
+    "order_id": "ORD9901030001",
+    "carrier": "京东物流",
+    "exception_type": "物流停滞超72小时",
+    "exception_recorded_date": "2026-11-01",
+    "resolved": false
+  }
+]

@@ -55,6 +55,67 @@ class CustomerSummary(BaseModel):
     vip_level: str
     register_date: str
     refund_history_count: int
+    # Only set for the generated demo test accounts (see
+    # scripts/demo/seed_test_accounts.py): what the account is for and what
+    # to try saying in the chat.
+    test_scenario: str | None = None
+    test_hints: list[str] = Field(default_factory=list)
+
+
+class ProductCard(BaseModel):
+    """Storefront display data -- presentation only, never decision input."""
+    product_id: str
+    title: str
+    brand: str
+    subtitle: str = ""
+    category: str
+    price: float
+    original_price: float | None = None
+    rating: float
+    review_count: int
+    monthly_sales: int
+    tags: list[str] = Field(default_factory=list)
+    icon: str
+    palette: str
+    is_fragile: bool = False
+    is_customized: bool = False
+
+
+class ProductSpec(BaseModel):
+    label: str
+    value: str
+
+
+class ProductSku(BaseModel):
+    sku_id: str
+    sku_name: str
+
+
+class ProductReview(BaseModel):
+    user: str
+    rating: int
+    date: str
+    sku_name: str
+    content: str
+
+
+class ServicePromise(BaseModel):
+    title: str
+    detail: str
+
+
+class ProductDetail(ProductCard):
+    highlights: list[str] = Field(default_factory=list)
+    description: str = ""
+    specs: list[ProductSpec] = Field(default_factory=list)
+    skus: list[ProductSku] = Field(default_factory=list)
+    reviews: list[ProductReview] = Field(default_factory=list)
+    service_promises: list[ServicePromise] = Field(default_factory=list)
+
+
+class ProductCategory(BaseModel):
+    category: str
+    product_count: int
 
 
 class OrderSummary(BaseModel):
@@ -71,6 +132,7 @@ class OrderSummary(BaseModel):
     amount: float
     payment_status: str
     order_status: str
+    product: ProductCard | None = None
 
 
 class LogisticsSummary(BaseModel):
@@ -94,10 +156,25 @@ class OrderItemSummary(BaseModel):
     shipped_quantity: int | None = None
 
 
+class TrackingCheckpoint(BaseModel):
+    time: str
+    location: str
+    description: str
+
+
+class OrderTracking(BaseModel):
+    order_id: str
+    carrier: str | None = None
+    tracking_number: str | None = None
+    current_status: str | None = None
+    checkpoints: list[TrackingCheckpoint] = Field(default_factory=list)
+
+
 class OrderDetail(OrderSummary):
     logistics: list[LogisticsSummary]
     order_items: list[OrderItemSummary] = Field(default_factory=list)
     refunded_amount: float = 0.0
+    tracking: OrderTracking | None = None
 
 
 class EvidenceSummary(BaseModel):
@@ -152,12 +229,15 @@ class CustomerServiceRequestProgress(BaseModel):
     evidence_reviews: list[CustomerEvidenceReview] = Field(default_factory=list)
     evidence: list[EvidenceSummary] = Field(default_factory=list)
     actions: list[dict[str, Any]] = Field(default_factory=list)
+    return_order: dict[str, Any] | None = None
 
 
 class ReturnShipmentRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     customer_id: str = Field(pattern=r"^CUS\d{4}$")
     carrier: str = Field(min_length=1, max_length=100)
-    tracking_number: str = Field(min_length=3, max_length=100)
+    tracking_number: str = Field(min_length=6, max_length=40, pattern=r"^[A-Za-z0-9-]+$")
 
 
 class WithdrawServiceRequestPayload(BaseModel):
@@ -186,6 +266,17 @@ class StaffServiceRequestSummary(BaseModel):
     assigned_to: str | None = None
     lease_expires_at: str | None = None
     row_version: int = 0
+    approved_quantity: int | None = None
+    approved_amount: float | None = None
+    decision_confidence: float | None = None
+    resolved_by: str | None = None
+    resolution_notes: str | None = None
+    resolved_at: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    # Storefront display card for the order's product (presentation only).
+    product: ProductCard | None = None
+    order_amount: float | None = None
 
 
 class StaffEvidenceSummary(BaseModel):
@@ -228,6 +319,33 @@ class StaffServiceRequestDetail(BaseModel):
     evidence: list[StaffEvidenceSummary] = Field(default_factory=list)
     order_items: list[OrderItemSummary] = Field(default_factory=list)
     request_items: list[dict[str, Any]] = Field(default_factory=list)
+    tracking: OrderTracking | None = None
+    return_order: dict[str, Any] | None = None
+    actions: list[dict[str, Any]] = Field(default_factory=list)
+    # The same customer's other after-sales cases, newest first.
+    customer_requests: list[StaffServiceRequestSummary] = Field(default_factory=list)
+
+
+class StaffReturnOrder(BaseModel):
+    return_order_id: str
+    request_id: str
+    order_id: str
+    customer_id: str
+    order_item_id: str
+    quantity: int
+    refundable_amount: float
+    workflow_status: str
+    return_carrier: str | None = None
+    return_tracking_number: str | None = None
+    shipped_at: str | None = None
+    received_at: str | None = None
+    inspected_at: str | None = None
+    inspection_result: str | None = None
+    inspection_notes: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    request_reason: str | None = None
+    product: ProductCard | None = None
 
 
 class ServiceRequestResolutionRequest(BaseModel):

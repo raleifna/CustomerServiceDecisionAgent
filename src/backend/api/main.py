@@ -20,6 +20,9 @@ from src.backend.api.schemas import (
     HealthResponse,
     OrderDetail,
     OrderSummary,
+    ProductCard,
+    ProductCategory,
+    ProductDetail,
 )
 from src.backend.graph.workflow import (
     compile_conversation_graph,
@@ -32,8 +35,15 @@ from src.backend.repositories.mock_db_repository import (
     get_order,
     get_orders_by_customer_id,
     get_logistics,
-    get_product,
+    get_logistics_tracking,
     load_table,
+    load_test_account_guide,
+)
+from src.backend.repositories.product_catalog_repository import (
+    get_storefront_product_card,
+    get_storefront_product_detail,
+    list_storefront_categories,
+    list_storefront_products,
 )
 from src.backend.repositories.postgres_repository import (
     database_is_available,
@@ -227,7 +237,55 @@ def health() -> HealthResponse:
 
 @app.get("/customers", response_model=list[CustomerSummary], tags=["customers"])
 def list_customers() -> list[CustomerSummary]:
-    return [CustomerSummary.model_validate(item) for item in load_table("customers.json")]
+    guide = load_test_account_guide()
+    return [
+        CustomerSummary.model_validate({
+            **item,
+            "test_scenario": guide.get(item["customer_id"], {}).get("title"),
+            "test_hints": guide.get(item["customer_id"], {}).get("hints", []),
+        })
+        for item in load_table("customers.json")
+    ]
+
+
+@app.get("/products", response_model=list[ProductCard], tags=["storefront"])
+def list_products(
+    category: str | None = None,
+    q: str | None = None,
+    sort: str | None = None,
+) -> list[ProductCard]:
+    return [
+        ProductCard.model_validate(card)
+        for card in list_storefront_products(category=category, query=q, sort=sort)
+    ]
+
+
+@app.get("/product-categories", response_model=list[ProductCategory], tags=["storefront"])
+def list_product_categories() -> list[ProductCategory]:
+    return [ProductCategory.model_validate(item) for item in list_storefront_categories()]
+
+
+@app.get("/products/{product_id}", response_model=ProductDetail, tags=["storefront"])
+def get_product_detail(product_id: str) -> ProductDetail:
+    detail = get_storefront_product_detail(product_id)
+    if detail is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="商品不存在。")
+    return ProductDetail.model_validate(detail)
+
+
+# Where customers send no-reason returns. Demo data; shown on the return card.
+RETURN_WAREHOUSE = {
+    "recipient": "ShopCare 退货仓",
+    "phone": "400-800-0000",
+    "address": "浙江省杭州市余杭区仓前街道退货处理中心 1 号库",
+}
+
+
+def _customer_return_order(request_id: str) -> dict | None:
+    return_order = get_return_order_for_request(request_id)
+    if return_order is None:
+        return None
+    return {**return_order, "return_address": RETURN_WAREHOUSE}
 
 
 def _order_status(order: dict) -> str:
@@ -253,14 +311,17 @@ def list_customer_orders(customer_id: str) -> list[OrderSummary]:
 
     result = []
     for order in get_orders_by_customer_id(customer_id):
-        product = get_product(order.get("product_id")) or {}
+        product = get_storefront_product_card(order.get("product_id"))
         result.append(
             OrderSummary(
                 **order,
-                product_category=product.get("category"),
+                product_category=product["category"] if product else None,
                 order_status=_order_status(order),
+                product=product,
             )
         )
+    # Newest first, like any shop's "我的订单" list.
+    result.sort(key=lambda order: order.order_date, reverse=True)
     return result
 
 
@@ -295,6 +356,7 @@ def list_customer_service_requests(customer_id: str) -> list[CustomerServiceRequ
             evidence_reviews=reviews,
             evidence=[_to_evidence_summary(record) for record in evidence_records],
             actions=list_actions_for_request(request_id),
+            return_order=_customer_return_order(request_id),
         ))
     return result
 
@@ -317,14 +379,16 @@ def get_customer_order_detail(customer_id: str, order_id: str) -> OrderDetail:
             detail="该订单不属于当前客户。",
         )
 
-    product = get_product(order.get("product_id")) or {}
+    product = get_storefront_product_card(order.get("product_id"))
     return OrderDetail(
         **order,
-        product_category=product.get("category"),
+        product_category=product["category"] if product else None,
         order_status=_order_status(order),
+        product=product,
         logistics=get_logistics(order_id),
         order_items=get_order_items(order_id),
         refunded_amount=get_completed_refund_amount(order_id),
+        tracking=get_logistics_tracking(order_id),
     )
 
 
@@ -372,7 +436,7 @@ def get_customer_service_request_status(
         approved_amount=service_request.get("approved_amount"),
         resolution_notes=service_request.get("resolution_notes"),
         resolved_at=(resolved_at.isoformat() if hasattr(resolved_at, "isoformat") else resolved_at),
-        return_order=get_return_order_for_request(request_id),
+        return_order=_customer_return_order(request_id),
         evidence_reviews=evidence_reviews,
         actions=list_actions_for_request(request_id),
     )
@@ -405,10 +469,13 @@ def withdraw_customer_service_request(
 @app.post("/service-requests/{request_id}/return-shipment", tags=["service-requests"])
 def submit_customer_return_shipment(request_id: str, payload: ReturnShipmentRequest) -> dict:
     _owned_service_request(request_id, payload.customer_id)
-    result = submit_return_shipment(request_id, payload.customer_id, payload.carrier, payload.tracking_number)
+    try:
+        result = submit_return_shipment(request_id, payload.customer_id, payload.carrier, payload.tracking_number)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail="退货服务暂时不可用，请稍后重试。") from exc
     if result is None:
-        raise HTTPException(status_code=409, detail="退货单不存在或当前状态不能提交寄回信息。")
-    return result
+        raise HTTPException(status_code=409, detail="退货单不存在，或已经提交过寄回物流。")
+    return {**result, "return_address": RETURN_WAREHOUSE}
 
 
 @app.post(

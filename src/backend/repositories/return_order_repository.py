@@ -17,6 +17,35 @@ def get_return_order_for_request(request_id: str) -> dict[str, Any] | None:
             return dict(row) if row else None
 
 
+def _serialize(row: dict[str, Any]) -> dict[str, Any]:
+    item = dict(row)
+    for key, value in item.items():
+        if hasattr(value, "isoformat"):
+            item[key] = value.isoformat()
+    if item.get("refundable_amount") is not None:
+        item["refundable_amount"] = float(item["refundable_amount"])
+    return item
+
+
+def list_return_orders(statuses: list[str] | None = None) -> list[dict[str, Any]]:
+    """Return orders for the staff warehouse queue, oldest update first."""
+    database_url = get_database_url()
+    if not database_url:
+        return []
+    import psycopg
+    from psycopg.rows import dict_row
+    with psycopg.connect(database_url, row_factory=dict_row) as connection:
+        with connection.cursor() as cursor:
+            if statuses:
+                cursor.execute(
+                    "SELECT * FROM return_orders WHERE workflow_status = ANY(%s) ORDER BY updated_at",
+                    (statuses,),
+                )
+            else:
+                cursor.execute("SELECT * FROM return_orders ORDER BY updated_at DESC LIMIT 200")
+            return [_serialize(row) for row in cursor.fetchall()]
+
+
 def submit_return_shipment(request_id: str, customer_id: str, carrier: str, tracking_number: str) -> dict[str, Any] | None:
     database_url = get_database_url()
     if not database_url:

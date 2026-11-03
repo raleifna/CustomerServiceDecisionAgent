@@ -527,6 +527,66 @@ def list_staff_service_request_queue() -> list[dict[str, Any]]:
             return [_normalize(dict(record)) for record in cursor.fetchall()]
 
 
+def list_staff_service_requests(
+    *,
+    workflow_status: str | None = None,
+    query: str | None = None,
+    limit: int = 200,
+) -> list[dict[str, Any]]:
+    """Every live service request for the staff case history, newest first.
+
+    Optionally narrowed to one workflow_status and/or a case-insensitive
+    substring of request_id / order_id / customer_id. Without a database
+    there is no live history -- fall back to the JSON seed requests so the
+    page still renders in local fixture mode.
+    """
+    needle = (query or "").strip().lower()
+    database_url = get_database_url()
+    if not database_url:
+        records = [
+            record for record in load_table("service_requests.json")
+            if (not workflow_status or record.get("workflow_status") == workflow_status)
+            and (not needle or any(
+                needle in str(record.get(key, "")).lower()
+                for key in ("request_id", "order_id", "customer_id")
+            ))
+        ]
+        return sorted(records, key=lambda record: record.get("request_date", ""), reverse=True)[:limit]
+
+    import psycopg
+    from psycopg.rows import dict_row
+
+    conditions, params = [], []
+    if workflow_status:
+        conditions.append("workflow_status = %s")
+        params.append(workflow_status)
+    if needle:
+        conditions.append(
+            "(lower(request_id) LIKE %s OR lower(order_id) LIKE %s OR lower(customer_id) LIKE %s)"
+        )
+        params.extend([f"%{needle}%"] * 3)
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+    with psycopg.connect(database_url, row_factory=dict_row) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT {SERVICE_REQUEST_FIELDS}, created_at, updated_at
+                FROM service_requests {where}
+                ORDER BY created_at DESC
+                LIMIT %s
+                """,
+                (*params, limit),
+            )
+            records = []
+            for record in cursor.fetchall():
+                item = _normalize(dict(record))
+                for key in ("created_at", "updated_at"):
+                    if item.get(key) is not None:
+                        item[key] = item[key].isoformat()
+                records.append(item)
+            return records
+
+
 def claim_service_request(
     request_id: str, *, staff_id: str, lease_minutes: int = 15
 ) -> dict[str, Any] | None:
