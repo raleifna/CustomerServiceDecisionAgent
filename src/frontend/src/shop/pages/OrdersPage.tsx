@@ -2,7 +2,7 @@ import { ReceiptText, Store } from "lucide-react";
 import { useMemo } from "react";
 
 import { Customer, CustomerOrder, CustomerServiceRequestProgress, orderStatusLabels, requestWorkflowStatusLabels, yuan } from "../api";
-import { EmptyState, Link, UserCenterLayout } from "../components";
+import { CustomizedNotice, EmptyState, Link, UserCenterLayout } from "../components";
 import { useCustomerOrders, useFetch } from "../hooks";
 import { ProductImage } from "../ProductImage";
 import { navigate, useLocation } from "../router";
@@ -89,6 +89,7 @@ export default function OrdersPage({ customerId, customer }: { customerId: strin
                     <div>
                       <b>{order.product?.title ?? order.product_id}</b>
                       <small>{order.product_category} · 数量 ×{order.quantity}</small>
+                      {order.product?.is_customized && <CustomizedNotice variant="tag" />}
                       {badge && <span className={`pill pill--${badge.tone}`}>{badge.label}</span>}
                     </div>
                   </Link>

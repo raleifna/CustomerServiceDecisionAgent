@@ -2,7 +2,7 @@ import { AlertTriangle, CheckCircle2, ClipboardList, CreditCard, Headset, MapPin
 import { useEffect, useState } from "react";
 
 import { Customer, CustomerServiceRequestProgress, OrderDetail, orderStatusLabels, yuan } from "../api";
-import { Breadcrumbs, EmptyState, Link, UserCenterLayout } from "../components";
+import { Breadcrumbs, CustomizedNotice, EmptyState, Link, UserCenterLayout } from "../components";
 import { useFetch } from "../hooks";
 import { ProductImage } from "../ProductImage";
 import { ReturnShipmentCard } from "../ReturnShipment";
@@ -64,6 +64,7 @@ export default function OrderDetailPage({ customerId, customer, orderId }: { cus
           <Link to={ask("我想申请售后")} className="btn btn--outline">申请售后</Link>
           <Link to={`/service?order=${order.order_id}`} className="btn btn--ghost"><Headset size={15} />联系客服</Link>
         </div>
+        {order.product?.is_customized && <div className="order-status-hero__notice"><CustomizedNotice variant="banner" /></div>}
         <ol className="order-steps">
           {steps.map((step, index) => (
             <li key={step.label} className={step.done ? "done" : ""}>
@@ -158,7 +159,11 @@ export default function OrderDetailPage({ customerId, customer, orderId }: { cus
             <div key={item.order_item_id} className="order-items__row">
               <Link to={`/product/${item.product_id}`} className="order-items__product">
                 <ProductImage product={item.product_id === order.product_id ? order.product : null} size="sm" />
-                <span><b>{item.product_id === order.product_id ? order.product?.title : item.product_id}</b><small>{item.sku_name}</small></span>
+                <span>
+                  <b>{item.product_id === order.product_id ? order.product?.title : item.product_id}</b>
+                  <small>{item.sku_name}</small>
+                  {item.product_id === order.product_id && order.product?.is_customized && <CustomizedNotice variant="tag" />}
+                </span>
               </Link>
               <span>{yuan(item.unit_price)}</span>
               <span>×{item.quantity}</span>

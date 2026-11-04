@@ -2,7 +2,7 @@ import { CircleAlert, CreditCard, MapPin, Wallet, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Customer, yuan } from "../api";
-import { EmptyState, Link } from "../components";
+import { CustomizedNotice, EmptyState, Link } from "../components";
 import { useCatalog } from "../hooks";
 import { ProductImage } from "../ProductImage";
 import { useLocation } from "../router";
@@ -54,7 +54,7 @@ export default function CheckoutPage({ customer }: { customer: Customer | undefi
           return (
             <div className="checkout-line" key={`${line.product_id}-${line.sku_id}`}>
               <ProductImage product={product} size="sm" />
-              <div><b>{product!.title}</b><small>{skuName}</small></div>
+              <div><b>{product!.title}</b><small>{skuName}</small>{product!.is_customized && <CustomizedNotice variant="tag" />}</div>
               <span>{yuan(product!.price)} × {line.quantity}</span>
               <b>{yuan(product!.price * line.quantity)}</b>
             </div>
@@ -70,6 +70,8 @@ export default function CheckoutPage({ customer }: { customer: Customer | undefi
           ))}
         </div>
       </section>
+
+      {rows.some(({ product }) => product?.is_customized) && <CustomizedNotice variant="banner" />}
 
       <div className="checkout-summary">
         <dl>

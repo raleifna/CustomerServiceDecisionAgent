@@ -2,7 +2,7 @@ import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 
 import { yuan } from "../api";
-import { EmptyState, Link, Price, ProductTile } from "../components";
+import { CustomizedNotice, EmptyState, Link, Price, ProductTile } from "../components";
 import { useCatalog } from "../hooks";
 import { ProductImage } from "../ProductImage";
 import { navigate } from "../router";
@@ -47,6 +47,7 @@ export default function CartPage() {
               <div>
                 <Link to={`/product/${line.product_id}`} className="cart-row__title">{product?.title ?? line.product_id}</Link>
                 <small>规格：{line.sku_name}</small>
+                {product?.is_customized && <CustomizedNotice variant="tag" />}
               </div>
             </div>
             <span>{product ? <Price value={product.price} original={product.original_price} size="sm" /> : "—"}</span>

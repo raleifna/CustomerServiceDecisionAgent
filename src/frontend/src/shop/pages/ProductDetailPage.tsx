@@ -15,7 +15,7 @@ import {
 import { useMemo, useState } from "react";
 
 import { compactCount, orderStatusLabels, ProductCard, ProductDetail } from "../api";
-import { Breadcrumbs, EmptyState, Link, Price, ProductTile } from "../components";
+import { Breadcrumbs, CustomizedNotice, EmptyState, Link, Price, ProductTile } from "../components";
 import { useCustomerOrders, useFetch } from "../hooks";
 import { ProductImage, Stars } from "../ProductImage";
 import { navigate } from "../router";
@@ -133,6 +133,8 @@ export default function ProductDetailPage({ productId, customerId, onLogin }: { 
               </span>
             </dd>
           </dl>
+
+          {product.is_customized && <CustomizedNotice variant="banner" />}
 
           <div className="pdp-actions">
             <button className="btn btn--outline btn--lg" onClick={handleAddToCart}><ShoppingCart size={17} />加入购物车</button>

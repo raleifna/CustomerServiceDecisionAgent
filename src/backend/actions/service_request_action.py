@@ -310,6 +310,29 @@ def service_request_action_node(
                 f"{options}。系统不会默认对整张订单发起售后。"
             ),
         }
+
+    # Same eligibility pre-check as the 7-day window above, for customized
+    # goods (REFUND-009): tell the customer up front instead of creating a
+    # request only for the decision engine to reject it. Checked on the
+    # selected item, since only one item of a multi-item order may be
+    # customized. The decision rule stays as the second line of defence.
+    item_product = get_product(order_item.get("product_id")) or {}
+    if pending.get("request_reason") == "不想要了" and item_product.get("is_customized"):
+        context.pop("pending_service_request", None)
+        context.pop("pending_action", None)
+        context["last_eligibility_denial"] = {
+            "order_id": order_id,
+            "request_reason": "不想要了",
+            "customized": True,
+        }
+        return {
+            "conversation_context": context,
+            "customer_response": (
+                f"很抱歉，「{order_item.get('sku_name') or '该商品'}」是定制商品，"
+                "制作完成后不支持无理由退货，本次不会为您创建售后申请。"
+                "如果商品存在质量问题、破损、错发或少发，请告诉我具体情况，我们会按专项售后为您处理。"
+            ),
+        }
     requested_quantity = pending.get("requested_quantity")
     ordered_quantity = order_item.get("quantity")
     if requested_quantity is None and ordered_quantity == 1:

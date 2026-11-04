@@ -1,4 +1,4 @@
-import { ChevronRight, FileText, Headset, LogIn, Package, ReceiptText, UserRound } from "lucide-react";
+import { ChevronRight, FileText, Headset, LogIn, Package, PenLine, ReceiptText, UserRound } from "lucide-react";
 import { ReactNode } from "react";
 
 import { compactCount, Customer, ProductCard, vipLabels, yuan } from "./api";
@@ -28,6 +28,7 @@ export function ProductTile({ product }: { product: ProductCard }) {
         <p>{product.subtitle}</p>
         <div className="product-tile__tags">
           {product.tags.slice(0, 2).map((tag) => <span key={tag} className={tag === "自营" ? "tag tag--brand" : "tag"}>{tag}</span>)}
+          {product.is_customized && <CustomizedNotice variant="tag" />}
           {product.is_fragile && <span className="tag tag--blue">易碎品保障</span>}
         </div>
         <div className="product-tile__foot">
@@ -101,6 +102,22 @@ export function UserCenterLayout({ customer, children }: { customer: Customer | 
         </nav>
       </aside>
       <section className="user-center__main">{children}</section>
+    </div>
+  );
+}
+
+/** Customized goods cannot be returned without a reason (REFUND-009); say so
+ * everywhere the customer decides to buy or to apply for after-sales, not
+ * only when a request gets rejected. Quality / damage / wrong or missing
+ * items are still covered, so the copy says that too. */
+export function CustomizedNotice({ variant }: { variant: "tag" | "banner" }) {
+  if (variant === "tag") {
+    return <span className="tag tag--customized" title="定制商品制作完成后不支持无理由退货；质量问题、破损、错发、少发仍可申请售后">定制 · 不支持无理由退货</span>;
+  }
+  return (
+    <div className="customized-notice" role="note">
+      <PenLine size={16} />
+      <span><b>定制商品，不支持无理由退货</b>商品按您的要求定制，制作完成后不支持「不想要了」等无理由退货；如存在质量问题、破损、错发或少发，仍可正常申请售后。</span>
     </div>
   );
 }

@@ -35,7 +35,7 @@ import {
   vipLabels,
   yuan,
 } from "./shop/api";
-import { Breadcrumbs, Link, UserCenterLayout } from "./shop/components";
+import { Breadcrumbs, CustomizedNotice, Link, UserCenterLayout } from "./shop/components";
 import { useFetch, useMyProfile } from "./shop/hooks";
 import { ProductImage } from "./shop/ProductImage";
 import { ReturnShipmentCard } from "./shop/ReturnShipment";
@@ -1190,7 +1190,7 @@ function ServiceCenter({ customerId, workspace, routeOrderId, routeProductId, ro
                   <div>
                     <span className="eyebrow">正在咨询的订单</span>
                     <h2>{orderDetail.product?.title || orderDetail.product_category || "商品订单"}</h2>
-                    <p><code>{orderDetail.order_id}</code><Link to={`/orders/${orderDetail.order_id}`}>订单详情 <ChevronRight size={11} /></Link></p>
+                    <p><code>{orderDetail.order_id}</code><Link to={`/orders/${orderDetail.order_id}`}>订单详情 <ChevronRight size={11} /></Link>{orderDetail.product?.is_customized && <CustomizedNotice variant="tag" />}</p>
                   </div>
                   <span className={`order-status order-status--${orderDetail.order_status.toLowerCase()}`}>
                     {orderDetail.order_status === "PendingShipment" ? "待发货" : orderDetail.order_status === "Shipped" ? "运输中" : "已签收"}

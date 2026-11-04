@@ -929,3 +929,15 @@ dd.order-amounts__total { color: var(--price) !important; font-size: 20px; font-
 .live-banner--waiting { color: #8a5300; background: var(--orange-soft); }
 .live-banner button { padding: 4px 10px; border: 1px solid currentColor; border-radius: 999px; color: inherit; background: var(--surface); font-size: 12px; }
 .return-shipment__deadline { display: block; margin-top: 4px; color: var(--orange); font-weight: 500; }
+
+/* customized goods: no no-reason returns (REFUND-009) */
+.tag--customized { align-self: flex-start; color: var(--violet); background: var(--violet-soft); }
+.customized-notice { margin-top: 16px; padding: 12px 14px; display: flex; gap: 10px; border: 1px solid rgba(123, 79, 214, .3); border-radius: 10px; color: var(--violet); background: var(--violet-soft); font-size: 13px; line-height: 1.6; }
+.customized-notice > svg { flex: 0 0 auto; margin-top: 2px; }
+.customized-notice span { color: var(--ink-2); }
+.customized-notice b { display: block; color: var(--violet); }
+.checkout > .customized-notice { margin: 0 0 14px; }
+.order-status-hero__notice { grid-column: 1 / -1; }
+.order-status-hero__notice .customized-notice { margin-top: 0; }
+.pdp-info .customized-notice { margin-left: 18px; }
+@media (max-width: 560px) { .pdp-info .customized-notice { margin-left: 0; } }
