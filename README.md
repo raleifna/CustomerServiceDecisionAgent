@@ -177,6 +177,21 @@ python scripts/demo/seed_test_accounts.py
 
 聊天中创建的售后申请保存在 PostgreSQL；同一场景想从头再测一遍，用 `docker compose down -v` 重置数据库。
 
+### 可选：通过 NewAPI 网关调用大模型
+
+```bash
+docker compose --profile gateway up -d newapi
+```
+
+1. 打开 http://localhost:3002 ，首次进入会引导创建管理员账号；
+2. 「渠道」→ 添加渠道：类型选 DeepSeek，填入 DeepSeek API Key，模型填 `deepseek-chat`；
+3. 「令牌」→ 添加令牌，复制生成的 `sk-...`；
+4. 修改 `.env`：`BASE_URL=http://newapi:3000/v1`、`API_KEY=<上一步的令牌>`、`MODEL=deepseek-chat`，
+   然后 `docker compose --profile execution up -d backend` 让后端读取新配置。
+
+之后所有大模型调用都经过 NewAPI，可以在它的后台看到每次调用的用量和日志；切回直连 DeepSeek 只需把
+`.env` 改回原值。
+
 ### 4. 停止与重置
 
 ```bash

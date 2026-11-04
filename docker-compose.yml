@@ -126,5 +126,20 @@ services:
       backend:
         condition: service_healthy
 
+  # Optional LLM gateway (NewAPI): `docker compose --profile gateway up -d newapi`.
+  # Configure the DeepSeek channel and create a token at http://localhost:${NEWAPI_PORT:-3002},
+  # then point the backend at it with BASE_URL=http://newapi:3000/v1 in .env.
+  newapi:
+    profiles: ["gateway"]
+    image: calciumion/new-api:latest
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "${NEWAPI_PORT:-3002}:3000"
+    volumes:
+      - newapi_data:/data
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  newapi_data:
